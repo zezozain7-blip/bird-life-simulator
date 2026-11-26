@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1b1710">
+<title>Bird Life Simulator</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#1b1710;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Arabic",sans-serif;color:#f5ead2;touch-action:none}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud>*{pointer-events:auto}
+#hud-top{position:absolute;top:max(6px,env(safe-area-inset-top));left:6px;right:6px;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:5px;height:34px;padding:0 9px;border-radius:17px;background:linear-gradient(#3b342a,#1f1b15);border:1.5px solid #6d5a34;box-shadow:0 2px 6px #0008;font-size:14px}
+.pill b{font-weight:700}.pill .ic{font-size:16px}
+.pill.lvl{padding:0 8px 0 0;gap:6px}
+.lvl-n{width:34px;height:34px;margin-left:-2px;border-radius:50%;background:radial-gradient(#4a4234,#1c1812);border:2px solid #d8b04a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#ffe9a8}
+.xpbar{width:46px;height:8px;border-radius:4px;background:#0007;overflow:hidden}.xpbar i{display:block;height:100%;width:0;background:linear-gradient(#7fd24d,#3c8f2a)}
+.pill b{direction:ltr;unicode-bidi:embed}
+.pill.btn{pointer-events:auto;color:#f5ead2;font-weight:700}
+#side-r,#side-l,#tools{position:absolute;top:100px;display:flex;flex-direction:column;gap:8px}
+#side-r{right:6px}#side-l{left:6px}
+.sq{position:relative;width:46px;height:46px;border-radius:12px;background:linear-gradient(#3b342a,#1f1b15);border:1.5px solid #6d5a34;color:#fff;font-size:20px;box-shadow:0 2px 6px #0008}
+.sq:active,.pill.btn:active,#nav button:active{filter:brightness(1.3)}
+.sq.spd{font-size:14px;font-weight:800;color:#ffd978}
+.badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#d33;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px}
+#ticker{position:absolute;left:8px;bottom:calc(84px + env(safe-area-inset-bottom));max-width:78%;display:none;align-items:center;gap:8px;padding:7px 12px;border-radius:22px;background:linear-gradient(#2c261d,#16130e);border:1.5px solid #6d5a34;font-size:14px;box-shadow:0 2px 6px #0008}
+#ticker .chev{color:#e8b84a;font-size:20px;line-height:1}
+#nav{position:absolute;left:6px;right:6px;bottom:calc(6px + env(safe-area-inset-bottom));display:flex;gap:5px}
+#nav button{flex:1;height:68px;border-radius:14px;background:linear-gradient(#3a3329,#1c1913);border:1.5px solid #4a4030;color:#f0e4c8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:700;box-shadow:0 2px 8px #000a}
+#nav button i{font-style:normal;font-size:24px;line-height:1}
+#nav button.on{background:linear-gradient(#8a6a22,#4f3a10);border-color:#e3b84f}
+#toast{position:fixed;left:50%;top:110px;transform:translateX(-50%);background:#000c;border:1px solid #6d5a34;padding:9px 16px;border-radius:18px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:88%;text-align:center;z-index:30}
+#toast.show{opacity:1}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-height:62%;display:flex;flex-direction:column;background:linear-gradient(#2a241b,#15120d);border-top:2px solid #d8b04a;border-radius:20px 20px 0 0;box-shadow:0 -6px 24px #000b;z-index:20;transform:translateY(0);transition:transform .22s;touch-action:pan-y}
+#sheet.hidden{transform:translateY(105%);pointer-events:none}
+#sheet-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px;font-weight:800;font-size:17px;color:#ffe3a0}
+#sheet-x{width:34px;height:34px;border-radius:17px;background:#0006;color:#fff;border:1px solid #6d5a34;font-size:16px}
+#sheet-body{overflow-y:auto;padding:4px 14px 18px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.rtl{direction:rtl;text-align:right}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.card{background:#0004;border:1px solid #5a4a2c;border-radius:12px;padding:8px;position:relative}
+.card.sel{border-color:#e3b84f;box-shadow:0 0 0 1px #e3b84f inset}
+.card canvas{display:block;margin:0 auto}
+.card .nm{font-weight:700;font-size:13px;text-align:center}
+.card .sm{font-size:11px;color:#c9b78d;text-align:center}
+.btn2{padding:10px 14px;border-radius:12px;background:linear-gradient(#a67c1f,#6a4c0e);border:1.5px solid #e3b84f;color:#fff;font-weight:700;font-size:14px;flex:1;min-width:84px}
+.btn2.alt{background:linear-gradient(#3b342a,#1f1b15);border-color:#6d5a34}
+.btn2.red{background:linear-gradient(#a33,#611);border-color:#e66}
+.btn2[disabled]{opacity:.4}
+.bar{height:11px;border-radius:6px;background:#0007;overflow:hidden;flex:1;border:1px solid #0009}.bar i{display:block;height:100%}
+.lab{width:86px;font-size:13px;color:#d9c9a0}
+.kv{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid #ffffff14}.kv span:first-child{color:#bfae85}
+h4{margin:12px 0 4px;color:#ffe3a0;font-size:14px}
+.tag{display:inline-block;padding:2px 8px;border-radius:9px;font-size:11px;background:#0005;border:1px solid #6d5a34;margin:1px}
+.warn{color:#ff9a8a}.ok{color:#9be37a}
+input.name{background:#0006;border:1px solid #6d5a34;color:#fff;border-radius:8px;padding:8px;font-size:15px;width:100%}
+.prog{position:absolute;left:6px;right:6px;bottom:6px;height:6px;background:#0007;border-radius:3px;overflow:hidden}.prog i{display:block;height:100%;background:#f1c24a}
+
+.tl{font-size:12px;color:#c9b78d;text-align:center;margin-top:6px}
+.trow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0}
+.tn{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;background:#0005;border:1px solid #6d5a34;font-size:13px}
+.tn i{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #0008}
+.tn.hl{border-color:#e3b84f;background:#4a3a14}.tn.gone{opacity:.6}.tn small{color:#a99;font-size:10px}
+.tarrow{text-align:center;color:#6d5a34;font-size:12px;line-height:1}
+#side-r{top:100px}
+#hint{position:fixed;left:12px;right:12px;top:150px;z-index:25;background:#000d;border:1.5px solid #d8b04a;border-radius:16px;padding:12px 14px;font-size:14px;line-height:1.5;text-align:center}#hint small{color:#c9b78d}
+
+#tools{right:60px}#tools.hidden{display:none}
+.sq svg,.pill svg,#nav svg{display:block;margin:auto}.sq{display:flex;align-items:center;justify-content:center;padding:0}
+.ic.gold{color:#f2c24a}.ic{display:inline-flex}
+#nav button i{display:flex;font-style:normal;color:#f0d9a0}#nav button.on i{color:#fff}
+#nav.rtl-nav{direction:rtl}
+.sq{color:#f0e4c8}.pill .ic{color:#e8d6a0}.pill .ic.gold{color:#f2c24a}
+.wel{font-size:15px;line-height:1.8}.wel div{display:flex;justify-content:space-between;border-bottom:1px solid #ffffff14;padding:3px 0}
+.ei{display:inline-flex;vertical-align:-3px;margin:0 2px;color:#e8d6a0}.ei svg{display:block}.warn .ei{color:#ff9a8a}
+
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div id="hud-top">
+    <div class="pill lvl"><div class="lvl-n" id="h-lvl">1</div><div class="xpbar"><i id="h-xp"></i></div></div>
+    <div class="pill"><span class="ic gold" data-ic="coin" data-sz="18"></span><b id="h-coins">0</b></div>
+    <div class="pill"><span class="ic" data-ic="grain" data-sz="18"></span><b id="h-feed">0</b></div>
+    <div class="pill"><span class="ic" data-ic="birds" data-sz="18"></span><b id="h-birds">0</b></div>
+    <div class="pill wide"><span class="ic" id="h-wic" data-ic="sun" data-sz="18"></span><b id="h-time">8:00</b></div>
+    <button class="pill btn" id="b-lang">EN</button>
+  </div>
+  <div id="side-r">
+    <button class="sq" id="b-build" data-ic="build"></button>
+    <button class="sq" id="b-tasks"><span data-ic="tasks"></span><span class="badge" id="h-badge"></span></button>
+    <button class="sq" id="b-tools" data-ic="tools"></button>
+  </div>
+  <div id="tools" class="hidden">
+    <button class="sq" id="b-zin" data-ic="plus"></button>
+    <button class="sq" id="b-zout" data-ic="minus"></button>
+    <button class="sq" id="b-center" data-ic="center"></button>
+    <button class="sq spd" id="b-speed">x1</button>
+    <button class="sq" id="b-skip" data-ic="ff"></button>
+    <button class="sq" id="b-snd" data-ic="sound"></button>
+  </div>
+  <div id="side-l">
+    <button class="sq" id="b-feeder" data-ic="grain"></button>
+    <button class="sq" id="b-water" data-ic="drop"></button>
+  </div>
+  <div id="ticker"><span class="ic" data-ic="egg" data-sz="20"></span><span id="tick-txt"></span><span class="chev" data-ic="chev" data-sz="18"></span></div>
+  <div id="nav">
+    <button data-nav="farm" class="on"><i data-ic="farm" data-sz="26"></i><span data-i="nav_farm"></span></button>
+    <button data-nav="birds"><i data-ic="birds" data-sz="26"></i><span data-i="nav_birds"></span></button>
+    <button data-nav="breeding"><i data-ic="egg" data-sz="26"></i><span data-i="nav_breeding"></span></button>
+    <button data-nav="market"><i data-ic="market" data-sz="26"></i><span data-i="nav_market"></span></button>
+    <button data-nav="manage"><i data-ic="manage" data-sz="26"></i><span data-i="nav_manage"></span></button>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="sheet" class="hidden"><div id="sheet-bar"><div id="sheet-title"></div><button id="sheet-x">✕</button></div><div id="sheet-body"></div></div>
+<script>
+// Bird Life Simulator - config & text. Pure data, portable to Unity (ScriptableObjects).
+var BLS = window.BLS = {};
+BLS.CFG = {
+  SAVE_KEY: 'bls_save_v1',
+  GRID: 12,
+  REAL_SEC_PER_HOUR: 2.5,      // at x1: 1 game hour = 2.5 real seconds (1 day = 60 s)
+  HUNGER_RATE: 1.6,            // per game hour (0 fed .. 100 starving)
+  THIRST_RATE: 2.4,
+  EAT_SPEED: 30,               // hunger units removed per real second while eating
+  DRINK_SPEED: 40,
+  GRAIN_PER_UNIT: 0.003,       // kg per hunger unit
+  WATER_PER_UNIT: 0.06,
+  FEEDER_CAP: 3, WATER_CAP: 100,
+  EGG_INCUBATION_H: 72, SQUAB_H: 72, JUVENILE_H: 168,   // hatch at 3 d, leave nest 3 d later, adult at 7 d
+  EGG_COLD_LIMIT_H: 18,
+  NEST_COUNT: 8, MAX_BIRDS: 40,
+  START_COINS: 2500, START_FEED: 15,
+  OFFLINE_MAX_H: 48,
+  PRICE: { feed5: 60, bird: 180, pair: 330, heal: 40 }
+};
+BLS.NAMES = {
+  en: ['Zaki','Hamama','Nour','Mazen','Salma','Yara','Omar','Laila','Karim','Dina','Adel','Rania','Tarek','Hana','Sami','Mona','Fouad','Nada','Ramy','Aya'],
+  ar: ['زكي','حمامة','نور','مازن','سلمى','يارا','عمر','ليلى','كريم','دينا','عادل','رانيا','طارق','هنا','سامي','منى','فؤاد','ندى','رامي','آية']
+};
+BLS.TXT = {
+ en:{nav_farm:'FARM',nav_birds:'BIRDS',nav_breeding:'BREEDING',nav_market:'MARKET',nav_manage:'MANAGEMENT',
+  male:'Male',female:'Female',egg:'Egg',squab:'Squab',juvenile:'Juvenile',adult:'Adult',
+  fullness:'Fullness',hydration:'Hydration',health:'Health',age:'Age',days:'days',weight:'Weight',color:'Colour',pattern:'Pattern',genes:'Genes',
+  parents:'Parents',mate:'Mate',none:'None',unknown:'Unknown',size:'Size',vitality:'Vitality',fertility:'Fertility',
+  grey:'Blue-grey',red:'Ash-red',white:'White',bar:'Bar',check:'Checker',
+  feed:'Feed',water:'Water',heal:'Heal',rename:'Rename',sell:'Sell',pair:'Pair',unpair:'Unpair',close:'Close',follow:'Follow',
+  my_birds:'My birds',nests:'Nests',nest:'Nest',empty:'Empty',free:'Free',new_pair:'New pair',pick_partner:'Choose a partner',
+  no_partner:'No eligible partner (needs an adult of the other sex, not related, not paired).',related:'Related',
+  incubating:'Incubating',cold:'Cooling',infertile:'Infertile',fertile:'Fertile',hatch_in:'Hatches in {0}h',
+  market:'Market',buy_feed:'Buy 5 kg feed',buy_bird:'Buy a pigeon',buy_pair:'Buy a young pair',buy_heal:'Medicine',
+  manage:'Management',stats:'Statistics',speed:'Game speed',skip:'Skip time',skip6:'+6 hours',skip24:'+1 day',
+  reset:'Start a new farm',reset_q:'Delete all progress and start over?',language:'Language',
+  tasks:'Tasks',claim:'Claim',claimed:'Done',reward:'Reward',level:'Level',coins:'Coins',feedstock:'Feed stock',
+  hatched:'Hatched',sold:'Sold',bought:'Bought',died:'Died',time:'Time',day:'Day',
+  t_hatch:'Hatch your first squab',t_six:'Own 6 birds',t_sell:'Sell a bird',t_buyfeed:'Buy feed',t_lvl3:'Reach level 3',t_hand:'Hand-feed a bird',
+  ev_egg:'New egg in nest {0}',ev_hatch:'Squab hatched in nest {0}!',ev_cold:'An egg went cold in nest {0}',ev_bad:'Infertile egg removed (nest {0})',
+  ev_die:'{0} died',ev_sick:'{0} is sick',ev_adult:'{0} is now an adult',ev_hungry:'Feeder is empty',ev_dry:'Water bowl is empty',ev_grow:'{0} left the nest',
+  ev_offline:'While you were away: {0} h passed',
+  need_coins:'Not enough coins',need_feed:'No feed in stock',feeder_filled:'Feeder filled',water_filled:'Water refilled',
+  fed:'{0} was fed',watered:'{0} drank',healed:'{0} feels better',sold_ok:'Sold {0} for {1}',paired:'{0} and {1} are a pair now',
+  bought_ok:'Bought',full:'Loft is full',nonest:'No free nest',nothing:'Nothing happening yet. Tap a bird to open its card.',
+  feeder:'Feeder',waterbowl:'Water bowl',sacks:'Feed sacks',grain:'Grain',tap_hint:'Tap a bird or a nest. Drag to move, pinch to zoom.',
+  reference:'Sold price',sure:'Sure?',welcome:'Welcome back',away:'Time away',w_eggs:'Eggs laid',w_hatch:'Hatched',w_died:'Lost',w_grain:'Grain eaten',w_water:'Water used',w_note:'The birds were looked after while you were away (up to 48 game hours, no deaths).',ok:'OK',tree:'Family tree',gone:'gone',children:'Children',grandp:'Grandparents',build:'Build',built:'Built!',nests_open:'Nests',perch_stands:'Perch stands',buy_nest:'Open a nest',buy_perch:'Add a perch stand',locked:'Locked nest',maxed:'Maximum',sound:'Sound',no_kids:'No offspring yet',
+  hatch_tip:'Eggs hatch after 3 days. Keep the feeder and water full so parents can sit.'},
+ ar:{nav_farm:'المزرعة',nav_birds:'الطيور',nav_breeding:'التزاوج',nav_market:'السوق',nav_manage:'الإدارة',
+  male:'ذكر',female:'أنثى',egg:'بيضة',squab:'زغلول',juvenile:'يافع',adult:'بالغ',
+  fullness:'الشبع',hydration:'الري',health:'الصحة',age:'العمر',days:'يوم',weight:'الوزن',color:'اللون',pattern:'النقشة',genes:'الجينات',
+  parents:'الأبوين',mate:'الشريك',none:'لا يوجد',unknown:'غير معروف',size:'الحجم',vitality:'القوة',fertility:'الخصوبة',
+  grey:'رمادي مزرق',red:'أحمر رمادي',white:'أبيض',bar:'خطوط',check:'مربعات',
+  feed:'أطعم',water:'اسقي',heal:'علاج',rename:'تغيير الاسم',sell:'بيع',pair:'تزويج',unpair:'فك الزواج',close:'إغلاق',follow:'تتبع',
+  my_birds:'طيوري',nests:'الأعشاش',nest:'عش',empty:'فاضي',free:'متاح',new_pair:'زوج جديد',pick_partner:'اختار الشريك',
+  no_partner:'مفيش شريك مناسب (لازم بالغ من الجنس التاني، مش قريب، وغير متزوج).',related:'قرابة',
+  incubating:'بتفقس',cold:'بتبرد',infertile:'غير مخصبة',fertile:'مخصبة',hatch_in:'تفقس بعد {0} ساعة',
+  market:'السوق',buy_feed:'اشتري 5 كجم علف',buy_bird:'اشتري حمامة',buy_pair:'اشتري زوج صغير',buy_heal:'دواء',
+  manage:'الإدارة',stats:'الإحصائيات',speed:'سرعة اللعبة',skip:'تخطي الوقت',skip6:'+6 ساعات',skip24:'+يوم',
+  reset:'ابدأ مزرعة جديدة',reset_q:'تمسح كل التقدم وتبدأ من الأول؟',language:'اللغة',
+  tasks:'المهام',claim:'استلم',claimed:'تم',reward:'الجائزة',level:'المستوى',coins:'العملات',feedstock:'مخزون العلف',
+  hatched:'فقس',sold:'مباع',bought:'مشترى',died:'نفق',time:'الوقت',day:'اليوم',
+  t_hatch:'افقس أول زغلول',t_six:'املك 6 طيور',t_sell:'بيع طائر',t_buyfeed:'اشتري علف',t_lvl3:'وصل للمستوى 3',t_hand:'أطعم طائر بإيدك',
+  ev_egg:'بيضة جديدة في العش {0}',ev_hatch:'زغلول فقس في العش {0}!',ev_cold:'بيضة بردت في العش {0}',ev_bad:'اتشالت بيضة غير مخصبة (عش {0})',
+  ev_die:'{0} نفق',ev_sick:'{0} تعبان',ev_adult:'{0} بقى بالغ',ev_hungry:'المعلف فاضي',ev_dry:'حوض الميه فاضي',ev_grow:'{0} طلع من العش',
+  ev_offline:'وانت غايب عدّى {0} ساعة',
+  need_coins:'العملات مش كفاية',need_feed:'مفيش علف في المخزن',feeder_filled:'المعلف اتملا',water_filled:'الميه اتملت',
+  fed:'{0} اتغذى',watered:'{0} شرب',healed:'{0} بقى أحسن',sold_ok:'بعت {0} بـ {1}',paired:'{0} و {1} بقوا زوج',
+  bought_ok:'تم الشراء',full:'البرج مليان',nonest:'مفيش عش فاضي',nothing:'لسه مفيش حاجة. دوس على طائر تفتح بطاقته.',
+  feeder:'المعلف',waterbowl:'حوض الميه',sacks:'شكاير العلف',grain:'حبوب',tap_hint:'دوس على طائر أو عش. اسحب للتحريك، وكبّر بإصبعين.',
+  reference:'سعر البيع',sure:'متأكد؟',welcome:'عودة حميدة',away:'مدة الغياب',w_eggs:'بيض اتبيّض',w_hatch:'فقس',w_died:'نفق',w_grain:'علف اتاكل',w_water:'ميه اتشربت',w_note:'الطيور اتراعت وانت غايب (لحد 48 ساعة لعبة، من غير نفوق).',ok:'تمام',tree:'شجرة النسب',gone:'غير موجود',children:'الأبناء',grandp:'الأجداد',build:'بناء',built:'تم البناء!',nests_open:'الأعشاش',perch_stands:'أعمدة وقوف',buy_nest:'افتح عش',buy_perch:'أضف عمود وقوف',locked:'عش مقفول',maxed:'الحد الأقصى',sound:'الصوت',no_kids:'لسه مفيش ذرية',
+  hatch_tip:'البيض بيفقس بعد 3 أيام. خلي المعلف والميه مليانين عشان الأبوين يقعدوا على البيض.'}
+};
+
+</script>
+<script>
+// Inline SVG icons (no emoji fonts needed, so they never render as empty boxes).
+BLS.Icons = (function(){
+  var P = {
+    farm:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+    birds:'<path d="M3 16c4 0 6-3 7-6 1-3 4-4 7-3l3 1-3 1c0 5-4 10-10 10H4z"/><circle cx="15" cy="9" r=".6"/>',
+    egg:'<path d="M12 3c4 0 7 6 7 11a7 7 0 0 1-14 0c0-5 3-11 7-11z"/>',
+    market:'<path d="M3 4h3l2 11h10l2-8H7"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>',
+    manage:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><path d="M4 7l6-3 6 5 5-4"/>',
+    coin:'<circle cx="12" cy="12" r="8"/><path d="M12 7v10M9.5 9.5c0-1.2 1-2 2.5-2s2.5.8 2.5 2-1 1.6-2.5 2-2.5.8-2.5 2 1 2 2.5 2 2.5-.8 2.5-2"/>',
+    grain:'<path d="M12 21V8"/><path d="M12 8c-3 0-4-2-4-4 3 0 4 2 4 4zM12 8c3 0 4-2 4-4-3 0-4 2-4 4zM12 14c-3 0-4-2-4-4 3 0 4 2 4 4zM12 14c3 0 4-2 4-4-3 0-4 2-4 4z"/>',
+    drop:'<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z"/>',
+    ff:'<path d="M4 6l8 6-8 6zM12 6l8 6-8 6z"/>',
+    sound:'<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
+    mute:'<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>',
+    build:'<path d="M14 6l4 4M4 20l9-9M13 4l3-1 5 5-1 3-3 1-6-6z"/>',
+    tasks:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM8.5 12l2 2 4-4M8.5 17h7"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>',
+    center:'<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
+    tools:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+    sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+    moon:'<path d="M20 14a8 8 0 1 1-10-10 7 7 0 0 0 10 10z"/>',
+    dusk:'<path d="M4 18h16M7 18a5 5 0 0 1 10 0M12 6v3M5 10l2 2M19 10l-2 2"/>',
+    tree:'<path d="M12 21v-6M12 15c-4 0-6-3-5-6-2-3 0-6 3-6 1-2 5-2 6 0 3 0 4 4 2 6 1 3-1 6-6 6z"/>',
+    heart:'<path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/>',
+    star:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z"/>',
+    lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    warn:'<path d="M12 4l9 16H3z"/><path d="M12 10v5M12 17.5v.5"/>',
+    check:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+    dot:'<circle cx="12" cy="12" r="5"/>', box:'<rect x="5" y="5" width="14" height="14" rx="3"/>',
+    snow:'<path d="M12 3v18M4 7.5l16 9M4 16.5l16-9"/>',
+    chev:'<path d="M9 5l7 7-7 7"/>'
+  };
+  function svg(n,sz){ sz=sz||22; return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(P[n]||'')+'</svg>'; }
+  function fill(root){ (root||document).querySelectorAll('[data-ic]').forEach(function(e){ e.innerHTML=svg(e.getAttribute('data-ic'),+e.getAttribute('data-sz')||22); }); }
+  var MAP={'🌾':'grain','💧':'drop','🪙':'coin','🥚':'egg','🪺':'egg','🐣':'egg','🕊':'birds','🌳':'tree','🎥':'center','💊':'plus','💔':'heart','❤':'heart','🔥':'sun','🪨':'minus','❄':'snow','⭐':'star','🔒':'lock','⚠':'warn','🔨':'build','🪵':'build','✅':'check','🟡':'dot','⬜':'box','♂':null,'♀':null};
+  var RX=new RegExp('('+Object.keys(MAP).filter(function(k){return MAP[k];}).join('|')+')\\uFE0F?','g');
+  function emo(str){ return String(str).replace(RX,function(m,k){ return '<span class="ei">'+svg(MAP[k],15)+'</span>'; }); }
+  return {svg:svg,fill:fill,emo:emo};
+})();
+
+</script>
+<script>
+// Simple Mendelian model. Two loci + 3 quantitative traits.
+// Colour locus: G (blue-grey) > R (ash-red) > W (white). Pattern locus: B (bar) > C (checker).
+BLS.Gen = (function(){
+  var COL_RANK = {G:3,R:2,W:1};
+  function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
+  function phenoColor(g){ var a=g.c[0], b=g.c[1]; return COL_RANK[a]>=COL_RANK[b]?a:b; }
+  function phenoPattern(g){ return (g.p[0]==='B'||g.p[1]==='B')?'B':'C'; }
+  function colorName(g){ return {G:'grey',R:'red',W:'white'}[phenoColor(g)]; }
+  function patternName(g){ return phenoPattern(g)==='B'?'bar':'check'; }
+  function randomGenes(){
+    return { c:[rnd(['G','G','G','R','W']), rnd(['G','G','R','R','W'])], p:[rnd(['B','B','C']), rnd(['B','C'])],
+             size:40+Math.random()*40|0, vit:40+Math.random()*40|0, fert:40+Math.random()*40|0 };
+  }
+  function mutateAllele(a, pool){ return Math.random()<0.03 ? rnd(pool) : a; }
+  function cross(m, f){
+    var t = function(v1,v2){ var v=(v1+v2)/2 + (Math.random()*16-8); return Math.max(20,Math.min(100,Math.round(v))); };
+    return {
+      c:[ mutateAllele(rnd(m.c),['G','R','W']), mutateAllele(rnd(f.c),['G','R','W']) ],
+      p:[ mutateAllele(rnd(m.p),['B','C']), mutateAllele(rnd(f.p),['B','C']) ],
+      size:t(m.size,f.size), vit:t(m.vit,f.vit), fert:t(m.fert,f.fert)
+    };
+  }
+  function geneString(g){ return g.c.join('/')+'  '+g.p.join('/'); }
+  return {phenoColor:phenoColor,phenoPattern:phenoPattern,colorName:colorName,patternName:patternName,randomGenes:randomGenes,cross:cross,geneString:geneString,rnd:rnd};
+})();
+
+</script>
+<script>
+// Simulation core: state, life cycle (aging, needs, eggs, hatching) and bird behaviour. No drawing here.
+BLS.Sim = (function(){
+  var C = BLS.CFG, Gen = BLS.Gen;
+  var G = null, listeners = {};
+  var L = BLS.LAYOUT = {
+    nestPos: function(i){ var col=i%4,row=(i/4)|0; return {x:2.2,y:1.3+col*1.05+0.45,z:0.45+row*0.9+0.04}; },
+    feeder:{x:6.2,y:6.0}, water:{x:4.3,y:7.2},
+    roofZ:2.72,
+    perchSpots:[[4.2,4.3],[9.6,4.8],[8.6,6.8],[4.2,9.5]],
+    roofPerch: function(){ var pl=G&&G.perches||[]; if(pl.length&&Math.random()<0.5){ var q=pl[(Math.random()*pl.length)|0], sp=L.perchSpots[q]; return {x:sp[0]+(Math.random()-0.5)*0.5,y:sp[1],z:0.95}; } return {x:1.0+Math.random()*1.5,y:1.2+Math.random()*4.4,z:L.roofZ}; },
+    walkable: function(x,y){ return (x>2.9&&x<11.5&&y>3.5&&y<7.8) || (x>2.9&&x<6.6&&y>=7.8&&y<11.5); },
+    randSpot: function(){ var best=null,bd=-1; for(var i=0;i<24;i++){ var x=3+Math.random()*8.4,y=3.6+Math.random()*7.8; if(!L.walkable(x,y)) continue; var md=9; var bs=G?G.birds:[]; for(var j=0;j<bs.length;j++){ if(bs[j].z>0.05) continue; var d=Math.hypot(bs[j].x-x,bs[j].y-y); if(d<md) md=d; } if(md>bd){ bd=md; best={x:x,y:y,z:0}; } if(bd>1.6) break; } return best||{x:5,y:5,z:0}; }
+  };
+  function emit(ev,a,b){ (listeners[ev]||[]).forEach(function(f){ f(a,b); }); }
+  function on(ev,f){ (listeners[ev]=listeners[ev]||[]).push(f); }
+  function T(k){ var s=(BLS.TXT[G&&G.lang||'ar'][k]||k); for(var i=1;i<arguments.length;i++) s=s.replace('{'+(i-1)+'}',arguments[i]); return s; }
+  BLS.T = T;
+
+  function stageOf(b){ return b.age<C.SQUAB_H?'squab':(b.age<C.JUVENILE_H?'juvenile':'adult'); }
+  function hourOfDay(){ return (8+G.t)%24; }
+  function dayNum(){ return Math.floor((8+G.t)/24)+1; }
+  function bird(id){ for(var i=0;i<G.birds.length;i++) if(G.birds[i].id===id) return G.birds[i]; return null; }
+  function pickName(){
+    var list=BLS.NAMES[G.lang||'ar'], used={}; G.birds.forEach(function(b){used[b.name]=1;});
+    var free=list.filter(function(n){return !used[n];});
+    if(free.length) return Gen.rnd(free);
+    return Gen.rnd(list)+' '+(G.nextId);
+  }
+  function newBird(o){
+    var b={ id:G.nextId++, name:o.name||pickName(), sex:o.sex, g:o.g, age:o.age||0, hunger:o.hunger||10, thirst:o.thirst||10,
+      health:100, mate:-1, nest:-1, parents:o.parents||[-1,-1], cool:6, clutch:0, layT:0, sickFlag:false,
+      x:o.x||5, y:o.y||5, z:o.z||0, face:1, st:'idle', timer:1+Math.random()*2, ph:Math.random()*10, tx:0,ty:0, slot:0 };
+    G.birds.push(b); G.archive[b.id]={name:b.name,sex:b.sex,parents:b.parents,col:Gen.phenoColor(b.g),pat:Gen.phenoPattern(b.g)}; return b;
+  }
+  function newGame(lang){
+    G = { v:1, t:0, coins:C.START_COINS, feed:C.START_FEED, xp:0, level:1, birds:[], eggs:[], nests:[], nextId:1,
+      feeder:{grain:1.5}, water:{amt:80}, tasks:{}, stats:{hatched:0,sold:0,bought:0,died:0,hand:0,boughtFeed:0},
+      lang:lang||'ar', speed:1, archive:{}, log:[], savedAt:Date.now(), nestsOpen:4, perches:[] };
+    for(var i=0;i<C.NEST_COUNT;i++) G.nests.push(null);
+    var gm={c:['G','R'],p:['B','C'],size:66,vit:70,fert:72}, gf={c:['G','G'],p:['B','B'],size:60,vit:68,fert:74};
+    var np=L.nestPos(0), rp=L.roofPerch();
+    var m=newBird({sex:'M',g:gm,age:400,x:rp.x,y:rp.y,z:L.roofZ}), f=newBird({sex:'F',g:gf,age:400,x:np.x,y:np.y,z:np.z});
+    m.st='perch'; m.timer=4; f.st='sit'; f.timer=3; f.face=-1; m.face=1;
+    pairUp(m,f,true); f.cool=10;
+    return G;
+  }
+  // ---------- relations
+  function ancestors(id,depth,out){ out=out||{}; var a=G.archive[id]; if(!a||depth<=0) return out; a.parents.forEach(function(p){ if(p>0){ out[p]=1; ancestors(p,depth-1,out);} }); return out; }
+  function related(a,b){
+    if(a.id===b.id) return true;
+    var A=ancestors(a.id,3), B=ancestors(b.id,3);
+    if(A[b.id]||B[a.id]) return true;
+    for(var k in A) if(B[k]) return true;
+    return false;
+  }
+  function canPair(a,b){ return a&&b&&a.sex!==b.sex&&stageOf(a)==='adult'&&stageOf(b)==='adult'&&a.mate<0&&b.mate<0&&!related(a,b); }
+  function freeNest(){ for(var i=0;i<Math.min(G.nests.length,G.nestsOpen);i++) if(!G.nests[i]) return i; return -1; }
+  function pairUp(a,b,silent){
+    var n=freeNest(); if(n<0) return false;
+    var m=a.sex==='M'?a:b, f=a.sex==='M'?b:a;
+    m.mate=f.id; f.mate=m.id; m.nest=f.nest=n; G.nests[n]={m:m.id,f:f.id};
+    if(!silent) emit('toast',T('paired',m.name,f.name)); return true;
+  }
+  function nestContents(n){
+    var e=G.eggs.filter(function(x){return x.nest===n;}).length;
+    var s=G.birds.filter(function(x){return x.nest===n&&stageOf(x)==='squab';}).length;
+    return e+s;
+  }
+  function unpair(b){
+    var mt=bird(b.mate); b.mate=-1; if(mt) mt.mate=-1;
+    releaseNests();
+  }
+  function releaseNests(){
+    for(var n=0;n<G.nests.length;n++){
+      var o=G.nests[n]; if(!o) continue;
+      var m=bird(o.m), f=bird(o.f);
+      var paired = m&&f&&m.mate===f.id;
+      if(!paired && nestContents(n)===0){
+        G.nests[n]=null; G.birds.forEach(function(x){ if(x.nest===n&&stageOf(x)!=='squab') x.nest=-1; });
+        if(m){m.clutch=0;} if(f){f.clutch=0;}
+      }
+    }
+  }
+  function covered(n){ return G.birds.some(function(b){ return b.nest===n&&b.st==='sit'&&stageOf(b)!=='squab'; }); }
+  // ---------- life cycle
+  function addXp(v){ G.xp+=v; while(G.xp>=100*G.level){ G.xp-=100*G.level; G.level++; emit('toast','⭐ '+T('level')+' '+G.level); emit('sfx','level'); } }
+  function layEgg(f,m,n){
+    var fert=Math.random() < 0.35+((m.g.fert+f.g.fert)/2)/100*0.62;
+    G.eggs.push({id:G.nextId++, nest:n, m:m.id, f:f.id, g:Gen.cross(m.g,f.g), prog:0, cold:0, fertile:fert, dead:false, deadT:0});
+    emit('event',T('ev_egg',n+1),'breeding'); emit('sfx','egg'); G.stats.eggs=(G.stats.eggs||0)+1;
+    [f,m].forEach(function(x){ if(x.st!=='fly'&&x.st!=='sit'){ x.timer=0; if(x.st==='walk'||x.st==='eat'||x.st==='drink'){} } });
+  }
+  function hatch(e){
+    var m=bird(e.m), f=bird(e.f);
+    var b=newBird({sex:Math.random()<0.5?'M':'F',g:e.g,age:0,parents:[e.m,e.f],hunger:20,thirst:20});
+    b.nest=e.nest; var pos=L.nestPos(e.nest); b.x=pos.x; b.y=pos.y; b.z=pos.z; b.st='squabnest';
+    var slot=G.birds.filter(function(x){return x.nest===e.nest&&stageOf(x)==='squab'&&x.id!==b.id;}).length; b.slot=slot%2;
+    G.stats.hatched++; emit('sfx','hatch'); addXp(30); emit('event',T('ev_hatch',e.nest+1),'breeding');
+  }
+  function stepLife(dt,auto,protect){
+    G.t+=dt;
+    var i, b, hungerAdd=C.HUNGER_RATE*dt, thirstAdd=C.THIRST_RATE*dt;
+    for(i=G.birds.length-1;i>=0;i--){
+      b=G.birds[i]; var st0=stageOf(b);
+      b.age+=dt; var stg=stageOf(b);
+      b.hunger+=hungerAdd*(stg==='squab'?0.8:1); b.thirst+=thirstAdd*(stg==='squab'?0.8:1);
+      if(stg==='squab'){
+        var par=[bird(b.parents[0]),bird(b.parents[1])].filter(function(p){return p&&p.hunger<78&&p.thirst<85;});
+        if(par.length){ b.hunger=Math.max(0,b.hunger-6*dt); b.thirst=Math.max(0,b.thirst-6*dt); }
+      }
+      if(auto){
+        if(b.hunger>35&&G.feeder.grain>0){ var need=b.hunger-10,kg=Math.min(G.feeder.grain,need*C.GRAIN_PER_UNIT); G.feeder.grain-=kg; b.hunger-=kg/C.GRAIN_PER_UNIT; }
+        if(b.thirst>35&&G.water.amt>0){ var nw=b.thirst-10,w=Math.min(G.water.amt,nw*C.WATER_PER_UNIT); G.water.amt-=w; b.thirst-=w/C.WATER_PER_UNIT; }
+      }
+      if(protect){ b.hunger=Math.min(b.hunger,80); b.thirst=Math.min(b.thirst,80); }
+      b.hunger=Math.min(100,b.hunger); b.thirst=Math.min(100,b.thirst);
+      if(b.hunger>90||b.thirst>90) b.health-=3*dt; else if(b.hunger<60&&b.thirst<60) b.health=Math.min(100,b.health+0.6*dt);
+      if(protect&&b.health<30) b.health=30;
+      if(b.health<45&&!b.sickFlag){ b.sickFlag=true; emit('event',T('ev_sick',b.name),'birds',b.id); }
+      if(b.health>=60) b.sickFlag=false;
+      if(b.health<=0){ die(b); continue; }
+      if(st0==='squab'&&stg==='juvenile'){ // leaves nest
+        var n=b.nest; b.nest=-1; b.st='idle'; b.timer=1; var gp=L.randSpot();
+        b.fl={x0:b.x,y0:b.y,z0:b.z,x1:3.3+Math.random()*0.6,y1:L.nestPos(n).y,z1:0,t:0,dur:1.4,arc:0.8}; b.st='fly'; b.after='idle';
+        emit('event',T('ev_grow',b.name),'birds',b.id);
+        var pf=bird(b.parents[1]); if(pf&&pf.nest===n&&nestContents(n)===0){ pf.cool=Math.min(pf.cool,24); }
+      }
+      if(st0==='juvenile'&&stg==='adult') emit('event',T('ev_adult',b.name),'birds',b.id);
+    }
+    // eggs
+    for(i=G.eggs.length-1;i>=0;i--){
+      var e=G.eggs[i];
+      if(e.dead){ if(G.t-e.deadT>12){ G.eggs.splice(i,1); emit('event',T('ev_bad',e.nest+1),'breeding'); } continue; }
+      var cov = auto || covered(e.nest);
+      if(cov) { e.prog+=dt; e.cold=Math.max(0,e.cold-dt*0.5); } else { e.cold+=dt; if(e.cold>C.EGG_COLD_LIMIT_H){ e.dead=true; e.deadT=G.t; emit('event',T('ev_cold',e.nest+1),'breeding'); continue; } }
+      if(e.prog>=C.EGG_INCUBATION_H){
+        if(e.fertile){ hatch(e); G.eggs.splice(i,1); } else { e.dead=true; e.deadT=G.t; }
+      }
+    }
+    // laying
+    G.birds.forEach(function(f){
+      if(f.sex!=='F'||f.mate<0||f.nest<0) return;
+      var m=bird(f.mate); if(!m) return; var n=f.nest;
+      if(stageOf(f)!=='adult') return;
+      f.cool-=dt;
+      var cont=nestContents(n);
+      if(f.clutch>0&&cont===0&&(f.clutch===2||G.t>f.layT)){ f.clutch=0; f.cool=Math.max(f.cool,30); }
+      if(f.clutch===0&&f.cool<=0&&cont===0&&f.hunger<65&&f.thirst<65&&f.health>60){ layEgg(f,m,n); f.clutch=1; f.layT=G.t+24; }
+      else if(f.clutch===1&&G.t>=f.layT&&cont<2&&f.hunger<80){ layEgg(f,m,n); f.clutch=2; }
+    });
+    releaseNests();
+    if(G.feeder.grain<=0.001&&!stepLife._fw){ stepLife._fw=1; emit('event',T('ev_hungry'),'farm'); } if(G.feeder.grain>0.2) stepLife._fw=0;
+    if(G.water.amt<=0.5&&!stepLife._ww){ stepLife._ww=1; emit('event',T('ev_dry'),'farm'); } if(G.water.amt>10) stepLife._ww=0;
+  }
+  function die(b){
+    var i=G.birds.indexOf(b); if(i>=0) G.birds.splice(i,1);
+    if(b.mate>=0){ var m=bird(b.mate); if(m) m.mate=-1; }
+    G.stats.died++; emit('sfx','sad'); emit('event',T('ev_die',b.name),'birds'); releaseNests();
+  }
+  // ---------- behaviour (real time)
+  function isNight(){ var h=hourOfDay(); return h>=21||h<5; }
+  function needy(b){ return b.hunger>=55||b.thirst>=55; }
+  function goto_(b,x,y,then){ b.tx=x; b.ty=y; b.st='walk'; b.after=then||'idle'; }
+  function flyTo(b,x,y,z,then,dur){
+    var d=Math.sqrt((x-b.x)*(x-b.x)+(y-b.y)*(y-b.y)+(z-b.z)*(z-b.z)); 
+    b.fl={x0:b.x,y0:b.y,z0:b.z,x1:x,y1:y,z1:z,t:0,dur:dur||Math.max(0.9,d/2.4),arc:Math.min(1.2,0.35+d*0.08)};
+    b.st='fly'; b.after=then||'idle'; setFace(b,x-b.x,y-b.y); emit('sfx','flap');
+  }
+  function setFace(b,dx,dy){ var sx=dx-dy; if(Math.abs(sx)>0.01) b.face=sx>=0?1:-1; }
+  function aroundFeeder(){ var a=Math.random()*6.28; return {x:L.feeder.x+Math.cos(a)*0.55,y:L.feeder.y+Math.sin(a)*0.55}; }
+  function aroundWater(){ var a=Math.random()*6.28; return {x:L.water.x+Math.cos(a)*0.45,y:L.water.y+Math.sin(a)*0.45}; }
+  function think(b){
+    var stg=stageOf(b); if(stg==='squab') return;
+    var onGround=b.z<0.05;
+    var mate=b.mate>=0?bird(b.mate):null;
+    var hasEggs=b.nest>=0&&G.eggs.some(function(e){return e.nest===b.nest&&!e.dead;});
+    // 1) needs first
+    var fed=b.hunger<=42, wat=b.thirst<=42;
+    if(!fed&&G.feeder.grain>0.01){
+      if(!onGround){ var s=L.randSpot(); return flyTo(b,s.x,s.y,0,'idle'); }
+      var p=aroundFeeder(); return goto_(b,p.x,p.y,'eat');
+    }
+    if(!wat&&G.water.amt>1){
+      if(!onGround){ var s2=L.randSpot(); return flyTo(b,s2.x,s2.y,0,'idle'); }
+      var q=aroundWater(); return goto_(b,q.x,q.y,'drink');
+    }
+    // 2) egg duty
+    if(hasEggs&&!needy(b)){
+      var want = b.sex==='F' || (mate&&mate.st!=='sit'&&needy(mate)) || !mate;
+      if(b.sex==='M'&&mate&&mate.st==='sit') want=false;
+      if(want){
+        if(b.st==='sit'){ b.timer=1.5; return; }
+        var np=L.nestPos(b.nest); return flyTo(b,np.x,np.y,np.z,'sit');
+      }
+    }
+    if(b.st==='sit'&&(!hasEggs)&&isNight()&&b.nest>=0){ b.timer=3; return; }
+    // 3) night rest
+    if(isNight()){
+      if(b.nest>=0&&mate&&!hasEggs){ if(b.st==='sit') {b.timer=3;return;} var n2=L.nestPos(b.nest); return flyTo(b,n2.x,n2.y,n2.z,'sit'); }
+      if(b.st==='perch'||b.st==='sit'){ b.timer=3; return; }
+      var rp=L.roofPerch(); return flyTo(b,rp.x,rp.y,rp.z,'perch');
+    }
+    // 4) day life
+    if(b.st==='sit'||b.st==='perch'){ // come down
+      var s3=L.randSpot(); if(b.st==='perch'&&Math.random()<0.5){ b.timer=3+Math.random()*5; return; }
+      return flyTo(b,s3.x,s3.y,0,'idle');
+    }
+    if(!onGround){ var s4=L.randSpot(); return flyTo(b,s4.x,s4.y,0,'idle'); }
+    var r=Math.random();
+    if(mate&&mate.st!=='fly'&&r<0.22&&mate.z<0.05){ return goto_(b,mate.x+(Math.random()*0.8-0.4),mate.y+(Math.random()*0.8-0.4),'coo'); }
+    if(r<0.5){ var s5=L.randSpot(); return goto_(b,s5.x,s5.y,'idle'); }
+    if(r<0.68){ b.st='peck'; b.timer=1.5+Math.random()*2; return; }
+    if(r<0.78){ b.st='preen'; b.timer=2+Math.random()*2; return; }
+    if(r<0.9){ var rp2=L.roofPerch(); return flyTo(b,rp2.x,rp2.y,rp2.z,'perch'); }
+    if(r<0.96){ var s6=L.randSpot(); return flyTo(b,s6.x,s6.y,0,'idle'); }
+    b.st='idle'; b.timer=1+Math.random()*2.5;
+  }
+  function updateBird(b,dt){
+    b.ph+=dt;
+    var stg=stageOf(b);
+    if(stg==='squab'&&b.nest>=0){ b.st='squabnest'; var p=L.nestPos(b.nest); b.x=p.x; b.y=p.y+(b.slot?0.22:-0.22); b.z=p.z; return; }
+    if(b.st==='squabnest'){ b.st='idle'; }
+    var spd=(stg==='juvenile'?0.7:0.85);
+    if(b.st==='fly'){
+      var f=b.fl; f.t+=dt; var u=Math.min(1,f.t/f.dur), e=u<0.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+      b.x=f.x0+(f.x1-f.x0)*e; b.y=f.y0+(f.y1-f.y0)*e; b.z=f.z0+(f.z1-f.z0)*e+f.arc*Math.sin(Math.PI*u);
+      if(u>=1){ b.x=f.x1;b.y=f.y1;b.z=f.z1; b.st=b.after||'idle'; b.timer=(b.st==='sit'||b.st==='perch')?2+Math.random()*3:1; if(b.st==='eat'||b.st==='drink'){ b.timer=6; } }
+      return;
+    }
+    if(b.st==='walk'){
+      var dx=b.tx-b.x, dy=b.ty-b.y, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<0.06){ b.st=b.after||'idle'; b.timer=(b.st==='eat'||b.st==='drink')?6:(b.st==='coo'?1.8:1+Math.random()*2); if(b.st==='eat'||b.st==='drink'){} return; }
+      var step=Math.min(d,spd*dt); b.x+=dx/d*step; b.y+=dy/d*step; setFace(b,dx,dy); return;
+    }
+    b.timer-=dt;
+    if(b.st==='eat'){
+      if(G.feeder.grain<=0.002||b.hunger<8||b.timer<=0){ b.st='idle'; b.timer=0.4; }
+      else { var amt=Math.min(b.hunger,C.EAT_SPEED*dt); b.hunger-=amt; G.feeder.grain=Math.max(0,G.feeder.grain-amt*C.GRAIN_PER_UNIT); face2(b,L.feeder); }
+      return;
+    }
+    if(b.st==='drink'){
+      if(G.water.amt<=0.2||b.thirst<8||b.timer<=0){ b.st='idle'; b.timer=0.4; }
+      else { var a2=Math.min(b.thirst,C.DRINK_SPEED*dt); b.thirst-=a2; G.water.amt=Math.max(0,G.water.amt-a2*C.WATER_PER_UNIT); face2(b,L.water); }
+      return;
+    }
+    if(b.timer<=0){ think(b); }
+  }
+  function face2(b,t){ setFace(b,t.x-b.x,t.y-b.y); }
+  function update(realDt){
+    if(realDt>0.5) realDt=0.5;
+    var hours=realDt*G.speed/C.REAL_SEC_PER_HOUR;
+    var left=hours; while(left>0){ var s=Math.min(left,0.25); stepLife(s,false,false); left-=s; }
+    for(var i=0;i<G.birds.length;i++) updateBird(G.birds[i],realDt*(G.speed>1?Math.min(G.speed,2):1));
+  }
+  function skip(hours){ var h=0; while(h<hours){ stepLife(1,true,true); h+=1; }
+    // rest birds
+    G.birds.forEach(function(b){ if(stageOf(b)!=='squab'){ b.st='idle'; b.timer=0.5; if(b.z>0.05&&b.nest<0){ var s=L.randSpot(); b.x=s.x;b.y=s.y;b.z=0; } } }); }
+  // ---------- player actions
+  function sellPrice(b){
+    var q=(b.g.size+b.g.vit+b.g.fert)/3, col=Gen.phenoColor(b.g);
+    var p=40+q*1.1+(col==='W'?25:col==='R'?10:0); var s=stageOf(b); p*= s==='squab'?0.4:(s==='juvenile'?0.7:1);
+    return Math.round(p);
+  }
+  function sell(b){ var p=sellPrice(b); G.coins+=p; G.stats.sold++; addXp(10); unpair(b); var i=G.birds.indexOf(b); if(i>=0) G.birds.splice(i,1); releaseNests(); emit('toast',T('sold_ok',b.name,p)); emit('sfx','coin'); }
+  function buyFeed(){ if(G.coins<C.PRICE.feed5) return emit('toast',T('need_coins')); G.coins-=C.PRICE.feed5; G.feed+=5; G.stats.boughtFeed++; emit('toast','🌾 +5 kg'); }
+  function placeNew(sex,g,age){ var s=L.randSpot(); return newBird({sex:sex,g:g,age:age,x:s.x,y:s.y,hunger:25,thirst:25}); }
+  function buyBird(){
+    if(G.birds.length>=C.MAX_BIRDS) return emit('toast',T('full')); if(G.coins<C.PRICE.bird) return emit('toast',T('need_coins'));
+    G.coins-=C.PRICE.bird; G.stats.bought++; var b=placeNew(Math.random()<0.5?'M':'F',Gen.randomGenes(),200+Math.random()*80); emit('toast','🕊️ '+T('bought_ok')+': '+b.name);
+  }
+  function buyPair(){
+    if(G.birds.length+2>C.MAX_BIRDS) return emit('toast',T('full')); if(G.coins<C.PRICE.pair) return emit('toast',T('need_coins'));
+    G.coins-=C.PRICE.pair; G.stats.bought+=2; var a=placeNew('M',Gen.randomGenes(),C.JUVENILE_H+10+Math.random()*30), b=placeNew('F',Gen.randomGenes(),C.JUVENILE_H+10+Math.random()*30);
+    emit('toast','🕊️🕊️ '+T('bought_ok')+': '+a.name+' + '+b.name);
+  }
+  function refillFeeder(){
+    var room=C.FEEDER_CAP-G.feeder.grain; if(room<0.05) return emit('toast',T('feeder_filled'));
+    if(G.feed<=0) return emit('toast',T('need_feed'));
+    var kg=Math.min(room,G.feed); G.feed-=kg; G.feeder.grain+=kg; emit('toast','🌾 '+T('feeder_filled')+' (+'+kg.toFixed(1)+' kg)');
+  }
+  function refillWater(){ G.water.amt=C.WATER_CAP; emit('toast','💧 '+T('water_filled')); }
+  function feedBird(b){ if(G.feed<0.05) return emit('toast',T('need_feed')); G.feed-=0.05; b.hunger=Math.max(0,b.hunger-45); G.stats.hand++; emit('toast',T('fed',b.name)); }
+  function waterBird(b){ b.thirst=0; emit('toast',T('watered',b.name)); }
+  function healBird(b){ if(G.coins<C.PRICE.heal) return emit('toast',T('need_coins')); G.coins-=C.PRICE.heal; b.health=Math.min(100,b.health+50); emit('toast',T('healed',b.name)); }
+  function weightOf(b){ var s=stageOf(b); var base=300+b.g.size*2.6; var f=s==='squab'?Math.min(1,0.08+b.age/C.SQUAB_H*0.5):(s==='juvenile'?0.6+0.4*(b.age-C.SQUAB_H)/(C.JUVENILE_H-C.SQUAB_H):1); return Math.round(base*f); }
+  function buyNest(){ if(G.nestsOpen>=C.NEST_COUNT) return; var cost=250+(G.nestsOpen-4)*100; if(G.coins<cost) return emit('toast',T('need_coins')); G.coins-=cost; G.nestsOpen++; emit('sfx','build'); emit('toast','🪺 '+T('built')); }
+  function nestCost(){ return 250+(G.nestsOpen-4)*100; }
+  function buyPerch(){ if(G.perches.length>=L.perchSpots.length) return; if(G.coins<150) return emit('toast',T('need_coins')); G.coins-=150; for(var i=0;i<L.perchSpots.length;i++) if(G.perches.indexOf(i)<0){ G.perches.push(i); break; } emit('sfx','build'); emit('toast','🪵 '+T('built')); }
+  function childrenOf(id){ var out=[]; for(var k in G.archive){ var a=G.archive[k]; if(a.parents&&(a.parents[0]===id||a.parents[1]===id)) out.push(+k); } return out; }
+  // ---------- tasks
+  var TASKS=[
+    {id:'hatch',k:'t_hatch',r:150,ok:function(){return G.stats.hatched>=1;}},
+    {id:'buyfeed',k:'t_buyfeed',r:100,ok:function(){return G.stats.boughtFeed>=1;}},
+    {id:'hand',k:'t_hand',r:60,ok:function(){return G.stats.hand>=1;}},
+    {id:'six',k:'t_six',r:200,ok:function(){return G.birds.length>=6;}},
+    {id:'sell',k:'t_sell',r:100,ok:function(){return G.stats.sold>=1;}},
+    {id:'lvl3',k:'t_lvl3',r:300,ok:function(){return G.level>=3;}}];
+  function claimable(){ return TASKS.filter(function(t){return !G.tasks[t.id]&&t.ok();}).length; }
+  function claim(id){ TASKS.forEach(function(t){ if(t.id===id&&!G.tasks[id]&&t.ok()){ G.tasks[id]=1; G.coins+=t.r; addXp(20); emit('toast','🪙 +'+t.r); } }); }
+  // ---------- save / load
+  function save(){
+    if(!G) return; G.savedAt=Date.now();
+    try{ localStorage.setItem(C.SAVE_KEY,JSON.stringify(G)); }catch(e){}
+  }
+  function load(){
+    var raw=null; try{ raw=localStorage.getItem(C.SAVE_KEY); }catch(e){}
+    if(!raw) return false;
+    try{ G=JSON.parse(raw); }catch(e){ return false; }
+    if(!G||!G.birds) return false;
+    if(G.nestsOpen===undefined){ G.nestsOpen=8; G.perches=[]; }
+    var away=(Date.now()-(G.savedAt||Date.now()))/1000/C.REAL_SEC_PER_HOUR; away=Math.min(away,C.OFFLINE_MAX_H);
+    G.birds.forEach(function(b){ if(b.st==='fly'||b.st==='walk'||b.st==='eat'||b.st==='drink'||b.st==='sit'||b.st==='perch'||b.st==='peck'||b.st==='preen'||b.st==='coo') { b.st='idle'; b.timer=0.5; if(b.z>0.05&&stageOf(b)!=='squab'){ var s=L.randSpot(); b.x=s.x;b.y=s.y;b.z=0; } } });
+    if(away>=1){ var s0={eggs:G.stats.eggs||0,hat:G.stats.hatched,died:G.stats.died,grain:G.feeder.grain,water:G.water.amt,birds:G.birds.length}; skip(Math.floor(away)); G.savedAt=Date.now(); G.welcome={h:Math.floor(away),eggs:(G.stats.eggs||0)-s0.eggs,hatched:G.stats.hatched-s0.hat,died:G.stats.died-s0.died,grain:Math.max(0,s0.grain-G.feeder.grain),water:Math.max(0,s0.water-G.water.amt),birds:G.birds.length-s0.birds}; }
+    return true;
+  }
+  return { get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
+    bird:bird, related:related, canPair:canPair, pairUp:pairUp, unpair:unpair, nestContents:nestContents, sell:sell, sellPrice:sellPrice,
+    buyFeed:buyFeed, buyBird:buyBird, buyPair:buyPair, refillFeeder:refillFeeder, refillWater:refillWater, feedBird:feedBird, waterBird:waterBird, healBird:healBird,
+    weightOf:weightOf, TASKS:TASKS, buyNest:buyNest, nestCost:nestCost, buyPerch:buyPerch, childrenOf:childrenOf, claimable:claimable, claim:claim, skip:skip, freeNest:freeNest, covered:covered, isNight:isNight, addXp:addXp };
+})();
+
+</script>
+<script>
+// Procedural sound (WebAudio, no files): coos, wing flaps, chimes, ambience. Starts after the first tap.
+BLS.Audio = (function(){
+  var ac=null, master=null, muted=false, amb=null, lastFlap=0, lastCoo=0;
+  try{ muted=localStorage.getItem('bls_mute')==='1'; }catch(e){}
+  function start(){
+    if(ac){ if(ac.state==='suspended') ac.resume(); return; }
+    var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    ac=new AC(); master=ac.createGain(); master.gain.value=muted?0:0.9; master.connect(ac.destination); ambience();
+  }
+  function noiseBuf(sec){ var b=ac.createBuffer(1,ac.sampleRate*sec,ac.sampleRate), d=b.getChannelData(0); for(var i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
+  function ambience(){
+    var src=ac.createBufferSource(); src.buffer=noiseBuf(3); src.loop=true; var f=ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=380; var g=ac.createGain(); g.gain.value=0.018; src.connect(f); f.connect(g); g.connect(master); src.start(); amb=g;
+  }
+  function env(g,t,a,d,v){ g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v,t+a); g.gain.exponentialRampToValueAtTime(0.0001,t+a+d); }
+  function tone(type,f0,f1,t,dur,vol,dest){ var o=ac.createOscillator(), g=ac.createGain(); o.type=type; o.frequency.setValueAtTime(f0,t); if(f1) o.frequency.exponentialRampToValueAtTime(f1,t+dur); env(g,t,0.02,dur,vol); o.connect(g); g.connect(dest||master); o.start(t); o.stop(t+dur+0.1); }
+  function coo(p){
+    if(!ac||muted) return; var t=ac.currentTime+0.01; p=p||1;
+    var lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=900; lp.connect(master);
+    var notes=[[300,380,0.0,0.16],[360,260,0.2,0.3],[330,250,0.58,0.26]];
+    notes.forEach(function(n){ var o=ac.createOscillator(), g=ac.createGain(), v=ac.createOscillator(), vg=ac.createGain(); o.type='triangle'; o.frequency.setValueAtTime(n[0]*p,t+n[2]); o.frequency.linearRampToValueAtTime(n[1]*p,t+n[2]+n[3]); v.frequency.value=22; vg.gain.value=14; v.connect(vg); vg.connect(o.frequency); env(g,t+n[2],0.04,n[3],0.11); o.connect(g); g.connect(lp); o.start(t+n[2]); o.stop(t+n[2]+n[3]+0.15); v.start(t+n[2]); v.stop(t+n[2]+n[3]+0.15); });
+  }
+  function flap(){
+    if(!ac||muted) return; var now=ac.currentTime; if(now-lastFlap<0.35) return; lastFlap=now;
+    for(var i=0;i<4;i++){ var s=ac.createBufferSource(); s.buffer=noiseBuf(0.12); var f=ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=900+Math.random()*500; f.Q.value=0.9; var g=ac.createGain(); env(g,now+i*0.09,0.01,0.07,0.07); s.connect(f); f.connect(g); g.connect(master); s.start(now+i*0.09); }
+  }
+  function chime(notes,vol){ if(!ac||muted) return; var t=ac.currentTime; notes.forEach(function(f,i){ tone('sine',f,null,t+i*0.11,0.35,vol||0.13); tone('triangle',f*2,null,t+i*0.11,0.2,(vol||0.13)*0.3); }); }
+  function play(name){
+    if(!ac||muted) return;
+    if(name==='flap') return flap();
+    if(name==='coo') return coo(0.9+Math.random()*0.3);
+    if(name==='egg') return chime([660,880],0.12);
+    if(name==='hatch') return chime([523,659,784,1046],0.14);
+    if(name==='coin') return chime([988,1319],0.1);
+    if(name==='level') return chime([523,659,784,1046,1318],0.14);
+    if(name==='build'){ var t=ac.currentTime; for(var i=0;i<3;i++) tone('square',140,90,t+i*0.13,0.08,0.08); return; }
+    if(name==='sad') return chime([392,330,262],0.12);
+    if(name==='click') return tone('sine',700,500,ac.currentTime,0.05,0.07);
+  }
+  function setMuted(m){ muted=m; try{ localStorage.setItem('bls_mute',m?'1':'0'); }catch(e){} if(master) master.gain.value=m?0:0.9; }
+  // random coos while birds are awake
+  function tick(){ if(!ac||muted||document.hidden) return; var G=BLS.Sim.G; if(!G||BLS.Sim.isNight()) return;
+    var n=G.birds.filter(function(b){return BLS.Sim.stageOf(b)!=='squab';}).length; if(n&&Math.random()<Math.min(0.6,0.15+n*0.06)) coo(0.85+Math.random()*0.35); }
+  return {start:start,play:play,tick:tick,toggle:function(){ setMuted(!muted); return !muted; },isOn:function(){return !muted;}};
+})();
+
+</script>
+<script>
+// Optional generated art. If files in assets/ exist they are used, otherwise the vector drawing stays.
+// For the single-file build, build.py fills BLS.ASSET_DATA with data URIs.
+BLS.Art = (function(){
+  var NAMES = {
+    spr:['grey_stand','grey_peck','grey_fly','red_stand','red_peck','red_fly','white_stand','white_peck','white_fly'],
+    tex:['floor','wood','roof','brick']
+  };
+  var img={}, tex={}, pending=0, onReady=null, cfg=BLS.ASSET_CFG||{};
+  function load(key,src,store){
+    pending++; var im=new Image(); im.onload=function(){ store[key]=im; done(); }; im.onerror=function(){ done(); }; im.src=src;
+  }
+  function done(){ pending--; if(pending===0&&onReady) onReady(); }
+  function init(cb){
+    onReady=cb; var D=BLS.ASSET_DATA||{};
+    NAMES.spr.forEach(function(n){ load(n,D['sprites/'+n]||('assets/sprites/'+n+'.png'),img); });
+    NAMES.tex.forEach(function(n){ load(n,D['textures/'+n]||('assets/textures/'+n+'.jpg'),tex); });
+    if(pending===0&&cb) cb();
+  }
+  function sprite(col,pose){ var k=(col==='G'?'grey':col==='R'?'red':'white')+'_'+pose; return img[k]||null; }
+  return {init:init,sprite:sprite,tex:function(n){return tex[n]||null;},count:function(){return Object.keys(img).length+Object.keys(tex).length;},cfg:cfg};
+})();
+
+</script>
+<script>
+// Vector pigeon sprite, drawn procedurally (no image files needed). Feet at (0,0), faces right.
+BLS.Sprites = (function(){
+  var PAL = {
+    G:{body:'#8b95a4',belly:'#a3acb9',wing:'#aab4c1',bar:'#222730',dark:'#5f6875'},
+    R:{body:'#a95740',belly:'#bd6d55',wing:'#cb8a6c',bar:'#5b2a20',dark:'#7a3a2b'},
+    W:{body:'#f1f0ec',belly:'#fbfaf7',wing:'#fdfcf8',bar:'#d8d4ca',dark:'#cfcbc1'}
+  };
+  function ell(c,x,y,rx,ry,rot){ c.beginPath(); c.ellipse(x,y,rx,ry,rot||0,0,6.2832); }
+  // opts: col('G'|'R'|'W'), pat('B'|'C'), pose, ph, stage, sel
+  function draw(c,x,y,s,face,o){
+    var P=PAL[o.col]||PAL.G, pose=o.pose||'stand', ph=o.ph||0, stage=o.stage||'adult';
+    var scale=s*(stage==='squab'?0.5:stage==='juvenile'?0.78:1);
+    c.save(); c.translate(x,y); c.scale(scale*face,scale);
+    var fly=pose==='fly', walk=pose==='walk', peck=pose==='peck'||pose==='eat'||pose==='drink', sit=pose==='sit'||pose==='perch'||pose==='squab';
+    var bob = walk?-Math.abs(Math.sin(ph*9))*1.8:0;
+    var headX=14, headY=-27+bob, tilt=0;
+    if(walk) headX+=Math.sin(ph*9)*1.6;
+    if(peck){ var k=0.5+0.5*Math.sin(ph*11); headX=17+k*3; headY=-27+k*15; }
+    if(pose==='preen'){ headX=2; headY=-23; }
+    if(o.pose==='coo'){ headY=-28-Math.abs(Math.sin(ph*8))*1.5; }
+    var by=-14+bob+(sit?5:0);
+    if(fly){ by=-18; }
+    var squab = stage==='squab';
+    var im=(stage!=='squab')&&BLS.Art&&BLS.Art.sprite(o.col,fly?'fly':(peck?'peck':'stand'));
+    if(im){
+      var key=fly?'fly':(peck?'peck':'stand'), cf=(BLS.ASSET_CFG&&BLS.ASSET_CFG[key])||{h:key==='fly'?54:46,ax:0.5,ay:1.0};
+      var hp=cf.h*(sit?0.93:1), wp=hp*im.width/im.height;
+      c.translate(0,walk?bob:(sit?3:0)); if(walk) c.rotate(Math.sin(ph*9)*0.035); if(fly) c.translate(0,Math.sin(ph*16)*2-16);
+      if(pose==='coo') c.translate(0,-Math.abs(Math.sin(ph*8))*1.5);
+      c.drawImage(im,-wp*cf.ax,-hp*cf.ay,wp,hp); c.restore(); return;
+    }
+    // legs
+    if(!fly&&!sit){
+      c.strokeStyle='#c4707a'; c.lineWidth=2; c.lineCap='round';
+      var sw=walk?Math.sin(ph*9)*4:0;
+      c.beginPath(); c.moveTo(-1,by+7); c.lineTo(-1+sw,0); c.moveTo(3,by+7); c.lineTo(3-sw,0); c.stroke();
+      c.lineWidth=1.6; c.beginPath(); c.moveTo(-1+sw,0); c.lineTo(3+sw,0); c.moveTo(3-sw,0); c.lineTo(7-sw,0); c.stroke();
+    }
+    var wy=fly?Math.sin(ph*16):0;
+    if(fly){ // far wing
+      c.fillStyle=P.dark; c.beginPath(); c.moveTo(-2,by-4); c.quadraticCurveTo(-8,by-24-wy*10,-22,by-26-wy*12); c.quadraticCurveTo(-12,by-12,-2,by+2); c.fill();
+    }
+    if(squab){
+      ell(c,0,by,13,10); c.fillStyle='#e9cf7e'; c.fill();
+      ell(c,10,by-9,6,6); c.fillStyle='#f0d98d'; c.fill();
+      c.fillStyle='#d8a090'; c.beginPath(); c.moveTo(15,by-9); c.lineTo(21,by-7); c.lineTo(15,by-6); c.fill();
+      c.fillStyle='#111'; c.beginPath(); c.arc(12,by-11,1.3,0,6.3); c.fill();
+      c.restore(); return;
+    }
+    // tail
+    c.fillStyle=P.dark; c.beginPath(); c.moveTo(-10,by-3); c.lineTo(-27,by+(fly?4:7)); c.lineTo(-24,by+(fly?9:11)); c.lineTo(-9,by+4); c.closePath(); c.fill();
+    c.fillStyle=P.bar; if(o.col!=='W'){ c.beginPath(); c.moveTo(-24,by+(fly?7:9.5)); c.lineTo(-26.5,by+(fly?5:8)); c.lineTo(-27,by+(fly?4:7)); c.lineTo(-24,by+(fly?9:11)); c.fill(); }
+    // body
+    var g=c.createLinearGradient(0,by-10,0,by+10); g.addColorStop(0,P.belly); g.addColorStop(1,P.body);
+    c.save(); c.translate(0,by); c.rotate(fly?-0.35:-0.12); ell(c,0,0,16,10); c.fillStyle=g; c.fill(); c.restore();
+    // neck + head
+    var ng=c.createLinearGradient(6,by-14,14,by-4); ng.addColorStop(0,o.col==='W'?'#f4f3ee':'#4f8f6f'); ng.addColorStop(0.5,o.col==='W'?'#ecebe6':'#7b5fa0'); ng.addColorStop(1,P.body);
+    c.beginPath(); c.moveTo(4,by-8); c.quadraticCurveTo(10,by-12,headX-4,headY+1); c.lineTo(headX+3,headY+4); c.quadraticCurveTo(16,by-2,10,by+5); c.closePath(); c.fillStyle=ng; c.fill();
+    ell(c,headX,headY,5.6,5.2); c.fillStyle=o.col==='W'?'#f7f6f2':P.body; c.fill();
+    // beak + cere
+    c.fillStyle='#4a4141'; c.beginPath(); c.moveTo(headX+4.5,headY-0.8); c.lineTo(headX+11,headY+1.2); c.lineTo(headX+4.5,headY+2.4); c.fill();
+    ell(c,headX+5.2,headY-0.6,2,1.6); c.fillStyle='#f4efe8'; c.fill();
+    c.fillStyle='#e48a1a'; c.beginPath(); c.arc(headX+1.5,headY-1.2,1.7,0,6.3); c.fill(); c.fillStyle='#000'; c.beginPath(); c.arc(headX+1.8,headY-1.2,0.8,0,6.3); c.fill();
+    // wing (folded) or open
+    if(fly){
+      c.fillStyle=P.wing; c.beginPath(); c.moveTo(0,by-5); c.quadraticCurveTo(-4,by-26+wy*12,-24,by-24+wy*14); c.quadraticCurveTo(-12,by-6,2,by+3); c.fill();
+      c.strokeStyle=P.bar; c.lineWidth=1.3; c.beginPath(); c.moveTo(-6,by-8); c.lineTo(-18,by-19+wy*10); c.moveTo(-8,by-5); c.lineTo(-21,by-14+wy*8); c.stroke();
+    } else {
+      c.save(); c.translate(-3,by-1); c.rotate(-0.12); ell(c,0,0,12.5,6.8); c.fillStyle=P.wing; c.fill(); c.clip();
+      if(o.col!=='W'){
+        c.strokeStyle=P.bar; c.fillStyle=P.bar;
+        if(o.pat==='B'){ c.lineWidth=2.2; c.beginPath(); c.moveTo(-3,-8); c.lineTo(-1,8); c.moveTo(4,-8); c.lineTo(6,8); c.stroke(); }
+        else { for(var i=-10;i<10;i+=4) for(var j=-6;j<6;j+=4){ c.globalAlpha=0.55; c.fillRect(i+((j/4)&1?2:0),j,2.6,2.6); } c.globalAlpha=1; }
+      } else { c.strokeStyle=P.bar; c.lineWidth=1; c.beginPath(); c.moveTo(-8,2); c.lineTo(8,3); c.stroke(); }
+      c.restore();
+    }
+    c.restore();
+  }
+  return {draw:draw,PAL:PAL};
+})();
+
+</script>
+<script>
+// Isometric scene: projection, cached static layers, dynamic drawing, camera, picking.
+BLS.Scene = (function(){
+  var C=BLS.CFG, L=BLS.LAYOUT, Sim=BLS.Sim, Spr=BLS.Sprites;
+  var HW=48, HH=24, ZH=44, OX=720, OY=470, LW=1440, LH=1260, S=1.15;
+  var cv, ctx, W=800, H=600, dpr=1, bg, layers=[], cam={x:60,y:215,z:0.7,tx:null,ty:null}, sel=-1, follow=false, t0=0;
+  var ambient=[]; for(var i=0;i<8;i++) ambient.push({x:-700+Math.random()*1400,y:-120-Math.random()*240,sp:35+Math.random()*35,ph:Math.random()*9,col:['W','G','G','R','G','W','G','R'][i]});
+  var aviary=[]; for(var k=0;k<14;k++) aviary.push({x:5.5+Math.random()*5,y:0.8+Math.random()*1.8,z:[1.0,1.6,0.05][k%3],c:['#f2d21e','#6cc04a','#e8892b','#4aa8e0','#f2d21e'][k%5],ph:Math.random()*9});
+  function P(x,y,z){ return [(x-y)*HW,(x+y)*HH-(z||0)*ZH]; }
+  function shade(hex,f){ var n=parseInt(hex.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255; r=Math.max(0,Math.min(255,r*f))|0; g=Math.max(0,Math.min(255,g*f))|0; b=Math.max(0,Math.min(255,b*f))|0; return 'rgb('+r+','+g+','+b+')'; }
+  function rng(seed){ var s=seed; return function(){ s=(s*16807)%2147483647; return (s-1)/2147483646; }; }
+  function poly(c,pts,fill,stroke,lw){ c.beginPath(); pts.forEach(function(p,i){ var q=P(p[0],p[1],p[2]); if(i)c.lineTo(q[0],q[1]); else c.moveTo(q[0],q[1]); }); c.closePath(); if(fill){c.fillStyle=fill;c.fill();} if(stroke){c.strokeStyle=stroke;c.lineWidth=lw||1;c.stroke();} }
+  function line(c,a,b,col,lw){ var p=P(a[0],a[1],a[2]),q=P(b[0],b[1],b[2]); c.strokeStyle=col; c.lineWidth=lw||1; c.beginPath(); c.moveTo(p[0],p[1]); c.lineTo(q[0],q[1]); c.stroke(); }
+  function box(c,x0,y0,z0,x1,y1,z1,col,o){ o=o||{};
+    poly(c,[[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1]],shade(col,o.fx||1));
+    poly(c,[[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]],shade(col,o.fy||0.72));
+    poly(c,[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],shade(col,o.ft||1.12)); }
+  function cyl(c,x,y,z0,z1,r,col){ var a=P(x,y,z0), b=P(x,y,z1), rx=r*HW*1.414, ry=r*HH*1.414;
+    var g=c.createLinearGradient(a[0]-rx,0,a[0]+rx,0); g.addColorStop(0,shade(col,0.7)); g.addColorStop(0.45,shade(col,1.15)); g.addColorStop(1,shade(col,0.6));
+    c.fillStyle=g; c.beginPath(); c.ellipse(a[0],a[1],rx,ry,0,0,Math.PI); c.lineTo(b[0]-rx,b[1]); c.ellipse(b[0],b[1],rx,ry,0,Math.PI,0,true); c.closePath(); c.fill();
+    c.fillStyle=shade(col,1.2); c.beginPath(); c.ellipse(b[0],b[1],rx,ry,0,0,6.3); c.fill(); }
+  function blob(c,x,y,r,col){ var g=c.createRadialGradient(x-r*0.3,y-r*0.35,r*0.1,x,y,r); g.addColorStop(0,shade(col,1.35)); g.addColorStop(1,shade(col,0.7)); c.fillStyle=g; c.beginPath(); c.arc(x,y,r,0,6.3); c.fill(); }
+  function bush(c,x,y,z,r,col,seed){ var q=P(x,y,z), R=rng(seed||7); for(var i=0;i<9;i++){ blob(c,q[0]+(R()-0.5)*r*1.5,q[1]-R()*r*0.9,r*(0.45+R()*0.35),col); } }
+  function palm(c,x,y,h,seed){ var R=rng(seed), b=P(x,y,0), top=[b[0]+22,b[1]-h]; 
+    c.strokeStyle='#6b4f32'; c.lineWidth=9; c.lineCap='round'; c.beginPath(); c.moveTo(b[0],b[1]); c.quadraticCurveTo(b[0]-14,b[1]-h*0.55,top[0],top[1]); c.stroke();
+    c.strokeStyle='#8a6a45'; c.lineWidth=3; for(var i=1;i<8;i++){ var u=i/8; c.beginPath(); c.moveTo(b[0]-12*u*(1-u)*2-6,b[1]-h*u); c.lineTo(b[0]+6+22*u*u,b[1]-h*u); c.stroke(); }
+    for(var f=0;f<9;f++){ var a=f/9*6.28+R(), len=70+R()*30; var ex=top[0]+Math.cos(a)*len, ey=top[1]+Math.sin(a)*len*0.45+len*0.35; c.strokeStyle=f%2?'#3f7f2e':'#4f9a3a'; c.lineWidth=7; c.beginPath(); c.moveTo(top[0],top[1]); c.quadraticCurveTo((top[0]+ex)/2,top[1]-24,ex,ey); c.stroke(); c.lineWidth=2.5; c.strokeStyle='#2d5f20'; c.stroke(); } }
+  function pot(c,x,y,r,col,seed){ var q=P(x,y,0); c.fillStyle='#b4643b'; c.beginPath(); c.moveTo(q[0]-9,q[1]-14); c.lineTo(q[0]+9,q[1]-14); c.lineTo(q[0]+6,q[1]); c.lineTo(q[0]-6,q[1]); c.fill(); bush(c,x,y,0.34,r,col,seed); }
+
+  function newLayer(){ var cn=document.createElement('canvas'); cn.width=LW*S; cn.height=LH*S; var c=cn.getContext('2d'); c.setTransform(S,0,0,S,OX*S,OY*S); return {cn:cn,c:c}; }
+  function buildLayers(){
+    var l0=newLayer(), l1=newLayer(), l2=newLayer(), c=l0.c, R=rng(42), N=C.GRID;
+    // ---- L0: trees, slab, floor, back walls, coop, tank, aviary back, sacks
+    palm(c,-2.2,3.5,230,3); palm(c,-1.8,9,260,5); palm(c,4.5,-2.4,210,8); palm(c,10.5,-2.0,250,9); palm(c,13.5,3,200,11);
+    bush(c,-2,0.5,0,60,'#4f8a3a',3); bush(c,-1.6,6,0,55,'#3f7a30',4); bush(c,7,-1.8,0,55,'#4f8a3a',5); bush(c,13.2,-0.5,0,55,'#3f7a30',6); bush(c,13.5,8,0,45,'#4f8a3a',7);
+    // slab sides
+    poly(c,[[N,0,0],[N,N,0],[N,N,-1.5],[N,0,-1.5]],'#a96e4c'); poly(c,[[0,N,0],[N,N,0],[N,N,-1.5],[0,N,-1.5]],'#80503a');
+    c.strokeStyle='rgba(60,30,20,0.35)'; c.lineWidth=1;
+    for(var z=-0.25;z>-1.5;z-=0.25){ line(c,[N,0,z],[N,N,z],'rgba(60,30,20,0.35)'); line(c,[0,N,z],[N,N,z],'rgba(60,30,20,0.35)'); }
+    for(var i=0;i<N;i++) for(var j=0;j<N;j++){
+      var v=0.9+R()*0.2, col=shade('#b9a68a',v*(((i+j)&1)?1:0.97)); poly(c,[[i,j,0],[i+1,j,0],[i+1,j+1,0],[i,j+1,0]],col,'rgba(70,55,40,0.35)',1);
+      if(R()<0.25){ var a=P(i+R(),j+R(),0); c.strokeStyle='rgba(60,45,30,0.25)'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(a[0]+(R()-0.5)*26,a[1]+(R()-0.5)*12); c.stroke(); }
+    }
+    // soft shadows of coop
+    poly(c,[[2.4,1,0],[3.7,1,0],[3.7,5.6,0],[2.4,5.6,0]],'rgba(40,30,20,0.18)');
+    // back parapets
+    box(c,-0.25,0,0,0.15,N,1.0,'#b98a64'); box(c,0,-0.25,0,N,0.15,1.0,'#b98a64',{fx:1,fy:0.85});
+    for(var k=0.1;k<1.0;k+=0.2){ line(c,[0.15,0,k],[0.15,N,k],'rgba(70,40,25,0.3)'); line(c,[0,0.15,k],[N,0.15,k],'rgba(70,40,25,0.3)'); }
+    for(var m=0;m<N;m+=1){ line(c,[0.15,m,0],[0.15,m,1.0],'rgba(70,40,25,0.18)'); line(c,[m,0.15,0],[m,0.15,1.0],'rgba(70,40,25,0.18)'); }
+    poly(c,[[0.15,0.15,0],[1.2,0.15,0],[1.2,N,0],[0.15,N,0]],'rgba(30,20,10,0.15)'); poly(c,[[0.15,0.15,0],[N,0.15,0],[N,1.2,0],[0.15,1.2,0]],'rgba(30,20,10,0.15)');
+    var M=rng(11); for(var mi=0;mi<70;mi++){ var mx=Math.floor(M()*N), my=Math.floor(M()*N), mq=P(mx+(M()<0.5?0:1),my+M(),0); c.strokeStyle='rgba(86,120,50,0.5)'; c.lineWidth=2; c.beginPath(); c.moveTo(mq[0],mq[1]); c.lineTo(mq[0]+(M()-0.5)*8,mq[1]-3-M()*3); c.stroke(); }
+    box(c,0.5,6.5,0,1.1,7.1,0.5,'#a9794a'); box(c,0.55,6.55,0.5,1.05,7.05,0.95,'#b98a58'); for(var cz=0.12;cz<0.9;cz+=0.2){ line(c,[1.1,6.5,cz],[1.1,7.1,cz],'rgba(50,30,10,0.35)'); }
+    function boxShadow(x0,y0,x1,y1,h,a){ var d=h*0.55; poly(c,[[x1,y0,0],[x1+d,y0+d*0.35,0],[x1+d,y1+d*0.35,0],[x1,y1,0]],'rgba(30,20,10,'+a+')'); poly(c,[[x0,y1,0],[x1,y1,0],[x1+d,y1+d*0.35,0],[x0+d,y1+d*0.35,0]],'rgba(30,20,10,'+(a*0.8)+')'); }
+    boxShadow(5,0.4,11,3,2.2,0.07); boxShadow(0.5,6.5,1.1,7.1,0.95,0.2);
+    var ts=P(4.5,1.2,0); c.fillStyle='rgba(30,20,10,0.2)'; c.beginPath(); c.ellipse(ts[0]+30,ts[1]+8,48,18,0,0,6.3); c.fill();
+    [[1.2,7.2],[1.9,7.1],[1.55,7.9],[2.2,7.9],[2.7,6.3]].forEach(function(p){ var q=P(p[0],p[1],0); c.fillStyle='rgba(30,20,10,0.22)'; c.beginPath(); c.ellipse(q[0]+16,q[1]+4,30,10,0,0,6.3); c.fill(); });
+    // water tank
+    [[4.2,0.9],[4.8,0.9],[4.2,1.5],[4.8,1.5]].forEach(function(p){ line(c,[p[0],p[1],0],[p[0],p[1],0.7],'#555b60',3); });
+    cyl(c,4.5,1.2,0.7,1.9,0.62,'#8f979d'); for(var q=0.9;q<1.9;q+=0.3){ var a2=P(4.5,1.2,q); c.strokeStyle='rgba(40,50,55,0.35)'; c.beginPath(); c.ellipse(a2[0],a2[1],0.62*HW*1.414,0.62*HH*1.414,0,0,Math.PI); c.stroke(); }
+    // aviary back (x=5 plane, y=0.4 plane), floor
+    poly(c,[[5,0.4,0],[11,0.4,0],[11,3,0],[5,3,0]],'#8e8268');
+    box(c,4.95,0.4,0,5.05,3,0.12,'#7b705a'); 
+    [[5,0.4],[11,0.4]].forEach(function(p){});
+    for(var yy=0.4;yy<=3.01;yy+=0.2) line(c,[5,yy,0],[5,yy,2.2],'rgba(210,225,230,0.28)'); for(var zz=0;zz<=2.21;zz+=0.2) line(c,[5,0.4,zz],[5,3,zz],'rgba(210,225,230,0.28)');
+    for(var xx=5;xx<=11.01;xx+=0.2) line(c,[xx,0.4,0],[xx,0.4,2.2],'rgba(210,225,230,0.28)'); for(zz=0;zz<=2.21;zz+=0.2) line(c,[5,0.4,zz],[11,0.4,zz],'rgba(210,225,230,0.28)');
+    // plants inside aviary
+    bush(c,5.6,0.9,0,26,'#3f8a3a',21); bush(c,10.5,0.9,0,26,'#3f8a3a',22); bush(c,10.4,2.7,0,22,'#4f9a40',23);
+    // perches
+    [1.0,1.6].forEach(function(z){ line(c,[5.3,1.2,z],[10.8,1.2,z],'#7a5a3a',3); line(c,[5.3,2.2,z],[10.8,2.2,z],'#7a5a3a',3); });
+    // ---- coop
+    box(c,0.4,1.0,0,2.4,5.6,2.45,'#a47642',{fx:1,fy:0.7,ft:1.0});
+    // planks on front face
+    for(var py=1.0;py<5.6;py+=0.23){ line(c,[2.4,py,0],[2.4,py,2.45],'rgba(50,30,10,0.28)'); }
+    for(var pz=0.2;pz<2.45;pz+=0.4){ var rr=0; }
+    for(var n=0;n<C.NEST_COUNT;n++){
+      var col=n%4,row=(n/4)|0, y0=1.3+col*1.05, z0=0.45+row*0.9;
+      poly(c,[[2.4,y0-0.07,z0-0.07],[2.4,y0+0.97,z0-0.07],[2.4,y0+0.97,z0+0.77],[2.4,y0-0.07,z0+0.77]],'#6e4a26');
+      poly(c,[[2.4,y0,z0],[2.4,y0+0.9,z0],[2.4,y0+0.9,z0+0.7],[2.4,y0,z0+0.7]],'#251709');
+      poly(c,[[2.4,y0,z0+0.7],[2.4,y0+0.9,z0+0.7],[2.25,y0+0.9,z0+0.7],[2.25,y0,z0+0.7]],'#150d05');
+      poly(c,[[2.4,y0+0.02,z0],[2.4,y0+0.88,z0],[2.3,y0+0.84,z0+0.12],[2.3,y0+0.06,z0+0.12]],'#c9a45a');
+      poly(c,[[2.4,y0,z0],[2.4,y0+0.9,z0],[2.4,y0+0.9,z0+0.03],[2.4,y0,z0+0.03]],'#8a5d2c');
+    }
+    // lower storage doors
+    poly(c,[[2.4,1.2,0.05],[2.4,2.4,0.05],[2.4,2.4,0.4],[2.4,1.2,0.4]],'#7e552c','#3a2410',1.5);
+    // lantern + ac unit
+    var ln=P(2.45,1.05,2.0); c.fillStyle='#ffd37a'; c.fillRect(ln[0]-4,ln[1]-6,8,12); c.strokeStyle='#222'; c.strokeRect(ln[0]-4,ln[1]-6,8,12);
+    box(c,0.4,5.6,0.7,1.2,6.2,1.5,'#d9dde0'); var fan=P(0.8,6.2,1.1); c.strokeStyle='#8a9096'; c.lineWidth=1.5; c.beginPath(); c.ellipse(fan[0],fan[1]-6,12,8,0,0,6.3); c.stroke();
+    // roof
+    poly(c,[[0.2,0.7,3.0],[2.9,0.7,2.55],[2.9,6.0,2.55],[0.2,6.0,3.0]],'#8b8478');
+    for(var ry=0.7;ry<6.0;ry+=0.16){ line(c,[0.2,ry,3.0],[2.9,ry,2.55],ry*6%2<1?'rgba(255,255,255,0.18)':'rgba(40,35,30,0.22)',1.5); }
+    poly(c,[[2.9,0.7,2.55],[2.9,6.0,2.55],[2.9,6.0,2.43],[2.9,0.7,2.43]],'#5d574d'); poly(c,[[0.2,6,3.0],[2.9,6,2.55],[2.9,6,2.43],[0.2,6,2.88]],'#4a443b');
+    // steps
+    for(var s=0;s<4;s++) box(c,2.4+s*0.0,5.0,0,2.4+0.7-s*0.18,5.5,0.12+s*0.1,'#9a6c3c');
+    // blue barrel
+    cyl(c,2.7,6.3,0,0.9,0.38,'#3e78b8'); 
+    // sacks
+    [[1.2,7.2],[1.9,7.1],[1.55,7.9],[2.2,7.9]].forEach(function(p,i){ var q=P(p[0],p[1],0); var g=c.createLinearGradient(q[0]-22,0,q[0]+22,0); g.addColorStop(0,'#b79a66'); g.addColorStop(0.5,'#e2c88f'); g.addColorStop(1,'#a38455');
+      c.fillStyle=g; c.beginPath(); c.moveTo(q[0]-22,q[1]); c.quadraticCurveTo(q[0]-28,q[1]-36,q[0]-14,q[1]-48); c.lineTo(q[0]+14,q[1]-48); c.quadraticCurveTo(q[0]+28,q[1]-36,q[0]+22,q[1]); c.closePath(); c.fill();
+      c.strokeStyle='#6b5530'; c.lineWidth=1; c.stroke(); c.fillStyle='#b8782a'; c.beginPath(); c.ellipse(q[0],q[1]-24,6,9,0,0,6.3); c.fill(); });
+    pot(c,3.2,3.1,26,'#3f8a3a',31); pot(c,4.2,3.0,24,'#5aa044',32); pot(c,3.6,11.0,26,'#4f9a40',33);
+    // ---- L1: aviary front mesh + roof
+    c=l1.c;
+    for(var y2=0.4;y2<=3.01;y2+=0) { break; }
+    for(var xx2=5;xx2<=11.01;xx2+=0.2) line(c,[xx2,3,0],[xx2,3,2.2],'rgba(220,232,238,0.42)'); for(zz=0;zz<=2.21;zz+=0.2) line(c,[5,3,zz],[11,3,zz],'rgba(220,232,238,0.42)');
+    for(var yy2=0.4;yy2<=3.01;yy2+=0.2) line(c,[11,yy2,0],[11,yy2,2.2],'rgba(220,232,238,0.42)'); for(zz=0;zz<=2.21;zz+=0.2) line(c,[11,0.4,zz],[11,3,zz],'rgba(220,232,238,0.42)');
+    for(var pxx=5;pxx<=11.01;pxx+=1.5) line(c,[pxx,3,0],[pxx,3,2.2],'#6b747a',3); for(var pyy=0.4;pyy<=3.01;pyy+=1.3) line(c,[11,pyy,0],[11,pyy,2.2],'#6b747a',3);
+    line(c,[5,3,2.2],[11,3,2.2],'#6b747a',3); line(c,[11,3,2.2],[11,0.4,2.2],'#6b747a',3); line(c,[5,3,0],[11,3,0],'#6b747a',3); line(c,[11,3,0],[11,0.4,0],'#6b747a',3);
+    poly(c,[[5,0.4,2.2],[11,0.4,2.2],[11,3,2.2],[5,3,2.2]],'rgba(170,200,215,0.28)','rgba(120,135,145,0.6)',2);
+    for(var rx=5;rx<=11.01;rx+=0.25) line(c,[rx,0.4,2.2],[rx,3,2.2],'rgba(230,240,245,0.35)'); 
+    poly(c,[[7.6,3,0],[8.5,3,0],[8.5,3,1.7],[7.6,3,1.7]],'rgba(120,100,70,0.15)','#4e4a40',3);
+    // ---- L2: front layer
+    c=l2.c;
+    poly(c,[[11.2,8.4,0],[11.9,8.65,0],[11.9,11.45,0],[11.2,11.2,0]],'rgba(30,20,10,0.22)');
+    // garden bed
+    box(c,7.2,8.4,0,11.2,11.2,0.4,'#b4573b',{fx:1.0,fy:0.78,ft:0.9});
+    poly(c,[[7.35,8.55,0.4],[11.05,8.55,0.4],[11.05,11.05,0.4],[7.35,11.05,0.4]],'#4a3320');
+    var G2=rng(9); for(var gi=0;gi<34;gi++){ var gx=7.5+G2()*3.5, gy=8.7+G2()*2.3, q2=P(gx,gy,0.42); blob(c,q2[0],q2[1]-8,12+G2()*7,G2()<0.3?'#6aae3d':'#3f8f3a'); }
+    for(gi=0;gi<7;gi++){ var q3=P(7.6+G2()*3.4,8.8+G2()*2.2,0.7); c.fillStyle=['#e86a8f','#f4d03a','#fff'][gi%3]; c.beginPath(); c.arc(q3[0],q3[1]-8,3,0,6.3); c.fill(); }
+    // pergola
+    var pp=[[0.45,9.0],[0.45,11.6],[2.6,9.0],[2.6,11.6]];
+    pp.forEach(function(p){ line(c,[p[0],p[1],0],[p[0],p[1],2.1],'#7a5230',6); });
+    for(var bx=0.45;bx<=2.61;bx+=0.43) line(c,[bx,9.0,2.1],[bx,11.6,2.1],'#8a5f38',4);
+    line(c,[0.45,9,2.1],[2.6,9,2.1],'#6b4526',6); line(c,[0.45,11.6,2.1],[2.6,11.6,2.1],'#6b4526',6);
+    var G3=rng(5); for(var vi=0;vi<26;vi++){ var q4=P(0.5+G3()*2.1,9.1+G3()*2.4,2.15); blob(c,q4[0],q4[1],11+G3()*8,'#3f8f3a'); }
+    // front rails (x=N and y=N edges)
+    for(var e=0;e<=N;e+=1){ line(c,[N,e,0],[N,e,0.5],'#6f7378',3); line(c,[e,N,0],[e,N,0.5],'#6f7378',3); }
+    line(c,[N,0,0.5],[N,N,0.5],'#8d9399',3); line(c,[0,N,0.5],[N,N,0.5],'#8d9399',3); line(c,[N,0,0.25],[N,N,0.25],'#7c8288',2); line(c,[0,N,0.25],[N,N,0.25],'#7c8288',2);
+    pot(c,11.6,4.2,24,'#5aa044',41); pot(c,11.6,6.2,22,'#3f8a3a',42); pot(c,5.5,11.6,26,'#4f9a40',43); pot(c,4.1,11.5,22,'#e86a8f',44);
+    bush(c,0.6,12.4,0,50,'#3f8a3a',45); bush(c,12.7,12,0,40,'#4f9a40',46);
+    layers=[l0,l1,l2];
+  }
+  function buildBg(){
+    bg=document.createElement('canvas'); bg.width=W*dpr; bg.height=H*dpr; var c=bg.getContext('2d'); c.scale(dpr,dpr);
+    var g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#6fa4d4'); g.addColorStop(0.35,'#bcd5e6'); g.addColorStop(0.5,'#f6d9a4'); g.addColorStop(0.62,'#d4b57a'); g.addColorStop(1,'#6e8a42'); c.fillStyle=g; c.fillRect(0,0,W,H);
+    var sg=c.createRadialGradient(W*0.2,H*0.42,5,W*0.2,H*0.42,W*0.6); sg.addColorStop(0,'rgba(255,240,190,0.9)'); sg.addColorStop(1,'rgba(255,240,190,0)'); c.fillStyle=sg; c.fillRect(0,0,W,H);
+    var R=rng(77), hy=H*0.47;
+    for(var i=0;i<30;i++){ var x=R()*W, w=18+R()*34, h=14+R()*30; c.fillStyle='rgb('+(190+R()*30|0)+','+(150+R()*30|0)+','+(120+R()*20|0)+')'; c.fillRect(x,hy-h,w,h); c.fillStyle='rgba(120,70,40,0.5)'; c.fillRect(x,hy-h,w,3); }
+    c.fillStyle='#e8dcc4'; c.fillRect(W*0.78,hy-92,9,92); c.beginPath(); c.moveTo(W*0.78-3,hy-92); c.lineTo(W*0.78+4.5,hy-112); c.lineTo(W*0.78+12,hy-92); c.fill(); c.fillStyle='#d9ccb0'; c.beginPath(); c.arc(W*0.86,hy-18,22,Math.PI,0); c.fill(); c.fillRect(W*0.86-22,hy-18,44,18);
+    c.fillStyle='rgba(120,100,60,0.35)'; c.fillRect(0,hy,W,H*0.12);
+    for(i=0;i<14;i++){ var px=R()*W; c.strokeStyle='#4a3a22'; c.lineWidth=3; c.beginPath(); c.moveTo(px,hy+6); c.lineTo(px+4,hy-40-R()*30); c.stroke(); c.fillStyle='#3f7a2c'; c.beginPath(); c.arc(px+4,hy-48,14,0,6.3); c.fill(); }
+    var hz=c.createLinearGradient(0,hy-60,0,hy+40); hz.addColorStop(0,'rgba(255,230,190,0)'); hz.addColorStop(0.6,'rgba(255,230,190,0.45)'); hz.addColorStop(1,'rgba(255,230,190,0)'); c.fillStyle=hz; c.fillRect(0,hy-60,W,100);
+  }
+  function resize(){ dpr=Math.min(2,window.devicePixelRatio||1); W=window.innerWidth; H=window.innerHeight; cv.width=W*dpr; cv.height=H*dpr; buildBg(); }
+  function fitZoom(){ return Math.max(0.55,Math.min(1.25,Math.min(W/560,H/640))); }
+  function toScreen(wx,wy,wz){ var p=P(wx,wy,wz); return [(p[0]-cam.x)*cam.z+W/2,(p[1]-cam.y)*cam.z+H/2]; }
+  function clampCam(){
+    cam.z=Math.max(Math.max(0.5,fitZoom()*0.8),Math.min(1.9,cam.z));
+    var hw=W/2/cam.z, hh=H/2/cam.z, x0=-600, x1=600, y0=-60, y1=620;
+    cam.x = (x1-x0<=2*hw)?(x0+x1)/2:Math.max(x0+hw,Math.min(x1-hw,cam.x));
+    cam.y = (y1-y0<=2*hh)?(y0+y1)/2:Math.max(y0+hh-60,Math.min(y1-hh+120,cam.y));
+  }
+  function focus(wx,wy,wz,z){ var p=P(wx,wy,wz); cam.tx=p[0]; cam.ty=p[1]+H*0.3/cam.z; if(z) cam.tz=z; }
+  function sheetOpen(){ return !document.getElementById('sheet').classList.contains('hidden'); }
+  // --- tint
+  function tint(h){ var n=[100,115,175],w=[255,255,255],d=[255,196,150];
+    function mix(a,b,u){ return [a[0]+(b[0]-a[0])*u|0,a[1]+(b[1]-a[1])*u|0,a[2]+(b[2]-a[2])*u|0]; }
+    var c; if(h<5) c=n; else if(h<7) c=mix(n,d,(h-5)/2); else if(h<9) c=mix(d,w,(h-7)/2); else if(h<16.5) c=w; else if(h<19) c=mix(w,d,(h-16.5)/2.5); else if(h<21) c=mix(d,n,(h-19)/2); else c=n;
+    return 'rgb('+c[0]+','+c[1]+','+c[2]+')'; }
+  function shadow(c,x,y,rx,ry,a){ c.fillStyle='rgba(30,20,10,'+a+')'; c.beginPath(); c.ellipse(x,y,rx,ry,0,0,6.3); c.fill(); }
+  function poseOf(b){ var st=b.st; if(st==='eat'||st==='drink'||st==='peck') return 'peck'; if(st==='walk') return 'walk'; if(st==='fly') return 'fly'; if(st==='sit'||st==='perch') return 'sit'; if(st==='squabnest') return 'squab'; if(st==='preen') return 'preen'; if(st==='coo') return 'coo'; return 'stand'; }
+  function drawBirdW(c,b,sz){
+    sz=sz||1.55; var k=sz/1.05;
+    var G=Sim.G, p=P(b.x,b.y,b.z), stg=Sim.stageOf(b);
+    var gp=P(b.x,b.y,0);
+    if(b.z>0.05) shadow(c,gp[0],gp[1],11*k*(stg==='adult'?1:0.7),4.5*k,Math.max(0.08,0.28-b.z*0.08));
+    else if(stg!=='squab') shadow(c,p[0],p[1],12*k*(stg==='adult'?1:0.7),4.5*k,0.28);
+    if(b.id===sel){ c.strokeStyle='#ffe27a'; c.lineWidth=2.5; c.beginPath(); c.ellipse(gp[0],gp[1],20*k,8*k,0,0,6.3); c.stroke(); }
+    Spr.draw(c,p[0],p[1],sz,b.face,{col:BLS.Gen.phenoColor(b.g),pat:BLS.Gen.phenoPattern(b.g),pose:poseOf(b),ph:b.ph,stage:stg});
+    if(b.hunger>75||b.thirst>75){ var q=P(b.x,b.y,b.z); var bx=q[0], by=q[1]-66*k/1.4; c.fillStyle='rgba(20,15,5,0.8)'; c.beginPath(); c.arc(bx,by,10,0,6.3); c.fill(); c.strokeStyle='#ffcf33'; c.lineWidth=1.6; c.stroke(); c.fillStyle=b.thirst>b.hunger?'#6ec6ff':'#ffcf33'; c.beginPath(); if(b.thirst>b.hunger){ c.moveTo(bx,by-6); c.quadraticCurveTo(bx+6,by+1,bx,by+5); c.quadraticCurveTo(bx-6,by+1,bx,by-6); } else { c.ellipse(bx,by,3,5,0.5,0,6.3); } c.fill(); }
+    if(b.id===sel){ var q2=P(b.x,b.y,b.z); c.font='bold 13px system-ui,sans-serif'; c.textAlign='center'; c.lineWidth=3; c.strokeStyle='rgba(0,0,0,0.75)'; c.strokeText(b.name,q2[0],q2[1]-(stg==='squab'?30:68)); c.fillStyle='#fff'; c.fillText(b.name,q2[0],q2[1]-(stg==='squab'?30:68)); }
+  }
+  function drawEgg(c,e,idx){
+    var np=L.nestPos(e.nest), off=(idx%2?0.2:-0.2), p=P(np.x+0.05,np.y+off,np.z+0.03);
+    c.save(); c.translate(p[0],p[1]); var g=c.createRadialGradient(-2,-6,1,0,-4,9); g.addColorStop(0,e.dead?'#b7b2a4':'#fffdf4'); g.addColorStop(1,e.dead?'#7f7a6c':'#d9d0b6'); c.fillStyle=g; c.beginPath(); c.ellipse(0,-4,5.5,7,0,0,6.3); c.fill(); c.restore();
+  }
+  function frame(now){
+    var G=Sim.G; if(!G) return;
+    var c=ctx; c.setTransform(dpr,0,0,dpr,0,0);
+    if(cam.tx!==null){ cam.x+=(cam.tx-cam.x)*0.15; cam.y+=(cam.ty-cam.y)*0.15; if(cam.tz) cam.z+=(cam.tz-cam.z)*0.15; if(Math.abs(cam.tx-cam.x)<0.5&&Math.abs(cam.ty-cam.y)<0.5){ cam.tx=null; cam.tz=null; } }
+    if(follow&&sel>=0){ var fb=Sim.bird(sel); if(fb){ var fp=P(fb.x,fb.y,fb.z); cam.x+=(fp[0]-cam.x)*0.1; cam.y+=(fp[1]-cam.y+(sheetOpen()?H*0.3/cam.z:0))*0.1; } }
+    clampCam();
+    c.drawImage(bg,0,0,W,H);
+    c.setTransform(cam.z*dpr,0,0,cam.z*dpr,(W/2-cam.x*cam.z)*dpr,(H/2-cam.y*cam.z)*dpr);
+    var t=now/1000;
+    c.drawImage(layers[0].cn,-OX,-OY,LW,LH);
+    // aviary birds
+    aviary.forEach(function(a){ var p=P(a.x,a.y,a.z); var bobv=Math.sin(t*2+a.ph)*1.2; c.fillStyle=a.c; c.beginPath(); c.ellipse(p[0],p[1]-9+bobv,5,7,0.2,0,6.3); c.fill(); c.beginPath(); c.arc(p[0]+3,p[1]-17+bobv,3.4,0,6.3); c.fill(); c.fillStyle='#222'; c.fillRect(p[0]+4,p[1]-18+bobv,1.5,1.5); c.fillStyle='#f6a02a'; c.beginPath(); c.moveTo(p[0]+6,p[1]-17+bobv); c.lineTo(p[0]+9,p[1]-15.5+bobv); c.lineTo(p[0]+6,p[1]-15+bobv); c.fill(); });
+    c.drawImage(layers[1].cn,-OX,-OY,LW,LH);
+    // nest eggs and elevated birds
+    for(var ln=G.nestsOpen;ln<C.NEST_COUNT;ln++){ var lcol=ln%4,lrow=(ln/4)|0, ly=1.3+lcol*1.05, lz=0.45+lrow*0.9; poly(c,[[2.43,ly-0.04,lz-0.04],[2.43,ly+0.94,lz-0.04],[2.43,ly+0.94,lz+0.74],[2.43,ly-0.04,lz+0.74]],'#8a6236','#3a2410',1.5);
+      for(var pl=0.15;pl<0.74;pl+=0.2) line(c,[2.43,ly-0.04,lz+pl],[2.43,ly+0.94,lz+pl],'rgba(40,22,8,0.5)',1.2); var lp=P(2.43,ly+0.45,lz+0.35); c.fillStyle='#ffe3a0'; c.fillRect(lp[0]-7,lp[1]-2,14,10); c.strokeStyle='#ffe3a0'; c.lineWidth=2.2; c.beginPath(); c.arc(lp[0],lp[1]-3,5,Math.PI,0); c.stroke(); }
+    var cnt={}; G.eggs.forEach(function(e){ cnt[e.nest]=(cnt[e.nest]||0)+1; drawEgg(c,e,cnt[e.nest]-1); });
+    var elev=G.birds.filter(function(b){ return b.st==='sit'||(b.st==='perch'&&b.z>2)||b.st==='squabnest'; }).sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
+    elev.forEach(function(b){ drawBirdW(c,b,b.st==='perch'?1.45:(b.st==='squabnest'?1.6:0.95)); });
+    // ground items + birds
+    var items=[]; 
+    items.push({k:L.feeder.x+L.feeder.y,f:function(){ drawFeeder(c,G); }}); items.push({k:L.water.x+L.water.y,f:function(){ drawWater(c,G); }});
+    G.perches.forEach(function(pi){ var sp=L.perchSpots[pi]; items.push({k:sp[0]+sp[1]-0.2,f:function(){ var a=P(sp[0],sp[1],0), b2=P(sp[0],sp[1],0.9); shadow(c,a[0],a[1],18,7,0.2); c.strokeStyle='#6b4526'; c.lineWidth=5; c.lineCap='round'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(b2[0],b2[1]); c.stroke(); line(c,[sp[0],sp[1]-0.55,0.92],[sp[0],sp[1]+0.55,0.92],'#8a5f38',5); line(c,[sp[0]-0.3,sp[1],0],[sp[0]+0.3,sp[1],0],'#6b4526',5); }}); });
+    G.birds.forEach(function(b){ if((b.st!=='sit'||false)&&b.st!=='sit'&&b.st!=='squabnest'&&b.st!=='fly'&&!(b.st==='perch'&&b.z>2)) items.push({k:b.x+b.y+0.001,f:function(){ drawBirdW(c,b); }}); });
+    items.sort(function(a,b){return a.k-b.k;}); items.forEach(function(i){ i.f(); });
+    c.drawImage(layers[2].cn,-OX,-OY,LW,LH);
+    G.birds.forEach(function(b){ if(b.st==='fly') drawBirdW(c,b,1.5); });
+    ambient.forEach(function(a){ a.x+=a.sp*0.016; if(a.x>800){ a.x=-800; a.y=-120-Math.random()*220; } Spr.draw(c,a.x,a.y+Math.sin(t+a.ph)*14,0.9,1,{col:a.col,pat:'B',pose:'fly',ph:t+a.ph}); });
+    // tint
+    c.setTransform(dpr,0,0,dpr,0,0);
+    var vg=c.createRadialGradient(W/2,H*0.5,Math.min(W,H)*0.45,W/2,H*0.5,Math.max(W,H)*0.78); vg.addColorStop(0,'rgba(20,12,0,0)'); vg.addColorStop(1,'rgba(20,12,0,0.38)'); c.fillStyle=vg; c.fillRect(0,0,W,H);
+    var h=Sim.hourOfDay(), tc=tint(h); if(tc!=='rgb(255,255,255)'){ c.globalCompositeOperation='multiply'; c.fillStyle=tc; c.fillRect(0,0,W,H); c.globalCompositeOperation='source-over'; }
+  }
+  function drawFeeder(c,G){ var p=P(L.feeder.x,L.feeder.y,0), r=0.55; shadow(c,p[0],p[1]+2,r*HW*1.5,r*HH*1.5,0.2);
+    c.fillStyle='#8a6a3f'; c.beginPath(); c.ellipse(p[0],p[1],r*HW*1.414,r*HH*1.414,0,0,6.3); c.fill();
+    c.fillStyle='#5e4528'; c.beginPath(); c.ellipse(p[0],p[1]-3,r*HW*1.25,r*HH*1.25,0,0,6.3); c.fill();
+    var f=Math.min(1,G.feeder.grain/C.FEEDER_CAP); if(f>0.02){ c.fillStyle='#e0b53a'; c.beginPath(); c.ellipse(p[0],p[1]-3-f*3,r*HW*1.15*Math.max(0.35,f),r*HH*1.15*Math.max(0.35,f),0,0,6.3); c.fill(); c.fillStyle='rgba(255,230,140,0.5)'; for(var i=0;i<8;i++){ c.fillRect(p[0]-14+((i*13)%28),p[1]-7-f*3+((i*7)%8),2,1.5); } } }
+  function drawWater(c,G){ var p=P(L.water.x,L.water.y,0); shadow(c,p[0],p[1]+2,22,9,0.2);
+    c.fillStyle='#b32424'; c.beginPath(); c.ellipse(p[0],p[1],18,8,0,0,6.3); c.fill(); c.fillStyle='#8c1a1a'; c.beginPath(); c.ellipse(p[0],p[1]-3,14,6,0,0,6.3); c.fill();
+    var w=Math.min(1,G.water.amt/C.WATER_CAP); c.fillStyle='rgba(235,245,250,0.85)'; c.beginPath(); c.moveTo(p[0]-9,p[1]-6); c.quadraticCurveTo(p[0]-12,p[1]-38,p[0],p[1]-44); c.quadraticCurveTo(p[0]+12,p[1]-38,p[0]+9,p[1]-6); c.closePath(); c.fill();
+    c.fillStyle='rgba(90,170,230,0.75)'; var wh=34*w; c.fillRect(p[0]-9.5+ (1-w)*0,p[1]-6-wh,19,wh*0.95); c.strokeStyle='rgba(120,140,150,0.6)'; c.lineWidth=1; c.stroke(); }
+  // --- picking
+  function pick(sx,sy){
+    var G=Sim.G, best=null, bd=1e9;
+    G.birds.forEach(function(b){ var stg=Sim.stageOf(b), p=toScreen(b.x,b.y,b.z), big=(b.st==='sit'||b.st==='squabnest')?0.7:1.45, r=(stg==='squab'?16:stg==='juvenile'?22:28)*cam.z*big+10; var cy=p[1]-(stg==='squab'?9:18)*cam.z*(stg==='juvenile'?0.8:1)*big; var d=Math.hypot(p[0]-sx,cy-sy); if(d<r&&d<bd){ bd=d; best={type:'bird',id:b.id}; } });
+    if(best) return best;
+    for(var n=0;n<C.NEST_COUNT;n++){ var np=L.nestPos(n), a=toScreen(2.4,np.y-0.45,np.z-0.04), b2=toScreen(2.4,np.y+0.45,np.z+0.66); var x0=Math.min(a[0],b2[0]),x1=Math.max(a[0],b2[0]),y0=Math.min(a[1],b2[1]),y1=Math.max(a[1],b2[1]); if(sx>=x0-4&&sx<=x1+4&&sy>=y0-4&&sy<=y1+4) return {type:'nest',n:n}; }
+    var f=toScreen(L.feeder.x,L.feeder.y,0); if(Math.abs(sx-f[0])<0.55*HW*1.4*cam.z+8&&Math.abs(sy-f[1])<28*cam.z) return {type:'feeder'};
+    var w=toScreen(L.water.x,L.water.y,0); if(Math.abs(sx-w[0])<22*cam.z&&sy<w[1]+10*cam.z&&sy>w[1]-48*cam.z) return {type:'water'};
+    var sk=toScreen(1.7,7.5,0); if(Math.hypot(sx-sk[0],sy-sk[1]+24*cam.z)<58*cam.z) return {type:'sacks'};
+    return null;
+  }
+  // --- input
+  function init(canvas){
+    cv=canvas; ctx=cv.getContext('2d'); resize(); window.addEventListener('resize',function(){ resize(); });
+    buildLayers(); cam.z=fitZoom();
+    var ptrs={}, moved=false, startPos=null, lastPinch=0;
+    function pts(){ return Object.keys(ptrs).map(function(k){return ptrs[k];}); }
+    cv.addEventListener('pointerdown',function(e){ cv.setPointerCapture(e.pointerId); ptrs[e.pointerId]={x:e.clientX,y:e.clientY}; if(pts().length===1){ moved=false; startPos={x:e.clientX,y:e.clientY}; } else { moved=true; lastPinch=0; } cam.tx=null; });
+    cv.addEventListener('pointermove',function(e){ var p=ptrs[e.pointerId]; if(!p) return; var ps=pts();
+      if(ps.length===1){ var dx=e.clientX-p.x, dy=e.clientY-p.y; if(!moved&&Math.hypot(e.clientX-startPos.x,e.clientY-startPos.y)>8) moved=true; if(moved){ cam.x-=dx/cam.z; cam.y-=dy/cam.z; follow=false; } p.x=e.clientX; p.y=e.clientY; }
+      else if(ps.length>=2){ p.x=e.clientX; p.y=e.clientY; var d=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y); if(lastPinch) cam.z*=d/lastPinch; lastPinch=d; } });
+    function up(e){ var was=ptrs[e.pointerId]; delete ptrs[e.pointerId]; lastPinch=0; if(was&&!moved&&Object.keys(ptrs).length===0){ var hit=pick(e.clientX,e.clientY); if(BLS.UI) BLS.UI.onPick(hit); } }
+    cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',function(e){ delete ptrs[e.pointerId]; });
+    cv.addEventListener('wheel',function(e){ e.preventDefault(); cam.z*=e.deltaY<0?1.1:0.9; },{passive:false});
+    function loop(now){ frame(now); requestAnimationFrame(loop); } requestAnimationFrame(loop);
+  }
+  return { init:init, focus:focus, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ buildLayers(); } };
+})();
+
+</script>
+<script>
+// DOM UI: HUD, bottom sheet panels, bird card. Reads and writes only through BLS.Sim.
+BLS.UI = (function(){
+  var Sim=BLS.Sim, C=BLS.CFG, T=BLS.T, Spr=BLS.Sprites, Gen=BLS.Gen;
+  var $=function(id){return document.getElementById(id);};
+  var sheet, body, cur={kind:null}, toastT=0, lastEvent=null;
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function toast(m){ var t=$('toast'); t.innerHTML=BLS.Icons.emo(esc(m)); t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove('show');},2200); }
+  function applyLang(){ var G=Sim.G; document.documentElement.lang=G.lang; $('b-lang').textContent=G.lang==='ar'?'EN':'ع';
+    document.querySelectorAll('[data-i]').forEach(function(e){ e.textContent=T(e.getAttribute('data-i')); }); sheet.classList.toggle('rtl',G.lang==='ar'); $('nav').classList.toggle('rtl-nav',G.lang==='ar'); }
+  function ad(n){ return G_lang()==='ar'?String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];}):String(n); }
+  function G_lang(){ return Sim.G.lang; }
+  function timeStr(hh,mm){ var ar=G_lang()==='ar'; return (ar?'اليوم ':'D')+ad(Sim.dayNum())+' · '+ad(hh%12||12)+':'+ad((mm<10?'0':'')+mm)+' '+(ar?(hh<12?'ص':'م'):(hh<12?'AM':'PM')); }
+  function hud(){
+    var G=Sim.G; $('h-lvl').textContent=G.level; $('h-xp').style.width=(G.xp/(100*G.level)*100)+'%';
+    $('h-coins').textContent=G.coins.toLocaleString('en'); $('h-feed').textContent=G.feed.toFixed(1)+' kg'; $('h-birds').textContent=G.birds.length;
+    var h=Sim.hourOfDay(), hh=Math.floor(h), mm=Math.floor((h-hh)*60); $('h-time').textContent=timeStr(hh,mm);
+    var wi=(h>=19||h<5)?'moon':(h<7||h>=17)?'dusk':'sun'; if($('h-wic').getAttribute('data-ic')!==wi){ $('h-wic').setAttribute('data-ic',wi); BLS.Icons.fill($('h-wic').parentNode); }
+    var n=Sim.claimable(); var bd=$('h-badge'); bd.style.display=n?'flex':'none'; bd.textContent=n;
+    $('b-speed').textContent='x'+G.speed;
+  }
+  function open(kind,title,html,opts){ if(!cur.kind){ try{ history.pushState({bls:1},''); }catch(e){} } cur={kind:kind,args:opts||{}}; $('sheet-title').innerHTML=BLS.Icons.emo(esc(title)); body.innerHTML=BLS.Icons.emo(html); sheet.classList.remove('hidden'); body.scrollTop=0; setNav(kind); }
+  function close(fromPop){ var was=cur.kind; sheet.classList.add('hidden'); cur={kind:null}; if(was&&fromPop!==true){ try{ if(history.state&&history.state.bls) history.back(); }catch(e){} } BLS.Scene.select(-1); setNav('farm'); }
+  function setNav(k){ var m={build:'farm',tree:'birds',bird:'birds',birds:'birds',breeding:'breeding',nest:'breeding',egg:'breeding',market:'market',manage:'manage',tasks:'manage',pick:'birds'}[k]||'farm'; document.querySelectorAll('#nav button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-nav')===m); }); }
+  function bar(v,good){ v=Math.max(0,Math.min(100,v)); var col=good?(v>60?'#6fcf4a':v>30?'#e6c03a':'#e0553a'):(v<40?'#6fcf4a':v<70?'#e6c03a':'#e0553a'); return '<div class="bar"><i style="width:'+v+'%;background:'+col+'"></i></div>'; }
+  function portrait(b,size){ var cn=document.createElement('canvas'); cn.width=size*2; cn.height=size*1.7; cn.style.width=size+'px'; cn.style.height=(size*0.85)+'px'; var c=cn.getContext('2d'); c.scale(2,2); c.fillStyle='#00000030'; c.beginPath(); c.ellipse(size*0.5,size*0.78,size*0.28,size*0.06,0,0,6.3); c.fill();
+    Spr.draw(c,size*0.5,size*0.78,size/46,1,{col:Gen.phenoColor(b.g),pat:Gen.phenoPattern(b.g),pose:'stand',ph:0,stage:Sim.stageOf(b)==='squab'?'squab':Sim.stageOf(b)}); return cn; }
+  function stageTxt(b){ return T(Sim.stageOf(b)); }
+  function sexTxt(b){ return (b.sex==='M'?'♂ ':'♀ ')+T(b.sex==='M'?'male':'female'); }
+  function archName(id){ var a=Sim.G.archive[id]; return a?a.name:T('unknown'); }
+  // ----- bird card
+  function showBird(id,keep){
+    var b=Sim.bird(id); if(!b) return close();
+    BLS.Scene.select(id); if(!keep){ BLS.Scene.focus(b.x,b.y,b.z); }
+    var G=Sim.G, mate=b.mate>=0?Sim.bird(b.mate):null, stg=Sim.stageOf(b);
+    var h='<div class="row"><div id="pt"></div><div style="flex:1"><div style="font-size:19px;font-weight:800">'+esc(b.name)+'</div><div>'+sexTxt(b)+' · '+stageTxt(b)+'</div>'
+      +'<div><span class="tag">'+T(Gen.colorName(b.g))+'</span><span class="tag">'+T(Gen.patternName(b.g))+'</span>'+(b.sickFlag?'<span class="tag warn">⚠ '+T('health')+'</span>':'')+'</div></div></div>'
+      +'<div class="row"><span class="lab">🌾 '+T('fullness')+'</span>'+bar(100-b.hunger,true)+'</div>'
+      +'<div class="row"><span class="lab">💧 '+T('hydration')+'</span>'+bar(100-b.thirst,true)+'</div>'
+      +'<div class="row"><span class="lab">❤ '+T('health')+'</span>'+bar(b.health,true)+'</div>'
+      +'<div class="kv"><span>'+T('age')+'</span><span>'+(b.age/24).toFixed(1)+' '+T('days')+'</span></div>'
+      +'<div class="kv"><span>'+T('weight')+'</span><span>'+Sim.weightOf(b)+' g</span></div>'
+      +'<div class="kv"><span>'+T('genes')+'</span><span dir="ltr">'+Gen.geneString(b.g)+'</span></div>'
+      +'<div class="kv"><span>'+T('size')+' / '+T('vitality')+' / '+T('fertility')+'</span><span>'+b.g.size+' / '+b.g.vit+' / '+b.g.fert+'</span></div>'
+      +'<div class="kv"><span>'+T('parents')+'</span><span>'+(b.parents[0]>0?esc(archName(b.parents[0]))+' × '+esc(archName(b.parents[1])):T('unknown'))+'</span></div>'
+      +'<div class="kv"><span>'+T('mate')+'</span><span>'+(mate?esc(mate.name)+' (🥚 '+T('nest')+' '+(b.nest+1)+')':T('none'))+'</span></div>'
+      +'<div class="row" style="margin-top:10px"><button class="btn2" id="a-feed">🌾 '+T('feed')+'</button><button class="btn2" id="a-water">💧 '+T('water')+'</button>'+(b.health<95?'<button class="btn2 alt" id="a-heal">💊 '+T('heal')+' ('+C.PRICE.heal+')</button>':'')+'</div>'
+      +'<div class="row"><button class="btn2 alt" id="a-pair">'+(mate?'💔 '+T('unpair'):'❤ '+T('pair'))+'</button><button class="btn2 alt" id="a-follow">🎥 '+T('follow')+'</button><button class="btn2 alt" id="a-tree">🌳 '+T('tree')+'</button></div>'
+      +'<div class="row"><input class="name" id="a-name" value="'+esc(b.name)+'" maxlength="14"><button class="btn2 alt" id="a-ren" style="flex:0 0 auto">'+T('rename')+'</button></div>'
+      +'<div class="row"><button class="btn2 red" id="a-sell">'+T('sell')+' · 🪙 '+Sim.sellPrice(b)+'</button></div>';
+    open('bird',T('my_birds'),h,{id:id}); $('pt').appendChild(portrait(b,120));
+    $('a-feed').onclick=function(){ Sim.feedBird(b); showBird(id,1); };
+    $('a-water').onclick=function(){ Sim.waterBird(b); showBird(id,1); };
+    if($('a-heal')) $('a-heal').onclick=function(){ Sim.healBird(b); showBird(id,1); };
+    $('a-pair').onclick=function(){ if(mate){ Sim.unpair(b); showBird(id,1); } else showPick(id); };
+    $('a-tree').onclick=function(){ showTree(id); };
+    $('a-follow').onclick=function(){ BLS.Scene.setFollow(!BLS.Scene.isFollow()); toast(BLS.Scene.isFollow()?'🎥 ON':'🎥 OFF'); };
+    $('a-ren').onclick=function(){ var v=$('a-name').value.trim(); if(v){ b.name=v; Sim.G.archive[b.id].name=v; showBird(id,1); } };
+    $('a-sell').onclick=function(){ if(this.dataset.s){ Sim.sell(b); close(); } else { this.dataset.s=1; this.innerHTML=BLS.Icons.emo(T('sure')+' '+T('sell')+' 🪙 '+Sim.sellPrice(b)); } };
+  }
+  function showPick(id){
+    var b=Sim.bird(id), h='<div class="row">'+T('pick_partner')+'</div>';
+    var list=Sim.G.birds.filter(function(o){ return o.id!==id&&o.sex!==b.sex; });
+    if(Sim.stageOf(b)!=='adult') h+='<div class="warn">'+T('juvenile')+'</div>';
+    h+='<div class="grid" id="pg"></div>'; if(!list.length) h+='<p>'+T('no_partner')+'</p>';
+    open('pick',T('pair'),h,{id:id}); var g=$('pg');
+    list.forEach(function(o){ var ok=Sim.canPair(b,o), rel=Sim.related(b,o); var d=document.createElement('div'); d.className='card'; d.style.opacity=ok?1:0.5; d.appendChild(portrait(o,96)); var n=document.createElement('div'); n.className='nm'; n.textContent=o.name; d.appendChild(n); var s=document.createElement('div'); s.className='sm'; s.textContent=rel?T('related'):(o.mate>=0?'❤':stageTxt(o)); d.appendChild(s);
+      d.onclick=function(){ if(!ok) return toast(rel?T('related'):T('no_partner')); if(Sim.freeNest()<0) return toast(T('nonest')); Sim.pairUp(b,o); showBird(id,1); }; g.appendChild(d); });
+  }
+  // ----- panels
+  function showBirds(){
+    var G=Sim.G, h='<div class="grid" id="bg"></div>'; open('birds',T('my_birds')+' ('+G.birds.length+')',h); var g=$('bg');
+    G.birds.slice().sort(function(a,b){return a.id-b.id;}).forEach(function(b){ var d=document.createElement('div'); d.className='card'; d.appendChild(portrait(b,96)); var n=document.createElement('div'); n.className='nm'; n.textContent=(b.sex==='M'?'♂ ':'♀ ')+b.name; d.appendChild(n); var s=document.createElement('div'); s.className='sm'; s.textContent=stageTxt(b)+(b.mate>=0?' ❤':''); d.appendChild(s); d.onclick=function(){ showBird(b.id); }; g.appendChild(d); });
+    if(!G.birds.length) body.innerHTML='<p>'+T('nothing')+'</p>';
+  }
+  function showBreeding(){
+    var G=Sim.G, h='<div class="grid" id="ng"></div><p style="color:#c9b78d;font-size:12px">'+T('hatch_tip')+'</p>'; open('breeding',T('nests'),h);
+    var g=$('ng');
+    for(var n=0;n<G.nestsOpen;n++){ (function(n){ var o=G.nests[n], d=document.createElement('div'); d.className='card'; var inner='<div class="nm">🪺 '+T('nest')+' '+(n+1)+'</div>';
+      if(!o){ inner+='<div class="sm">'+T('free')+'</div>'; }
+      else { var m=Sim.bird(o.m), f=Sim.bird(o.f); inner+='<div class="sm">'+(m?esc(m.name):'?')+' ♂ + '+(f?esc(f.name):'?')+' ♀</div>';
+        var eggs=G.eggs.filter(function(e){return e.nest===n;}); var sq=G.birds.filter(function(b){return b.nest===n&&Sim.stageOf(b)==='squab';});
+        inner+='<div class="sm">'+eggs.map(function(e){ return e.dead?'🪨':'🥚'; }).join('')+sq.map(function(){return '🐣';}).join('')+(Sim.covered(n)?' 🔥':'')+'</div>';
+        if(eggs.length){ var mp=Math.max.apply(null,eggs.map(function(e){return e.dead?0:e.prog;})); inner+='<div class="prog"><i style="width:'+(mp/C.EGG_INCUBATION_H*100)+'%"></i></div>'; d.style.paddingBottom='18px'; } }
+      d.innerHTML=inner; d.onclick=function(){ showNest(n); }; g.appendChild(d); })(n); }
+  }
+  function showNest(n){
+    var G=Sim.G, o=G.nests[n], h='';
+    if(!o){ h+='<p>'+T('empty')+'. '+T('pair')+': '+T('my_birds')+' ›</p><button class="btn2" id="n-b">'+T('my_birds')+'</button>'; open('nest',T('nest')+' '+(n+1),h); $('n-b').onclick=showBirds; return; }
+    var m=Sim.bird(o.m), f=Sim.bird(o.f);
+    h+='<div class="kv"><span>♂</span><span>'+(m?esc(m.name):'?')+'</span></div><div class="kv"><span>♀</span><span>'+(f?esc(f.name):'?')+'</span></div>';
+    G.eggs.filter(function(e){return e.nest===n;}).forEach(function(e,i){ var left=Math.max(0,C.EGG_INCUBATION_H-e.prog); var st=e.dead?(e.fertile?T('cold'):T('infertile')):(e.prog>24?(e.fertile?T('fertile'):T('infertile')):'…');
+      h+='<h4>🥚 '+T('egg')+' '+(i+1)+'</h4><div class="row">'+bar(e.prog/C.EGG_INCUBATION_H*100,true)+'</div><div class="kv"><span>'+st+'</span><span>'+((e.dead||(e.prog>24&&!e.fertile))?'':T('hatch_in',Math.ceil(left)))+'</span></div><div class="kv"><span>❄</span><span>'+Math.round(e.cold)+' / '+C.EGG_COLD_LIMIT_H+' h</span></div>'; });
+    G.birds.filter(function(b){return b.nest===n&&Sim.stageOf(b)==='squab';}).forEach(function(b){ h+='<h4>🐣 '+esc(b.name)+'</h4><div class="kv"><span>'+T('age')+'</span><span>'+(b.age/24).toFixed(1)+' '+T('days')+'</span></div><div class="row"><button class="btn2 alt" data-b="'+b.id+'">'+T('my_birds')+'</button></div>'; });
+    h+='<div class="row">'+(m?'<button class="btn2 alt" data-b="'+m.id+'">♂ '+esc(m.name)+'</button>':'')+(f?'<button class="btn2 alt" data-b="'+f.id+'">♀ '+esc(f.name)+'</button>':'')+'</div>';
+    open('nest',T('nest')+' '+(n+1),h); body.querySelectorAll('[data-b]').forEach(function(e){ e.onclick=function(){ showBird(+e.getAttribute('data-b')); }; });
+    BLS.Scene.focus(2.4,BLS.LAYOUT.nestPos(n).y,BLS.LAYOUT.nestPos(n).z);
+  }
+  function showMarket(){
+    var G=Sim.G, P=C.PRICE;
+    var h='<div class="kv"><span>🪙 '+T('coins')+'</span><span>'+G.coins+'</span></div><div class="kv"><span>🌾 '+T('feedstock')+'</span><span>'+G.feed.toFixed(1)+' kg</span></div>'
+     +'<div class="row"><button class="btn2" id="m-f">🌾 '+T('buy_feed')+' · '+P.feed5+'</button></div><div class="row"><button class="btn2" id="m-b">🕊️ '+T('buy_bird')+' · '+P.bird+'</button></div><div class="row"><button class="btn2" id="m-p">🕊️🕊️ '+T('buy_pair')+' · '+P.pair+'</button></div>'
+     +'<p style="color:#c9b78d;font-size:12px">'+T('sell')+': '+T('my_birds')+' › '+T('sell')+'</p>';
+    open('market',T('market'),h);
+    $('m-f').onclick=function(){ Sim.buyFeed(); showMarket(); }; $('m-b').onclick=function(){ Sim.buyBird(); showMarket(); }; $('m-p').onclick=function(){ Sim.buyPair(); showMarket(); };
+  }
+  function showManage(){
+    var G=Sim.G, s=G.stats;
+    var h='<h4>'+T('stats')+'</h4><div class="kv"><span>'+T('level')+'</span><span>'+G.level+'</span></div><div class="kv"><span>'+T('day')+'</span><span>'+Sim.dayNum()+'</span></div><div class="kv"><span>'+T('hatched')+'</span><span>'+s.hatched+'</span></div><div class="kv"><span>'+T('sold')+'</span><span>'+s.sold+'</span></div><div class="kv"><span>'+T('bought')+'</span><span>'+s.bought+'</span></div><div class="kv"><span>'+T('died')+'</span><span>'+s.died+'</span></div>'
+      +'<h4>'+T('speed')+'</h4><div class="row"><button class="btn2 alt" data-sp="1">x1</button><button class="btn2 alt" data-sp="2">x2</button><button class="btn2 alt" data-sp="4">x4</button></div>'
+      +'<h4>'+T('skip')+'</h4><div class="row"><button class="btn2 alt" id="k6">'+T('skip6')+'</button><button class="btn2 alt" id="k24">'+T('skip24')+'</button></div>'
+      +'<h4>'+T('tasks')+'</h4><div id="tl"></div><div class="row" style="margin-top:14px"><button class="btn2 red" id="rs">'+T('reset')+'</button></div>';
+    open('manage',T('manage'),h);
+    body.querySelectorAll('[data-sp]').forEach(function(e){ e.onclick=function(){ G.speed=+e.getAttribute('data-sp'); hud(); }; });
+    $('k6').onclick=function(){ Sim.skip(6); toast('+6h'); showManage(); }; $('k24').onclick=function(){ Sim.skip(24); toast('+24h'); showManage(); };
+    $('rs').onclick=function(){ if(confirm(T('reset_q'))){ var l=G.lang; Sim.newGame(l); BLS.UI.applyLang(); close(); location.reload(); } };
+    tasksInto($('tl'),showManage);
+  }
+  function tasksInto(el,again){
+    Sim.TASKS.forEach(function(t){ var done=Sim.G.tasks[t.id], ok=t.ok(); var r=document.createElement('div'); r.className='row'; r.innerHTML='<div style="flex:1">'+(done?'✅ ':ok?'🟡 ':'⬜ ')+T(t.k)+'<div style="font-size:11px;color:#c9b78d">'+T('reward')+': 🪙 '+t.r+'</div></div>'+(done?'<span class="ok">'+T('claimed')+'</span>':'<button class="btn2" style="flex:0 0 auto" '+(ok?'':'disabled')+'>'+T('claim')+'</button>');
+      var b=r.querySelector('button'); if(b) b.onclick=function(){ Sim.claim(t.id); again(); }; el.appendChild(r); });
+  }
+  function showTasks(){ open('tasks',T('tasks'),'<div id="tl"></div>'); tasksInto($('tl'),showTasks); }
+  function showBuild(){
+    var G=Sim.G, nc=Sim.nestCost(), full=G.nestsOpen>=C.NEST_COUNT, pf=G.perches.length>=BLS.LAYOUT.perchSpots.length;
+    var h='<div class="kv"><span>🪙 '+T('coins')+'</span><span>'+G.coins+'</span></div>'
+     +'<h4>🪺 '+T('nests_open')+': '+G.nestsOpen+' / '+C.NEST_COUNT+'</h4><div class="row"><button class="btn2" id="bn" '+(full?'disabled':'')+'>'+(full?T('maxed'):T('buy_nest')+' · '+nc)+'</button></div>'
+     +'<h4>🪵 '+T('perch_stands')+': '+G.perches.length+' / '+BLS.LAYOUT.perchSpots.length+'</h4><div class="row"><button class="btn2" id="bp" '+(pf?'disabled':'')+'>'+(pf?T('maxed'):T('buy_perch')+' · 150')+'</button></div>';
+    open('build',T('build'),h); $('bn').onclick=function(){ Sim.buyNest(); showBuild(); }; $('bp').onclick=function(){ Sim.buyPerch(); showBuild(); };
+  }
+  function treeNode(id,hl){ var a=Sim.G.archive[id], alive=!!Sim.bird(id); if(!a) return '<div class="tn gone">?</div>';
+    var col={G:'#8b95a4',R:'#a95740',W:'#f1f0ec'}[a.col]||'#8b95a4';
+    return '<div class="tn'+(hl?' hl':'')+(alive?'':' gone')+'" data-id="'+id+'"><i style="background:'+col+'"></i>'+(a.sex==='M'?'♂ ':'♀ ')+esc(a.name)+(alive?'':'<small>'+T('gone')+'</small>')+'</div>'; }
+  function showTree(id){
+    var G=Sim.G, a=G.archive[id]; if(!a) return;
+    var P=a.parents||[-1,-1], gp=[]; P.forEach(function(p){ var q=(p>0&&G.archive[p])?G.archive[p].parents:[-1,-1]; gp.push(q[0],q[1]); });
+    function row(ids,label){ return '<div class="tl">'+label+'</div><div class="trow">'+ids.map(function(i){ return i>0?treeNode(i):'<div class="tn gone">?</div>'; }).join('')+'</div>'; }
+    var kids=Sim.childrenOf(id);
+    var h=row(gp,T('grandp'))+'<div class="tarrow">▼</div>'+row(P,T('parents'))+'<div class="tarrow">▼</div><div class="trow">'+treeNode(id,1)+'</div>'
+      +'<div class="tarrow">▼</div><div class="tl">'+T('children')+'</div><div class="trow">'+(kids.length?kids.map(function(k){return treeNode(k);}).join(''):'<span style="color:#c9b78d">'+T('no_kids')+'</span>')+'</div>';
+    open('tree','🌳 '+T('tree'),h); body.querySelectorAll('.tn[data-id]').forEach(function(e){ e.onclick=function(){ var i=+e.getAttribute('data-id'); if(Sim.bird(i)) showBird(i); else showTree(i); }; });
+  }
+  function showWelcome(w){
+    var h='<div class="wel"><div><span>'+T('away')+'</span><b>'+ad(w.h)+' h</b></div><div><span>'+T('w_eggs')+'</span><b>'+ad(w.eggs)+'</b></div><div><span>'+T('w_hatch')+'</span><b>'+ad(w.hatched)+'</b></div><div><span>'+T('w_died')+'</span><b>'+ad(w.died)+'</b></div><div><span>'+T('w_grain')+'</span><b>'+ad(w.grain.toFixed(1))+' kg</b></div><div><span>'+T('w_water')+'</span><b>'+ad(Math.round(w.water))+'</b></div></div><p style="color:#c9b78d;font-size:12px">'+T('w_note')+'</p><div class="row"><button class="btn2" id="w-ok">'+T('ok')+'</button></div>';
+    open('welcome',T('welcome'),h); $('w-ok').onclick=function(){ close(); };
+  }
+  // ----- events
+  function onPick(hit){
+    if(!hit){ if(cur.kind==='bird'||cur.kind==='pick') close(); else if(cur.kind) close(); return; }
+    if(hit.type==='bird') showBird(hit.id);
+    else if(hit.type==='nest') { if(hit.n>=Sim.G.nestsOpen) showBuild(); else showNest(hit.n); }
+    else if(hit.type==='feeder') Sim.refillFeeder();
+    else if(hit.type==='water') Sim.refillWater();
+    else if(hit.type==='sacks') showMarket();
+  }
+  function init(){
+    sheet=$('sheet'); body=$('sheet-body'); $('sheet-x').onclick=function(){ close(); }; window.addEventListener('popstate',function(){ if(cur.kind) close(true); });
+    var G0=Sim.G; if(!G0.seenHint){ var hn=document.createElement('div'); hn.id='hint'; hn.innerHTML='<b>🕊️</b> '+T('tap_hint')+'<br><small>'+T('hatch_tip')+'</small>'; hn.onclick=function(){ hn.remove(); G0.seenHint=1; }; document.body.appendChild(hn); }
+    Sim.on('toast',toast);
+    Sim.on('event',function(m,go,id){ lastEvent={go:go,id:id}; var t=$('ticker'); $('tick-txt').innerHTML=BLS.Icons.emo(esc(m)); t.style.display='flex'; clearTimeout(t._h); t._h=setTimeout(function(){t.style.display='none';},9000); toast(m); });
+    $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); };
+    document.querySelectorAll('#nav button').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-nav'); if(k==='farm') close(); else if(k==='birds') showBirds(); else if(k==='breeding') showBreeding(); else if(k==='market') showMarket(); else showManage(); }; });
+    $('b-zin').onclick=function(){ BLS.Scene.cam.z*=1.25; }; $('b-zout').onclick=function(){ BLS.Scene.cam.z/=1.25; };
+    $('b-center').onclick=function(){ var c=BLS.Scene.cam; c.tx=60; c.ty=215; c.tz=BLS.Scene.fitZoom(); BLS.Scene.setFollow(false); };
+    $('b-tasks').onclick=showTasks;
+    $('b-speed').onclick=function(){ var G=Sim.G; G.speed=G.speed===1?2:G.speed===2?4:1; hud(); toast('x'+G.speed); };
+    function sndIc(){ $('b-snd').setAttribute('data-ic',BLS.Audio.isOn()?'sound':'mute'); BLS.Icons.fill($('b-snd').parentNode); }
+    $('b-snd').onclick=function(){ BLS.Audio.toggle(); BLS.Audio.start(); sndIc(); }; sndIc(); $('b-tools').onclick=function(){ $('tools').classList.toggle('hidden'); }; $('b-build').onclick=showBuild;
+    $('b-feeder').onclick=Sim.refillFeeder; $('b-water').onclick=Sim.refillWater;
+    $('b-skip').onclick=function(){ Sim.skip(6); toast('+6h'); };
+    $('b-lang').onclick=function(){ var G=Sim.G; G.lang=G.lang==='ar'?'en':'ar'; applyLang(); if(cur.kind) close(); hud(); };
+    BLS.Icons.fill(document); applyLang(); hud(); if(Sim.G.welcome){ var w=Sim.G.welcome; delete Sim.G.welcome; var hh=document.getElementById('hint'); if(hh){ hh.remove(); Sim.G.seenHint=1; } showWelcome(w); } setInterval(hud,250);
+  }
+  return {init:init,applyLang:applyLang,onPick:onPick,toast:toast,hud:hud,showBird:showBird,showBreeding:showBreeding,close:close,showNest:showNest,showTree:showTree,showBuild:showBuild};
+})();
+
+</script>
+<script>
+(function(){
+  var Sim=BLS.Sim;
+  if(!Sim.load()) Sim.newGame('ar');
+  BLS.Scene.init(document.getElementById('game'));
+  BLS.Art.init(function(){ if(BLS.Art.count()&&BLS.Scene.rebuild) BLS.Scene.rebuild(); });
+  BLS.UI.init();
+  var A=BLS.Audio;
+  Sim.on('sfx',function(n){ A.play(n); });
+  ['pointerdown','touchstart','keydown'].forEach(function(e){ window.addEventListener(e,function(){ A.start(); },{passive:true}); });
+  document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('button')) A.play('click'); });
+  setInterval(A.tick,4500);
+  var last=performance.now();
+  function tick(now){ var dt=(now-last)/1000; last=now; Sim.update(dt); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  setInterval(Sim.save,5000);
+  document.addEventListener('visibilitychange',function(){ if(document.hidden) Sim.save(); });
+  window.addEventListener('pagehide',Sim.save);
+  window.BLS_DEBUG={Sim:Sim};
+})();
+
+</script>
+</body>
+</html>
