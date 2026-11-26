@@ -9,7 +9,7 @@ BLS.Sim = (function(){
     perchSpots:[[4.2,4.3],[9.6,4.8],[8.6,6.8],[4.2,9.5]],
     roofPerch: function(){ var pl=G&&G.perches||[]; if(pl.length&&Math.random()<0.5){ var q=pl[(Math.random()*pl.length)|0], sp=L.perchSpots[q]; return {x:sp[0]+(Math.random()-0.5)*0.5,y:sp[1],z:0.95}; } return {x:1.0+Math.random()*1.5,y:1.2+Math.random()*4.4,z:L.roofZ}; },
     walkable: function(x,y){ return (x>2.9&&x<11.5&&y>3.5&&y<7.8) || (x>2.9&&x<6.6&&y>=7.8&&y<11.5); },
-    randSpot: function(){ for(var i=0;i<30;i++){ var x=3+Math.random()*8.4,y=3.6+Math.random()*7.8; if(L.walkable(x,y)) return {x:x,y:y,z:0}; } return {x:5,y:5,z:0}; }
+    randSpot: function(){ var best=null,bd=-1; for(var i=0;i<24;i++){ var x=3+Math.random()*8.4,y=3.6+Math.random()*7.8; if(!L.walkable(x,y)) continue; var md=9; var bs=G?G.birds:[]; for(var j=0;j<bs.length;j++){ if(bs[j].z>0.05) continue; var d=Math.hypot(bs[j].x-x,bs[j].y-y); if(d<md) md=d; } if(md>bd){ bd=md; best={x:x,y:y,z:0}; } if(bd>1.6) break; } return best||{x:5,y:5,z:0}; }
   };
   function emit(ev,a,b){ (listeners[ev]||[]).forEach(function(f){ f(a,b); }); }
   function on(ev,f){ (listeners[ev]=listeners[ev]||[]).push(f); }
