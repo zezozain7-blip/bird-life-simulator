@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1b1710">
+<title>Bird Life Simulator</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div id="hud-top">
+    <div class="pill lvl"><div class="lvl-n" id="h-lvl">1</div><div class="xpbar"><i id="h-xp"></i></div></div>
+    <div class="pill"><span class="ic gold" data-ic="coin" data-sz="18"></span><b id="h-coins">0</b></div>
+    <div class="pill"><span class="ic" data-ic="grain" data-sz="18"></span><b id="h-feed">0</b></div>
+    <div class="pill"><span class="ic" data-ic="birds" data-sz="18"></span><b id="h-birds">0</b></div>
+    <div class="pill wide"><span class="ic" id="h-wic" data-ic="sun" data-sz="18"></span><b id="h-time">8:00</b></div>
+    <button class="pill btn" id="b-lang">EN</button>
+  </div>
+  <div id="side-r">
+    <button class="sq" id="b-build" data-ic="build"></button>
+    <button class="sq" id="b-tasks"><span data-ic="tasks"></span><span class="badge" id="h-badge"></span></button>
+    <button class="sq" id="b-tools" data-ic="tools"></button>
+  </div>
+  <div id="tools" class="hidden">
+    <button class="sq" id="b-zin" data-ic="plus"></button>
+    <button class="sq" id="b-zout" data-ic="minus"></button>
+    <button class="sq" id="b-center" data-ic="center"></button>
+    <button class="sq spd" id="b-speed">x1</button>
+    <button class="sq" id="b-skip" data-ic="ff"></button>
+    <button class="sq" id="b-snd" data-ic="sound"></button>
+  </div>
+  <div id="side-l">
+    <button class="sq" id="b-feeder" data-ic="grain"></button>
+    <button class="sq" id="b-water" data-ic="drop"></button>
+  </div>
+  <div id="ticker"><span class="ic" data-ic="egg" data-sz="20"></span><span id="tick-txt"></span><span class="chev" data-ic="chev" data-sz="18"></span></div>
+  <div id="nav">
+    <button data-nav="farm" class="on"><i data-ic="farm" data-sz="26"></i><span data-i="nav_farm"></span></button>
+    <button data-nav="birds"><i data-ic="birds" data-sz="26"></i><span data-i="nav_birds"></span></button>
+    <button data-nav="breeding"><i data-ic="egg" data-sz="26"></i><span data-i="nav_breeding"></span></button>
+    <button data-nav="market"><i data-ic="market" data-sz="26"></i><span data-i="nav_market"></span></button>
+    <button data-nav="manage"><i data-ic="manage" data-sz="26"></i><span data-i="nav_manage"></span></button>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="sheet" class="hidden"><div id="sheet-bar"><div id="sheet-title"></div><button id="sheet-x">✕</button></div><div id="sheet-body"></div></div>
+<script src="js/config.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/genetics.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
