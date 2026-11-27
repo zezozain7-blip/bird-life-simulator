@@ -140,3 +140,8 @@ input.name{background:#0006;border:1px solid #6d5a34;color:#fff;border-radius:8p
 #alerts .al{display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:18px;border:1.5px solid #b5452f;background:linear-gradient(#4a2219,#2a120d);color:#ffe9d6;font:600 12px sans-serif;box-shadow:0 2px 6px #0006}
 #alerts .al span{font-size:16px}#alerts .al small{font-size:11px;opacity:.9}#alerts .al b{font-size:12px;color:#ffd36a}
 #alerts .al-hun,#alerts .al-thi,#alerts .al-dirt{border-color:#6d9a3a;background:linear-gradient(#2d3d1b,#18220f)}
+
+#ticker{max-width:64%;font-size:12px;padding:5px 10px;gap:6px}#ticker #tick-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#toast{top:96px;font-size:12.5px;padding:6px 12px;max-width:70%}
+#alerts.compact .al small{display:none}#alerts.compact .al{padding:4px 8px}
+#alerts .al-med,#alerts .al-medgo{border-color:#4a8fb5;background:linear-gradient(#1d3547,#101f2b)}
