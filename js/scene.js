@@ -77,8 +77,11 @@ BLS.Scene = (function(){
     var f=Math.min(1,u.grain/Sim.feederCap()); if(f>0.02){ c.fillStyle='#e0b53a'; c.beginPath(); c.ellipse(p[0],p[1]-3-f*6,(rx-8)*Math.max(0.4,f),8*Math.max(0.5,f),0,0,6.3); c.fill(); c.fillStyle='rgba(255,230,140,0.6)'; for(var i=0;i<8;i++) c.fillRect(p[0]-14+((i*13)%28),p[1]-8-f*5+((i*7)%6),2,1.5); } }
   function drawWater(c,G,u,pos){ u=u||G.water; pos=pos||L.water; var p=P(pos.x,pos.y,0); shadow(c,p[0],p[1]+3,26,8,0.22);
     c.fillStyle='#b32424'; c.beginPath(); c.ellipse(p[0],p[1],22,8,0,0,6.3); c.fill(); c.fillStyle='#8c1a1a'; c.beginPath(); c.ellipse(p[0],p[1]-3,17,6,0,0,6.3); c.fill();
-    var w=Math.min(1,u.amt/Sim.waterCap()); c.fillStyle='rgba(235,245,250,0.88)'; c.beginPath(); c.moveTo(p[0]-11,p[1]-6); c.quadraticCurveTo(p[0]-14,p[1]-44,p[0],p[1]-52); c.quadraticCurveTo(p[0]+14,p[1]-44,p[0]+11,p[1]-6); c.closePath(); c.fill();
-    c.fillStyle='rgba(90,170,230,0.78)'; var wh=40*w; c.fillRect(p[0]-11.5,p[1]-6-wh,23,wh*0.95); c.strokeStyle='rgba(120,140,150,0.6)'; c.lineWidth=1; c.stroke(); }
+    var w=Math.max(0,Math.min(1,u.amt/Sim.waterCap())), x0=p[0], yb=p[1]-6, yt=p[1]-52;
+    function bottle(){ c.beginPath(); c.moveTo(x0-11,yb); c.quadraticCurveTo(x0-14,yb-38,x0,yt); c.quadraticCurveTo(x0+14,yb-38,x0+11,yb); c.closePath(); }
+    c.fillStyle='rgba(235,245,250,0.88)'; bottle(); c.fill();
+    if(w>0.01){ c.save(); bottle(); c.clip(); var ly=yb-(yb-yt)*w; c.fillStyle='rgba(90,170,230,0.85)'; c.fillRect(x0-16,ly,32,yb-ly+1); c.fillStyle='rgba(200,230,250,0.9)'; c.fillRect(x0-16,ly,32,1.6); c.fillStyle='rgba(255,255,255,0.35)'; c.fillRect(x0-8,Math.min(ly+3,yb-4),2.5,Math.max(0,yb-ly-8)); c.restore(); }
+    c.strokeStyle='rgba(120,140,150,0.75)'; c.lineWidth=1.2; bottle(); c.stroke(); }
   // ---- bought gear props (v0.40): everything in the shop shows in the loft
   function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
   function cross(c,x,y,s,col){ c.fillStyle=col; c.fillRect(x-s/2,y-s/6,s,s/3); c.fillRect(x-s/6,y-s/2,s/3,s); }
@@ -104,14 +107,23 @@ BLS.Scene = (function(){
     var sc=(stg==='adult'?1:stg==='juvenile'?0.78:0.5);
     if(b.st!=='sit'&&b.st!=='squabnest') shadow(c,gp[0],gp[1]+1,16*sz*sc/1.2*Math.max(0.5,1-b.z*0.25),5*sz*sc/1.2,Math.max(0.1,0.3-b.z*0.06));
     if(b.id===sel){ c.strokeStyle='#ffe27a'; c.lineWidth=3; c.beginPath(); c.ellipse(gp[0],gp[1]+1,26*sz*sc/1.3+4,8*sz*sc/1.3+2,0,0,6.3); c.stroke(); }
+    var brood=b.st==='sit'&&b.nest>=0&&stg==='adult'&&Sim.G.eggs.some(function(e){return e.nest===b.nest&&!e.dead;});
+    if(brood){ // brooding: body sunk into the nest, legs and belly hidden behind the straw rim, sitting on the eggs
+      var nr=nestRect(b.nest), nx=nr.x+nr.w*0.5, fy=nr.y+nr.h-3, bh=50*sz;
+      c.save(); c.beginPath(); c.rect(nr.x-6,fy-bh-30,nr.w+12,bh+30-1); c.clip();
+      Spr.draw(c,nx,fy+bh*0.12,sz*1.0,b.face,{br:BLS.Gen.breedOf(b.g),col:BLS.Gen.phenoColor(b.g),pat:BLS.Gen.phenoPattern(b.g),pose:'sit',ph:b.ph,stage:stg});
+      c.restore();
+      c.fillStyle='#d4a84b'; c.strokeStyle='#a97c2a'; c.lineWidth=1;
+      for(var hi=0;hi<9;hi++){ var hx=nr.x+12+hi*(nr.w-24)/8; c.beginPath(); c.ellipse(hx,fy,6.5,2.4,(hi%2?0.25:-0.2),0,6.3); c.fill(); c.stroke(); }
+      return; }
     Spr.draw(c,p[0],p[1],sz,b.face,{br:BLS.Gen.breedOf(b.g),col:BLS.Gen.phenoColor(b.g),pat:BLS.Gen.phenoPattern(b.g),pose:poseOf(b),ph:b.ph,stage:stg});
     var hgt=50*sz*sc;
     if(b.hunger>75||b.thirst>75){ var bx=p[0], by=p[1]-hgt-14; c.fillStyle='rgba(20,15,5,0.85)'; c.beginPath(); c.arc(bx,by,11,0,6.3); c.fill(); c.strokeStyle='#ffcf33'; c.lineWidth=1.8; c.stroke(); c.fillStyle=b.thirst>b.hunger?'#6ec6ff':'#ffcf33'; c.beginPath();
       if(b.thirst>b.hunger){ c.moveTo(bx,by-6); c.quadraticCurveTo(bx+6,by+1,bx,by+5); c.quadraticCurveTo(bx-6,by+1,bx,by-6); } else { c.ellipse(bx,by,3.2,6,0,0,6.3); } c.fill(); }
     if(b.id===sel){ c.font='bold 14px system-ui,sans-serif'; c.textAlign='center'; c.lineWidth=3; c.strokeStyle='rgba(0,0,0,0.75)'; c.strokeText(b.name,p[0],p[1]-hgt-(b.hunger>75||b.thirst>75?32:12)); c.fillStyle='#fff'; c.fillText(b.name,p[0],p[1]-hgt-(b.hunger>75||b.thirst>75?32:12)); }
   }
-  function drawEgg(c,e,idx){ var np=L.nestPos(e.nest), r=nestRect(e.nest), x=r.x+r.w*(idx%2?0.66:0.34), y=r.y+r.h-9; c.save(); c.translate(x,y);
-    var g=c.createRadialGradient(-2,-6,1,0,-4,10); g.addColorStop(0,e.dead?'#b7b2a4':'#fffdf4'); g.addColorStop(1,e.dead?'#7f7a6c':'#d9d0b6'); c.fillStyle=g; c.beginPath(); c.ellipse(0,-4,6.5,8.5,0,0,6.3); c.fill(); c.restore(); }
+  function drawEgg(c,e,idx){ var np=L.nestPos(e.nest), r=nestRect(e.nest), x=r.x+r.w*(idx%2?0.66:0.34), y=r.y+r.h-6; c.save(); c.translate(x,y);
+    var g=c.createRadialGradient(-1,-3.5,0.5,0,-2.4,5.5); g.addColorStop(0,e.dead?'#b7b2a4':'#fffdf4'); g.addColorStop(1,e.dead?'#7f7a6c':'#d9d0b6'); c.fillStyle=g; c.beginPath(); c.ellipse(0,-2.4,3.4,4.5,0,0,6.3); c.fill(); c.restore(); }
   // --- background
   function drawBackdrop(c){
     var tb=BLS.Art&&(BLS.Art.tex('town'+Sim.season())||BLS.Art.tex('town'));
