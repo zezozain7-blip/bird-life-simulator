@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bundle the project into one self-contained HTML file (dist/bird-life-simulator.html)."""
 import re, os
-VER='17.1'  # build version: bump this AND the ?v= in index.html so phones fetch fresh js
+VER='18'  # build version: bump this AND the ?v= in index.html so phones fetch fresh js
 root=os.path.dirname(os.path.abspath(__file__))
 h=open(os.path.join(root,'index.html'),encoding='utf8').read()
 h=re.sub(r'(src="js/[a-z]+\.js)(\?v=[\d.]+)?(")', lambda m: m.group(1)+'?v='+VER+m.group(3), h)
