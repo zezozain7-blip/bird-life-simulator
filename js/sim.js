@@ -377,7 +377,7 @@ BLS.Sim = (function(){
   function mixPrice(){ return Math.round(feedPrice()*1.7); }
   function buyMix(){ var p=mixPrice(); if(G.coins<p) return emit('toast',T('need_coins')); G.coins-=p; G.feedQ=((G.feedQ||0)*G.feed+C.FEED_BAG)/(G.feed+C.FEED_BAG); G.feed+=C.FEED_BAG; G.stats.boughtFeed++; emit('toast','🌾 +'+C.FEED_BAG+' kg '+T('mix')); }
   // an egg's value follows its breed; the price must not reveal fertility before candling (24 h)
-  function eggPrice(e){ var known=e.dead||e.prog>24; if(e.dead||(known&&!e.fertile)) return C.PRICE.eggBad; return Math.round(C.PRICE.egg*BLS.BREEDS[Gen.breedOf(e.g)].mul); }
+  function eggPrice(e){ var known=e.dead||e.prog>C.EGG_CANDLE_H; if(e.dead||(known&&!e.fertile)) return C.PRICE.eggBad; return Math.round(C.PRICE.egg*BLS.BREEDS[Gen.breedOf(e.g)].mul); }
   function sellEgg(id){ var e=null,i; for(i=0;i<G.eggs.length;i++) if(G.eggs[i].id===id) e=G.eggs[i]; if(!e) return false; var p=eggPrice(e); G.coins+=p; G.eggs.splice(G.eggs.indexOf(e),1); emit('toast','🪙 +'+p); emit('sfx','coin'); return true; }
   function buyFeed(){ var fp=feedPrice(); if(G.coins<fp) return emit('toast',T('need_coins')); G.coins-=fp; G.feed+=C.FEED_BAG; G.stats.boughtFeed++; emit('toast','🌾 +'+C.FEED_BAG+' kg'); }
   function placeNew(sex,g,age){ var s=L.randSpot(); return newBird({sex:sex,g:g,age:age,x:s.x,y:s.y,hunger:25,thirst:25}); }
