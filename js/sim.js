@@ -141,7 +141,7 @@ BLS.Sim = (function(){
       if(b.health>=60) b.sickFlag=false;
       if(b.health<=0){ die(b); continue; }
       if(!protect&&(stg==='squab'||stg==='juvenile')){ var hz=(stg==='squab'?C.SQUAB_HZ:C.JUV_HZ)*(0.5+G.dirt/100+b.stress/100+(b.hunger>70?0.5:0)); if(Math.random()<hz*dt){ die(b,'c_young'); continue; } }
-      { var ad_=b.age/24, os_=oldStart(b); if(ad_>os_&&Math.random()<Math.pow(Math.min(1,(ad_-os_)/Math.max(1,lifeD(b)-os_)),2)*0.02*dt){ b.oldAge=true; die(b); continue; } }
+      { var ad_=b.age/24, os_=oldStart(b); if(!protect&&ad_>os_&&Math.random()<Math.pow(Math.min(1,(ad_-os_)/Math.max(1,lifeD(b)-os_)),2)*0.02*dt){ b.oldAge=true; die(b); continue; } }
       if(st0==='squab'&&stg==='juvenile'){ // leaves nest
         var n=b.nest; b.nest=-1; b.st='idle'; b.timer=1; var gp=L.randSpot();
         b.fl={x0:b.x,y0:b.y,z0:b.z,x1:3.3+Math.random()*0.6,y1:L.nestPos(n).y,z1:0,t:0,dur:1.4,arc:0.8}; b.st='fly'; b.after='idle';
