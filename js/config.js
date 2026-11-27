@@ -16,6 +16,7 @@ BLS.CFG = {
   NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.9, OLD_START_D: 150, LIFE_D: 260,
   START_COINS: 1200, START_FEED: 1.6, UPKEEP_PER_BIRD: 3, GUARD_COST: 400, ISO_COST: 250, UP_COST:{heat:350,vent:300,nursery:450,vet:500,flight:400,cam:300}, PRED_P: 0.10, DISEASE_P: 0.05,
   OFFLINE_MAX_H: 48,
+  EXTRA_FEEDER_COST:[150,300,500], EXTRA_WATER_COST:[120,250,400], EXTRA_UNIT_LV:[2,4,6],
   PRICE: { feed5: 90, bird: 260, pair: 480, egg: 25, eggBad: 5, sellK: 1.15, heal: 60 }
 };
 BLS.NAMES = {
@@ -41,7 +42,7 @@ BLS.TXT = {
   ev_egg:'New egg in nest {0}',ev_hatch:'Squab hatched in nest {0}!',ev_cold:'An egg went cold in nest {0}',ev_bad:'Infertile egg removed (nest {0})',
   ev_die:'{0} died',ev_old:'{0} died of old age',ev_sick:'{0} is sick',ev_adult:'{0} is now an adult',ev_hungry:'Feeder is empty',ev_dry:'Water bowl is empty',ev_grow:'{0} left the nest',
   ev_offline:'While you were away: {0} h passed',
-  need_coins:'Not enough coins',need_feed:'No feed in stock',feeder_filled:'Feeder filled',water_filled:'Water refilled',
+  unit_max:'You have all of them',yard_sec:'Yard',buy_feeder:'Extra feeder',buy_waterer:'Extra water dispenser',feeder_d:'Holds 0.6 kg. Birds spread out and queue less.',waterer_d:'Holds 100 units of water. Fills with the dispenser button.',need_coins:'Not enough coins',need_feed:'No feed in stock',feeder_filled:'Feeder filled',water_filled:'Water refilled',
   fed:'{0} was fed',watered:'{0} drank',healed:'{0} feels better',sold_ok:'Sold {0} for {1}',paired:'{0} and {1} are a pair now',
   bought_ok:'Bought',full:'Loft is full',nonest:'No free nest',nothing:'Nothing happening yet. Tap a bird to open its card.',
   feeder:'Feeder',waterbowl:'Water bowl',sacks:'Feed sacks',grain:'Grain',tap_hint:'Tap a bird or a nest. Drag to move, pinch to zoom.',
@@ -65,7 +66,7 @@ BLS.TXT = {
   ev_egg:'بيضة جديدة في العش {0}',ev_hatch:'زغلول فقس في العش {0}!',ev_cold:'بيضة بردت في العش {0}',ev_bad:'اتشالت بيضة غير مخصبة (عش {0})',
   ev_die:'{0} نفق',ev_old:'{0} مات من كبر السن',ev_sick:'{0} تعبان',ev_adult:'{0} بقى بالغ',ev_hungry:'المعلف فاضي',ev_dry:'حوض الميه فاضي',ev_grow:'{0} طلع من العش',
   ev_offline:'وانت غايب عدّى {0} ساعة',
-  need_coins:'العملات مش كفاية',need_feed:'مفيش علف في المخزن',feeder_filled:'المعلف اتملا',water_filled:'الميه اتملت',
+  unit_max:'عندك الحد الأقصى',yard_sec:'الحوش',buy_feeder:'معلف إضافي',buy_waterer:'مسقى مياه إضافي',feeder_d:'بيشيل 0.6 كجم. الطيور بتتوزع ومفيش زحمة.',waterer_d:'بيشيل 100 وحدة مياه. بيتملي من زرار المياه.',need_coins:'العملات مش كفاية',need_feed:'مفيش علف في المخزن',feeder_filled:'المعلف اتملا',water_filled:'الميه اتملت',
   fed:'{0} اتغذى',watered:'{0} شرب',healed:'{0} بقى أحسن',sold_ok:'بعت {0} بـ {1}',paired:'{0} و {1} بقوا زوج',
   bought_ok:'تم الشراء',full:'البرج مليان',nonest:'مفيش عش فاضي',nothing:'لسه مفيش حاجة. دوس على طائر تفتح بطاقته.',
   feeder:'المعلف',waterbowl:'حوض الميه',sacks:'شكاير العلف',grain:'حبوب',tap_hint:'دوس على طائر أو عش. اسحب للتحريك، وكبّر بإصبعين.',
