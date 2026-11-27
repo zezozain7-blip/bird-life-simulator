@@ -9,6 +9,7 @@ import base64,glob,json
 data={}
 for f in sorted(glob.glob(os.path.join(root,'assets/sprites/*.png'))): data['sprites/'+os.path.basename(f)[:-4]]='data:image/png;base64,'+base64.b64encode(open(f,'rb').read()).decode()
 for f in sorted(glob.glob(os.path.join(root,'assets/textures/*.jpg'))): data['textures/'+os.path.basename(f)[:-4]]='data:image/jpeg;base64,'+base64.b64encode(open(f,'rb').read()).decode()
+for f in sorted(glob.glob(os.path.join(root,'assets/bg/*.jpg'))): data['bg/'+os.path.basename(f)[:-4]]='data:image/jpeg;base64,'+base64.b64encode(open(f,'rb').read()).decode()
 DATA_JS='BLS.ASSET_DATA='+json.dumps(data)+';\n'
 def js(m):
     if m.group(1)=='js/assets.js': return '<script>\n'+DATA_JS+open(os.path.join(root,m.group(1)),encoding='utf8').read()+'\n</script>'
