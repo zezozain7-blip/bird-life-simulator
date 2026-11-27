@@ -1,5 +1,7 @@
 // Bird Life Simulator - config & text. Pure data, portable to Unity (ScriptableObjects).
 var BLS = window.BLS = {};
+// reduced motion: the OS setting by default; localStorage bls_rm = '1' (force on) or '0' (force off) from the Farm tools menu
+Object.defineProperty(BLS,'REDUCED',{get:function(){ var v=null; try{ v=localStorage.getItem('bls_rm'); }catch(e){} if(v==='1') return true; if(v==='0') return false; return !!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches); }});
 BLS.CFG = {
   SAVE_KEY: 'bls_save_v1',
   GRID: 12,
