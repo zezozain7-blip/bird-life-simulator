@@ -42,3 +42,4 @@ The isometric scene was replaced by a flat 2D front-on farm (js/scene.js). The o
 - v0.8.1: daily (3) and weekly (2) quests, 7-day login streak reward.
 - v0.9: per-bird cleanliness/mood/stress/personality, visible signs, save v3 migration.
 - v0.10: gradual disease (cold/stomach/pox, causes shown), isolation cage, adaptive challenge level.
+- v0.11: seasons (15 days each), daily weather, heater and ventilation fan.
