@@ -1,20 +1,20 @@
 // Pigeon breeds + aviary species. Pure data, portable like config.js.
 // Pigeon fields: sc = body scale, mul = value multiplier, lv = level needed to buy, f = visual features.
 BLS.BREEDS = {
-  baladi:  {ar:'بلدي',    en:'Baladi',          sc:1.00, mul:1.00, lv:1, f:[]},
-  homer:   {ar:'زاجل',    en:'Racing homer',    sc:1.00, mul:1.25, lv:1, f:['band','wattle']},
-  roller:  {ar:'قلاب',    en:'Roller',          sc:0.95, mul:1.20, lv:1, f:['crest']},
-  swallow: {ar:'سنونو',   en:'Swallow',         sc:1.00, mul:1.35, lv:2, f:['mk_swallow','muff']},
-  nun:     {ar:'الراهبة', en:'Nun',             sc:1.00, mul:1.40, lv:2, f:['mk_nun','crest'], base:'W'},
-  helmet:  {ar:'أبو طاقية',en:'Helmet',         sc:1.00, mul:1.40, lv:2, f:['mk_helmet'], base:'W'},
-  king:    {ar:'كينج',    en:'King',            sc:1.00, mul:1.50, lv:3, f:[]},
-  fantail: {ar:'هزاز',    en:'Fantail',         sc:1.00, mul:1.60, lv:3, f:[]},
-  magpie:  {ar:'العقعق',  en:'Magpie',          sc:0.96, mul:1.60, lv:3, f:['mk_magpie'], base:'W'},
-  maltese: {ar:'مالطي',   en:'Maltese',         sc:1.00, mul:1.70, lv:4, f:[]},
-  pouter:  {ar:'نفاخ',    en:'Pouter',          sc:1.00, mul:1.80, lv:4, f:[]},
-  trumpet: {ar:'بخاري',   en:'Bokhara trumpeter',sc:1.00,mul:2.00, lv:5, f:['crest','rose','muff']},
-  jacobin: {ar:'يعقوبي',  en:'Jacobin',         sc:1.00, mul:2.20, lv:5, f:['ruff']},
-  roman:   {ar:'روماني',  en:'Roman runt',      sc:1.08, mul:2.40, lv:6, f:['wattle']}
+  baladi:  {w:415, ar:'بلدي',    en:'Baladi',          sc:1.00, mul:1.00, lv:1, f:[]},
+  homer:   {w:475, ar:'زاجل',    en:'Racing homer',    sc:1.00, mul:1.25, lv:1, f:['band','wattle']},
+  roller:  {w:275, ar:'قلاب',    en:'Roller',          sc:0.95, mul:1.20, lv:1, f:['crest']},
+  swallow: {w:380, ar:'سنونو',   en:'Swallow',         sc:1.00, mul:1.35, lv:2, f:['mk_swallow','muff']},
+  nun:     {w:370, ar:'الراهبة', en:'Nun',             sc:1.00, mul:1.40, lv:2, f:['mk_nun','crest'], base:'W'},
+  helmet:  {w:350, ar:'أبو طاقية',en:'Helmet',         sc:1.00, mul:1.40, lv:2, f:['mk_helmet'], base:'W'},
+  king:    {w:850, ar:'كينج',    en:'King',            sc:1.00, mul:1.50, lv:3, f:[]},
+  fantail: {w:400, ar:'هزاز',    en:'Fantail',         sc:1.00, mul:1.60, lv:3, f:[]},
+  magpie:  {w:430, ar:'العقعق',  en:'Magpie',          sc:0.96, mul:1.60, lv:3, f:['mk_magpie'], base:'W'},
+  maltese: {w:300, ar:'مالطي',   en:'Maltese',         sc:1.00, mul:1.70, lv:4, f:[]},
+  pouter:  {w:600, ar:'نفاخ',    en:'Pouter',          sc:1.00, mul:1.80, lv:4, f:[]},
+  trumpet: {w:370, ar:'بخاري',   en:'Bokhara trumpeter',sc:1.00,mul:2.00, lv:5, f:['crest','rose','muff']},
+  jacobin: {w:350, ar:'يعقوبي',  en:'Jacobin',         sc:1.00, mul:2.20, lv:5, f:['ruff']},
+  roman:   {w:1250, ar:'روماني',  en:'Roman runt',      sc:1.08, mul:2.40, lv:6, f:['wattle']}
 };
 BLS.BREED_PRICE = 300;   // unused since v0.37 (each breed has pp)
 // real Egyptian market price of a PAIR in EGP (June-Nov 2026): baladi, king, roman, fantail, homer squabs come from published lists; the others are estimates
@@ -37,7 +37,7 @@ BLS.SPECIES = {
   ringneck: {ar:'الدرة',       en:'Ringneck parakeet',price:900,lv:5, body:'#6cc455', head:'#84d268', wing:'#3f9a45', beak:'#d8362c', len:24},
   grey:     {ar:'كاسكو',       en:'African grey',   price:2200,lv:6, body:'#9ba0a6', head:'#b8bcc2', wing:'#70767e', beak:'#222222', len:11, big:1.35, tail:'#c8202a'}
 };
-BLS.AVIARY_CAP = 24; BLS.AVIARY_UPKEEP = 1; BLS.AVIARY_BREED_P = 0.25; BLS.AVIARY_SELL = 0.35;
+BLS.AVIARY_CAP = 24; BLS.AVIARY_UPKEEP = 0.75; BLS.AVIARY_BREED_P = 0.25; BLS.AVIARY_SELL = 0.35;
 (function(){
   var en={breed:'Breed',breeds_shop:'Pigeon breeds',buy_m:'Male',buy_f:'Female',lv_need:'Level {0}',aviary:'Aviary',aviary_info:'Two birds of the same species may raise a chick each day. Each bird costs 1 coin a day.',buy_apair:'Buy a pair',av_full:'Aviary is full',av_chick:'New chick in the aviary: {0}',av_sell:'Sell one',av_own:'Owned',p_ok:'OK'};
   var ar={breed:'السلالة',breeds_shop:'سلالات الحمام',buy_m:'ذكر',buy_f:'أنثى',lv_need:'مستوى {0}',aviary:'قفص العصافير',aviary_info:'كل طيرين من نفس النوع ممكن يطلعوا فرخ جديد كل يوم. كل طير مصاريفه عملة في اليوم.',buy_apair:'اشتري زوج',av_full:'القفص مليان',av_chick:'فرخ جديد في القفص: {0}',av_sell:'بيع واحد',av_own:'عندك'};
@@ -71,3 +71,16 @@ BLS.TXT=BLS.TXT||{en:{},ar:{}}; (function(){ var e=BLS.TXT.en, a=BLS.TXT.ar; e.r
 (function(){ var e=BLS.TXT.en, a=BLS.TXT.ar;
  e.bird_days='bird-days of feed'; e.days_left='days for your flock'; e.c_young='weak young bird'; e.h_c_young='Young birds are fragile (about 13% die in the first days in real lofts). Keep the loft clean, food and water full, and parents well fed.';
  a.bird_days='يوم-طائر علف'; a.days_left='يوم لطيورك'; a.c_young='طائر صغير ضعيف'; a.h_c_young='الصغار هشّة (حوالي 13% بيموتوا في الأيام الأولى في الأبراج الحقيقية). خلّي البرج نضيف والأكل والمية مليانين والأهل مشبعين.'; })();
+(function(){ var e=BLS.TXT.en, a=BLS.TXT.ar;
+ e.gear_maint='Maintenance'; e.gear_broken='Broken: not working'; e.gear_worn='Worn out'; e.gear_ok='Working'; e.gear_run='cost/day'; e.gear_eol='End of life: retire and replace'; e.gear_fixed='{0} repaired'; e.gear_retired='{0} retired, scrap +{1}';
+ e.ev_gear_broke='{0} broke down. Repair or replace it'; e.ev_gear_worn='{0} is worn out, repair soon'; e.al_gear='Gear needs repair';
+ e.gn_guard='Guard'; e.gn_iso='Isolation unit'; e.gn_heat='Heater'; e.gn_vent='Ventilation'; e.gn_nursery='Nursery'; e.gn_vet='Vet kit'; e.gn_flight='Flight area'; e.gn_cam='Camera';
+ a.gear_maint='الصيانة'; a.gear_broken='عطلان: مش شغال'; a.gear_worn='مهترئ'; a.gear_ok='شغال'; a.gear_run='تكلفة/يوم'; a.gear_eol='انتهى عمره: كهّنه واشتري بدله'; a.gear_fixed='تم إصلاح {0}'; a.gear_retired='تم تكهين {0}، خردة +{1}';
+ a.ev_gear_broke='{0} باظ. صلّحه أو بدّله'; a.ev_gear_worn='{0} اتهرّى، صلّحه قريب'; a.al_gear='تجهيزات محتاجة صيانة';
+ a.gn_guard='الحارس'; a.gn_iso='وحدة العزل'; a.gn_heat='التدفئة'; a.gn_vent='التهوية'; a.gn_nursery='الحضانة'; a.gn_vet='عدة البيطري'; a.gn_flight='منطقة الطيران'; a.gn_cam='الكاميرا'; })();
+(function(){ var e=BLS.TXT.en, a=BLS.TXT.ar;
+ e.al_med='Medicine in water'; e.al_medgo='Treat all via water'; e.med_on='Medicated water is already running'; e.med_none='No sick birds'; e.med_nowater='Fill the drinker first'; e.med_started='Medicated water for 5 days, cost {0}. Sick birds improve gradually'; e.ev_med_end='Water course finished';
+ a.al_med='علاج في المية'; a.al_medgo='علاج الكل بالمية'; a.med_on='المية المعالَجة شغالة بالفعل'; a.med_none='مفيش طيور مريضة'; a.med_nowater='املا المشرب الأول'; a.med_started='مية معالَجة لمدة 5 أيام، التكلفة {0}. المريض هيتحسن تدريجياً'; a.ev_med_end='خلص كورس العلاج في المية'; })();
+(function(){ var e=BLS.TXT.en, a=BLS.TXT.ar;
+ e.cap_sec='Bigger feeder and drinker'; e.cap_feeder='Feeder size (each dish)'; e.cap_water='Drinker size (each)'; e.cap_now='Now';
+ a.cap_sec='معلف ومشرب أكبر'; a.cap_feeder='حجم المعلف (كل واحد)'; a.cap_water='حجم المشرب (كل واحد)'; a.cap_now='دلوقتي'; })();
