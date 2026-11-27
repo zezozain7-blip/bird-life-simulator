@@ -41,7 +41,7 @@ BLS.Sim = (function(){
   }
   function newGame(lang){
     G = { v:1, t:0, coins:C.START_COINS, feed:C.START_FEED, xp:0, level:1, birds:[], eggs:[], nests:[], nextId:1,
-      feeder:{grain:0.3}, water:{amt:80}, tasks:{}, stats:{hatched:0,sold:0,bought:0,died:0,hand:0,boughtFeed:0},
+      feeder:{grain:0.6}, water:{amt:1200}, tasks:{}, stats:{hatched:0,sold:0,bought:0,died:0,hand:0,boughtFeed:0},
       lang:lang||'ar', speed:1, archive:{}, log:[], savedAt:Date.now(), nestsOpen:4, perches:[] };
     for(var i=0;i<C.NEST_COUNT;i++) G.nests.push(null);
     ensureUnits(); ensureComp();
@@ -134,11 +134,12 @@ BLS.Sim = (function(){
       if(b.dis){ b.dis.t+=dt; var sg=Math.min(2,Math.floor(b.dis.t/24)); b.health-=(0.2+0.15*sg)*dt*(b.iso?0.8:1); dmg(b,'disease',(0.2+0.15*sg)*dt*(b.iso?0.8:1)); b.stress=Math.min(100,b.stress+0.5*dt); if(b.dis.t>120&&b.health>45&&Math.random()<0.02*dt*((G.up&&G.up.vet)?3:1)){ b.dis=null; b.iso=false; emit('event',T('ev_recover',b.name),'birds',b.id); } }
       if(protect){ b.hunger=Math.min(b.hunger,80); b.thirst=Math.min(b.thirst,80); }
       b.hunger=Math.min(100,b.hunger); b.thirst=Math.min(100,b.thirst);
-      if(b.hunger>90||b.thirst>90){ b.health-=3*dt; if(b.hunger>90&&b.thirst>90){ dmg(b,'hunger',1.5*dt); dmg(b,'thirst',1.5*dt); } else dmg(b,b.hunger>90?'hunger':'thirst',3*dt); } else if(b.hunger<60&&b.thirst<60&&!b.dis) b.health=Math.min(100,b.health+0.6*dt);
+      if(b.hunger>90||b.thirst>90){ var hd=b.hunger>90?C.STARVE_H*(stg==='squab'?2:1)*dt:0, td=b.thirst>90?C.DEHYD_H*(stg==='squab'?1.5:1)*dt:0; b.health-=hd+td; dmg(b,'hunger',hd); dmg(b,'thirst',td); } else if(b.hunger<60&&b.thirst<60&&!b.dis) b.health=Math.min(100,b.health+0.6*dt);
       if(protect&&b.health<30) b.health=30;
       if(b.health<45&&!b.sickFlag){ b.sickFlag=true; emit('event',T('ev_sick',b.name),'birds',b.id); }
       if(b.health>=60) b.sickFlag=false;
       if(b.health<=0){ die(b); continue; }
+      if(!protect&&(stg==='squab'||stg==='juvenile')){ var hz=(stg==='squab'?C.SQUAB_HZ:C.JUV_HZ)*(0.5+G.dirt/100+b.stress/100+(b.hunger>70?0.5:0)); if(Math.random()<hz*dt){ die(b,'c_young'); continue; } }
       { var ad_=b.age/24, os_=oldStart(b); if(ad_>os_&&Math.random()<Math.pow(Math.min(1,(ad_-os_)/Math.max(1,lifeD(b)-os_)),2)*0.02*dt){ b.oldAge=true; die(b); continue; } }
       if(st0==='squab'&&stg==='juvenile'){ // leaves nest
         var n=b.nest; b.nest=-1; b.st='idle'; b.timer=1; var gp=L.randSpot();
@@ -180,10 +181,11 @@ BLS.Sim = (function(){
   function lifeD(b){ ensureBird(b); return C.LIFE_D*(0.8+(b.g.vit||50)/250); }
   function oldStart(b){ return C.OLD_START_D*(0.8+(b.g.vit||50)/250); }
   function ageFert(b){ var a=b.age/24,s=oldStart(b); if(a<=s) return 1; return Math.max(0.35,1-0.65*(a-s)/Math.max(1,lifeD(b)-s)); }
+  function migrate5(){ (G.xw||[]).concat([G.water]).forEach(function(u){ if(u&&u.amt<=100) u.amt*=15; }); }
   function migrate4(){
     G.feed=(G.feed||0)/5; if(G.feeder) G.feeder.grain=(G.feeder.grain||0)/5;
     (G.birds||[]).forEach(function(b){ if(b.age>=240) b.age+=240; else if(b.age>96) b.age=96+(b.age-96)*(384/144); });
-    G.saveVersion=4;
+    G.saveVersion=5;
   }
   function dmg(b,k,v){ if(v<=0) return; b.dmg=b.dmg||{}; b.dmg[k]=(b.dmg[k]||0)+v; }
   // cause of death: old age and predators are explicit; otherwise the source that took the most health from this bird
@@ -459,7 +461,7 @@ BLS.Sim = (function(){
   function season(){ return Math.floor((dayNum()-1)/15)%4; }
   function rollWeather(){ var tb=WTAB[season()], r=Math.random(), acc=0, w='clear'; for(var i=0;i<tb.length;i++){ acc+=tb[i][1]; if(r<acc){ w=tb[i][0]; break; } }
     var prev=G.weather; G.weather=w; var bad=(w==='heat'&&!(G.up&&G.up.vent))||(w==='cold'&&!(G.up&&G.up.heat)); G.weatherBad=bad; if(w!==prev&&w!=='clear') emit('event',T('ev_w_'+w),'farm'); }
-  function wMul(){ var w=G.weather, up=G.up||{}; return { th:w==='heat'?(up.vent?1.15:1.5):1, hu:w==='cold'?(up.heat?1.1:1.3):1 }; }
+  function wMul(){ var w=G.weather, up=G.up||{}; return { th:w==='heat'?(up.vent?1.4:2):1, hu:w==='cold'?(up.heat?1.1:1.3):1 }; }
   function buyUp(k){ var cost=C.UP_COST[k]; G.up=G.up||{}; if(G.up[k]) return; if(G.coins<cost) return emit('toast',T('need_coins')); G.coins-=cost; G.up[k]=1; emit('sfx','build'); emit('toast',T('up_done')); }
   function newEvent(){
     var d=dayNum(), kinds=['stray','rare','trader','injured','shortage'], k=Gen.rnd(kinds), id=(G.evSeq=(G.evSeq||0)+1), ev={id:id,k:k,exp:d+2};
@@ -586,15 +588,15 @@ BLS.Sim = (function(){
   }
   function save(){
     if(!G) return; G.savedAt=Date.now();
-    try{ G.saveVersion=4; var old=localStorage.getItem(C.SAVE_KEY); if(old&&old.length>20) localStorage.setItem(C.SAVE_KEY+'_bak',old); localStorage.setItem(C.SAVE_KEY,JSON.stringify(G)); }catch(e){}
+    try{ G.saveVersion=5; var old=localStorage.getItem(C.SAVE_KEY); if(old&&old.length>20) localStorage.setItem(C.SAVE_KEY+'_bak',old); localStorage.setItem(C.SAVE_KEY,JSON.stringify(G)); }catch(e){}
   }
   function load(){
     var raw=null; try{ raw=localStorage.getItem(C.SAVE_KEY); }catch(e){}
     if(!raw) return false;
     try{ G=JSON.parse(raw); }catch(e){ try{ G=JSON.parse(localStorage.getItem(C.SAVE_KEY+'_bak')); }catch(e2){ return false; } }
     if(!G||!G.birds) return false;
-    if((G.saveVersion||0)<4){ migrate4(); }
-    ensureUnits(); ensureOrders(); ensureComp(); ensureQuests(); G.birds.forEach(ensureBird); fixNames(); G.saveVersion=4;
+    if((G.saveVersion||0)<4){ migrate4(); } if((G.saveVersion||0)<5){ migrate5(); }
+    ensureUnits(); ensureOrders(); ensureComp(); ensureQuests(); G.birds.forEach(ensureBird); fixNames(); G.saveVersion=5;
     if(!G.weather){ G.weather='clear'; G.up={}; }
     mk(); if(!G.pend) G.pend=[];
     if(G.nestsOpen===undefined){ G.nestsOpen=8; G.perches=[]; }
