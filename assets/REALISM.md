@@ -114,3 +114,11 @@ Drawn procedurally (own code, no third-party art) for baladi, homer, roller, kin
 
 ## v0.53 (motion polish, visual only, no gameplay numbers)
 - Idle micro-animations: breathing, head-bob sway, a small hop every ~6.7 s, wing-flap squash in flight. Pooled feather/dust particles, hard cap 60. Reduced motion (OS setting, or the Farm tools toggle) turns these and the dust-mote drift off.
+
+## v0.54 (UI redesign "Ghieh & Terracotta", visual only)
+- New look (body.ui2) with a switch back to the old look (Farm tools menu, More grid, hub). Saved in localStorage 'bls_ui'.
+- No game number changed. The only data change: the bird pill now shows "birds / population cap" using the existing Sim.popCap() (Game mechanic, see earlier notes).
+- Colours, sizes (44px targets, 136px HUD limit), radii and timings (280/220 ms sheets, 9 s chip, 2.6 s toast) are DESIGN CHOICES from the Gemini concept, not sourced real-world values.
+- Fonts are system stacks only; the Arabic look depends on the phone. Feed pill turns amber under 2 kg: a UI threshold, design choice.
+- Bird sprites: Gemini art not yet integrated; vector pigeons remain.
+- v0.55: fix only. A closed sheet could peek over the bottom tab bar (its slide-out distance was shorter than the nav offset); now fully off-screen and visibility:hidden. Visual only.
