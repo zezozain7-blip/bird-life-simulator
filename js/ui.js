@@ -4,7 +4,7 @@ BLS.UI = (function(){
   var $=function(id){return document.getElementById(id);};
   var sheet, body, cur={kind:null}, toastT=0, lastEvent=null;
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function toast(m){ var t=$('toast'); t.innerHTML=BLS.Icons.emo(esc(m)); t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove('show');},2200); }
+  function toast(m,ms){ var t=$('toast'); t.innerHTML=BLS.Icons.emo(esc(m)); t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove('show');},ms||2200); }
   function applyLang(){ var G=Sim.G; document.documentElement.lang=G.lang; $('b-lang').textContent=G.lang==='ar'?'EN':'ع';
     document.querySelectorAll('[data-i]').forEach(function(e){ e.textContent=T(e.getAttribute('data-i')); }); sheet.classList.toggle('rtl',G.lang==='ar'); $('nav').classList.toggle('rtl-nav',G.lang==='ar'); }
   function ad(n){ return String(n); }
@@ -31,6 +31,7 @@ BLS.UI = (function(){
   function sexTxt(b){ return (b.sex==='M'?'♂ ':'♀ ')+T(b.sex==='M'?'male':'female'); }
   function archName(id){ var a=Sim.G.archive[id]; return a?a.name:T('unknown'); }
   // ----- bird card
+  function pairWarn(b){ if(!b||b.mate<0||b.mate==null) return ''; var m=Sim.bird(b.mate); if(!m) return ''; var G=Sim.G, eggs=0, sq=0, n; for(n=0;n<G.nests.length;n++){ var o=G.nests[n]; if(o&&(o.m===b.id||o.f===b.id)){ eggs+=G.eggs.filter(function(e){return e.nest===n&&!e.dead;}).length; sq+=G.birds.filter(function(x){return x.nest===n&&Sim.stageOf(x)==='squab';}).length; } } return T('pw_pair',b.name,m.name,m.name)+(eggs?T('pw_eggs',eggs):'')+(sq?T('pw_sq',sq,m.name):'')+((eggs||sq)?'':T('pw_none')); }
   function showBird(id,keep){
     var b=Sim.bird(id); if(!b) return close();
     BLS.Scene.select(id); if(!keep){ BLS.Scene.focus(b.x,b.y,b.z); }
@@ -64,7 +65,7 @@ BLS.UI = (function(){
     $('a-tree').onclick=function(){ showTree(id); };
     $('a-follow').onclick=function(){ BLS.Scene.setFollow(!BLS.Scene.isFollow()); toast(BLS.Scene.isFollow()?'🎥 ON':'🎥 OFF'); };
     $('a-ren').onclick=function(){ var v=$('a-name').value.trim(); if(v){ b.name=v; Sim.G.archive[b.id].name=v; showBird(id,1); } };
-    $('a-sell').onclick=function(){ if(this.dataset.s){ Sim.sell(b); close(); } else { this.dataset.s=1; this.innerHTML=BLS.Icons.emo(T('sure')+' '+T('sell')+' 🪙 '+Sim.sellPrice(b)); } };
+    $('a-sell').onclick=function(){ if(this.dataset.s){ Sim.sell(b); close(); } else { this.dataset.s=1; var pw=pairWarn(b); if(pw) toast('⚠ '+pw,7000); this.innerHTML=BLS.Icons.emo(T('sure')+' '+T('sell')+' 🪙 '+Sim.sellPrice(b)); } };
   }
   function showPick(id){
     var b=Sim.bird(id), h='<div class="row">'+T('pick_partner')+'</div>';
@@ -174,7 +175,7 @@ BLS.UI = (function(){
   function shopAct(act){
     var p=act.split(':'), G=Sim.G;
     // selling needs a second tap
-    if(/^(sb|se|sa|or)$/.test(p[0])&&sellArm!==act){ sellArm=act; return showShop(shopTab); }
+    if(/^(sb|se|sa|or)$/.test(p[0])&&sellArm!==act){ sellArm=act; if(p[0]==='sb'){ var wb=Sim.bird(+p[1]); var pw=pairWarn(wb); if(pw) toast('⚠ '+pw,7000); } else if(p[0]==='or'){ var wb2=Sim.bird(+p[2]); var pw2=pairWarn(wb2); if(pw2) toast('⚠ '+pw2,7000); } return showShop(shopTab); }
     sellArm=null;
     if(p[0]==='feed') Sim.buyFeed(); else if(p[0]==='mix') Sim.buyMix(); else if(p[0]==='rbird') Sim.buyBird(); else if(p[0]==='rpair') Sim.buyPair();
     else if(p[0]==='br') Sim.buyBreed(p[1],p[2]); else if(p[0]==='av') Sim.avBuy(p[1]);
