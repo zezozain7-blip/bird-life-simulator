@@ -37,6 +37,11 @@ BLS.UI = (function(){
       +'<div class="row"><span class="lab">🌾 '+T('fullness')+'</span>'+bar(100-b.hunger,true)+'</div>'
       +'<div class="row"><span class="lab">💧 '+T('hydration')+'</span>'+bar(100-b.thirst,true)+'</div>'
       +'<div class="row"><span class="lab">❤ '+T('health')+'</span>'+bar(b.health,true)+'</div>'
+      +'<div class="row"><span class="lab">✨ '+T('cleanliness')+'</span>'+bar(b.clean,true)+'</div>'
+      +'<div class="row"><span class="lab">😌 '+T('mood')+'</span>'+bar(b.mood,true)+'</div>'
+      +'<div class="row"><span class="lab">😰 '+T('stress')+'</span>'+bar(100-b.stress,true)+'</div>'
+      +'<div class="kv"><span>'+T('personality')+'</span><span>'+T(Sim.PERS[b.pers].k)+'</span></div>'
+      +(Sim.symptoms(b).length?'<div class="kv"><span>'+T('signs')+'</span><span>'+Sim.symptoms(b).map(function(k){return T(k);}).join('، ')+'</span></div>':'')
       +'<div class="kv"><span>'+T('age')+'</span><span>'+(b.age/24).toFixed(1)+' '+T('days')+'</span></div>'
       +'<div class="kv"><span>'+T('weight')+'</span><span>'+Sim.weightOf(b)+' g</span></div>'
       +'<div class="kv"><span>'+T('genes')+'</span><span dir="ltr">'+Gen.geneString(b.g)+'</span></div>'
