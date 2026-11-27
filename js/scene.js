@@ -111,7 +111,7 @@ BLS.Scene = (function(){
     if(brood){ // brooding: body sunk into the nest, legs and belly hidden behind the straw rim, sitting on the eggs
       var nr=nestRect(b.nest), nx=nr.x+nr.w*0.5, fy=nr.y+nr.h-3, bh=50*sz;
       c.save(); c.beginPath(); c.rect(nr.x-6,fy-bh-30,nr.w+12,bh+30-1); c.clip();
-      Spr.draw(c,nx,fy+bh*0.12,sz*1.0,b.face,{br:BLS.Gen.breedOf(b.g),col:BLS.Gen.phenoColor(b.g),pat:BLS.Gen.phenoPattern(b.g),pose:'sit',ph:b.ph,stage:stg});
+      Spr.draw(c,nx,fy+bh*0.05,sz*1.2,b.face,{br:BLS.Gen.breedOf(b.g),col:BLS.Gen.phenoColor(b.g),pat:BLS.Gen.phenoPattern(b.g),pose:(BLS.VS&&BLS.VS.has(BLS.Gen.breedOf(b.g))?'brood':'sit'),ph:b.ph,stage:stg});
       c.restore();
       c.fillStyle='#d4a84b'; c.strokeStyle='#a97c2a'; c.lineWidth=1;
       for(var hi=0;hi<9;hi++){ var hx=nr.x+12+hi*(nr.w-24)/8; c.beginPath(); c.ellipse(hx,fy,6.5,2.4,(hi%2?0.25:-0.2),0,6.3); c.fill(); c.stroke(); }
