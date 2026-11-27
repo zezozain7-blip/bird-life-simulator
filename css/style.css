@@ -145,3 +145,11 @@ input.name{background:#0006;border:1px solid #6d5a34;color:#fff;border-radius:8p
 #toast{top:96px;font-size:12.5px;padding:6px 12px;max-width:70%}
 #alerts.compact .al small{display:none}#alerts.compact .al{padding:4px 8px}
 #alerts .al-med,#alerts .al-medgo{border-color:#4a8fb5;background:linear-gradient(#1d3547,#101f2b)}
+
+/* v0.45 smaller notifications */
+#alerts{top:246px;gap:4px;max-width:40%}
+#alerts .al{padding:2px 6px;gap:3px;border-radius:14px;font-size:11px;box-shadow:none;opacity:.92}
+#alerts .al span{font-size:13px}#alerts .al b{font-size:11px}#alerts .al small{display:none}
+#alerts .alx{font-style:normal;font-size:13px;line-height:1;margin-inline-start:4px;padding:0 3px;opacity:.7}
+#ticker{font-size:11px;padding:3px 8px;gap:4px;max-width:58%;bottom:calc(80px + env(safe-area-inset-bottom))}
+#toast{font-size:11.5px;padding:4px 10px;top:88px}
