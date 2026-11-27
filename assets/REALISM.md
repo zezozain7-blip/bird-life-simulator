@@ -122,3 +122,16 @@ Drawn procedurally (own code, no third-party art) for baladi, homer, roller, kin
 - Fonts are system stacks only; the Arabic look depends on the phone. Feed pill turns amber under 2 kg: a UI threshold, design choice.
 - Bird sprites: Gemini art not yet integrated; vector pigeons remain.
 - v0.55: fix only. A closed sheet could peek over the bottom tab bar (its slide-out distance was shorter than the nav offset); now fully off-screen and visibility:hidden. Visual only.
+
+## v0.56 (Gemini bird images, old look removed, QA fixes)
+- Gemini photo-style images (user-supplied, 11 breeds x stand/fly/peck/brood) are used ONLY when the game colour matches the picture:
+  homer = grey+chequer (blue-chequer), roller = grey+bar (blue-bar), roman = grey+chequer, king/fantail/trumpet = white, maltese = red,
+  swallow = white body (black-and-white), nun/helmet/magpie = white base with black marks (any colour except red).
+- Everything else (other colours of those breeds, baladi, pouter, jacobin, all squabs and juveniles) keeps the vector sprites, so a wrong-colour bird is never shown as a real breed colour. No tinting is used.
+- Known weak images (from the supplier): roller and roman heads are not true to breed; nun and helmet look alike. Images are shrunk (about 200 px stand height, WebP) and mirrored so all face right. Sizes on screen are design choices.
+- Old look removed; saved flag cleared. Pair-sell warning now shows inside the sheet. No game numbers changed.
+
+## v0.57 (ported from the user's v0.58 zip)
+- Blink and head-scan on resting vector pigeons are DESIGN CHOICES (visual only, no game effect): blink phase = ph*0.19, lid closed about 4.5% of the cycle (a blink every few seconds, staggered per bird), head sway amplitude about 1.25 px x and 0.65 px y at slow rates. Real pigeons blink a few times a minute; these timings are not sourced, only a look. Off in flight and with reduced motion.
+- Offline catch-up no longer kills birds by old age while you are away (same protection as hunger/health). 7 real days away = 105 game days (clock 15x), as in config.
+- Service worker now precaches the full shell; pinch zoom of the page stays OFF (viewport unchanged).
