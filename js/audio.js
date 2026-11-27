@@ -2,6 +2,15 @@
 BLS.Audio = (function(){
   var ac=null, master=null, muted=false, amb=null, lastFlap=0, lastCoo=0;
   try{ muted=localStorage.getItem('bls_mute')==='1'; }catch(e){}
+  // ---- seasonal music (real audio files, one loop per season, crossfaded)
+  var mus=[], musSeason=-1, musCur=null, MV=0.32;
+  function musicTick(){
+    if(!ac||!BLS.Sim.G||!BLS.Art||!BLS.Art.musicSrc) return;
+    var s=BLS.Sim.season();
+    if(s!==musSeason){ musSeason=s; if(!mus[s]){ var el=new Audio(BLS.Art.musicSrc(s)); el.loop=true; el.volume=0; mus[s]=el; } var p=mus[s].play(); if(p&&p.catch) p.catch(function(){}); }
+    for(var i=0;i<mus.length;i++){ var m=mus[i]; if(!m) continue; var target=(i===s&&!muted&&!document.hidden)?MV:0; m.volume=Math.max(0,Math.min(1,m.volume+(target-m.volume)*0.15)); if(i!==s&&m.volume<0.01&&!m.paused) m.pause(); if(i===s&&m.paused&&!muted&&!document.hidden){ var q=m.play(); if(q&&q.catch) q.catch(function(){}); } }
+  }
+  setInterval(musicTick,400);
   function start(){
     if(ac){ if(ac.state==='suspended') ac.resume(); return; }
     var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
