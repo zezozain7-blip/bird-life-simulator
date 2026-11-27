@@ -98,7 +98,7 @@ BLS.Scene = (function(){
     var g=c.createRadialGradient(-2,-6,1,0,-4,10); g.addColorStop(0,e.dead?'#b7b2a4':'#fffdf4'); g.addColorStop(1,e.dead?'#7f7a6c':'#d9d0b6'); c.fillStyle=g; c.beginPath(); c.ellipse(0,-4,6.5,8.5,0,0,6.3); c.fill(); c.restore(); }
   // --- background
   function drawBackdrop(c){
-    var tb=BLS.Art&&BLS.Art.tex('town');
+    var tb=BLS.Art&&(BLS.Art.tex('town'+(BLS.Sim.G?BLS.Sim.season():0))||BLS.Art.tex('town'));
     if(tb){ var k=Math.max(W/tb.width,H/tb.height)*1.06, dw=tb.width*k, dh=tb.height*k, sh=(cam.x-WW/2)*0.04; c.drawImage(tb,(W-dw)/2-sh,Math.min(0,(H-dh)*0.18),dw,dh); return; }
     var g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#6fa4d4'); g.addColorStop(0.5,'#f6d9a4'); g.addColorStop(1,'#8fb35a'); c.fillStyle=g; c.fillRect(0,0,W,H);
   }
@@ -158,6 +158,9 @@ BLS.Scene = (function(){
     c.setTransform(dpr,0,0,dpr,0,0);
     if(!vigC||vigC.width!==cv.width||vigC.height!==cv.height){ vigC=document.createElement('canvas'); vigC.width=cv.width; vigC.height=cv.height; var vc=vigC.getContext('2d'); vc.scale(dpr,dpr); var vg=vc.createRadialGradient(W/2,H*0.5,Math.min(W,H)*0.5,W/2,H*0.5,Math.max(W,H)*0.8); vg.addColorStop(0,'rgba(20,12,0,0)'); vg.addColorStop(1,'rgba(20,12,0,0.3)'); vc.fillStyle=vg; vc.fillRect(0,0,W,H); }
     c.drawImage(vigC,0,0,W,H);
+    var sn=BLS.Sim.G?BLS.Sim.season():0, stint=['rgba(120,220,120,0.07)','rgba(255,210,90,0.08)','rgba(230,120,30,0.12)','rgba(170,200,255,0.18)'][sn]; c.fillStyle=stint; c.fillRect(0,0,W,H);
+    if(sn===3||sn===2||(BLS.Sim.G&&BLS.Sim.G.weather==='rain')){ var n=sn===3?40:sn===2?16:60, tm=performance.now()/1000; c.fillStyle=sn===3?'rgba(255,255,255,0.85)':sn===2?'rgba(214,120,40,0.8)':'rgba(190,210,235,0.5)';
+      for(var pi=0;pi<n;pi++){ var sp=sn===3?40:sn===2?55:420, px=((pi*97.3+tm*(sn===1?0:18)*(pi%3+1))%(W+40))-20, py=((pi*53.7+tm*sp*(0.6+(pi%5)*0.15))%(H+20)); if(sn===3||sn===2){ c.beginPath(); c.arc(px,py,sn===3?2.2:2.8,0,6.3); c.fill(); } else c.fillRect(px,py,1.2,9); } }
     var h=Sim.hourOfDay(), tc=tint(h); if(tc!=='rgb(255,255,255)'){ c.globalCompositeOperation='multiply'; c.fillStyle=tc; c.fillRect(0,0,W,H); c.globalCompositeOperation='source-over'; }
   }
   // --- picking
