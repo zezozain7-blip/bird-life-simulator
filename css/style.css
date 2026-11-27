@@ -124,3 +124,13 @@ input.name{background:#0006;border:1px solid #6d5a34;color:#fff;border-radius:8p
 @keyframes pop{from{transform:scale(.3);opacity:0}}
 #lvlup>i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall 2.6s linear forwards}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+
+/* v0.27 UI pass */
+#sheet-body p{font-size:13px;line-height:1.55;margin:8px 0;color:#d9c9a0}
+#sheet-body h4{font-size:15px;margin:14px 0 6px;color:#ffd36a}
+.btn2{min-height:44px;display:inline-flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;line-height:1.25}
+.btn2 small{display:block;font-weight:400;font-size:11px;opacity:.85}
+.kv span:last-child{unicode-bidi:plaintext;text-align:end}
+#sheet-body .row{gap:8px;align-items:stretch}
+.card .nm{overflow-wrap:anywhere}
+@media (max-width:380px),(max-height:640px){#sheet{max-height:70%}.btn2{font-size:13px;padding:8px 8px;min-width:70px}#sheet-bar{font-size:17px}}
