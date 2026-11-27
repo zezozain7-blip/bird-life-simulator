@@ -71,6 +71,11 @@ BLS.VS = (function(){
     var bx=-1, by=-(leg+ry*0.78)+bob;
     var hx=K_.hx, hy=K_.hy-bob*0.5;
     if(walk){ hx+=Math.sin(ph*9)*1.4; }
+    else if(!fly&&!peck&&!brood&&!BLS.REDUCED){
+      // Calm, slow head scanning gives each resting bird a slightly different living rhythm.
+      hx+=Math.sin(ph*0.72+0.6)*1.25;
+      hy+=Math.sin(ph*0.43+1.1)*0.65;
+    }
     if(peck){ var k=0.5+0.5*Math.sin(ph*11); tilt-=0.35; hx=K_.hx+4+k*4; hy=K_.hy*0.45-k*(K_.hy*0.28); by+=1.5; }
     if(pose==='preen'){ hx=K_.hx*0.1; hy=K_.hy*0.78; }
     if(pose==='coo'){ hy+= -Math.abs(Math.sin(ph*8))*1.2; }
@@ -140,6 +145,18 @@ BLS.VS = (function(){
     var ex=hc[0]+hr*0.32, ey=hc[1]-hr*0.18;
     ell(c,ex,ey,2.1,2.1); c.fillStyle='#f4efe4'; c.fill();
     ell(c,ex,ey,1.55,1.55); c.fillStyle=P.eye; c.fill(); ell(c,ex+0.1,ey,0.85,0.85); c.fillStyle='#14100c'; c.fill(); ell(c,ex-0.35,ey-0.45,0.3,0.3); c.fillStyle='#fff'; c.fill();
+    // Natural, deterministic blink: staggered by each bird's simulation phase (no frame randomness).
+    if(!fly&&!BLS.REDUCED){
+      var blinkPhase=((ph*0.19+0.137)%1+1)%1;
+      var blink=Math.max(0,1-Math.abs(blinkPhase-0.925)/0.045);
+      if(blink>0){
+        c.save(); c.globalAlpha=0.96*blink; c.fillStyle=shade(P.head,0.98);
+        ell(c,ex,ey,2.05,0.25+1.9*blink,0); c.fill();
+        c.strokeStyle=shade(P.head,0.78); c.lineWidth=0.65;
+        c.beginPath(); c.moveTo(ex-1.9,ey); c.quadraticCurveTo(ex,ey+0.9+1.5*blink,ex+1.9,ey); c.stroke();
+        c.restore();
+      }
+    }
   }
   return {draw:draw,has:has,K:K};
 })();
