@@ -31,3 +31,11 @@ Sound, family tree (bird card > Family tree), build mode (hammer button: open ne
 
 ## v0.7 (flat 2D rebuild)
 The isometric scene was replaced by a flat 2D front-on farm (js/scene.js). The old isometric scene is not shipped. sim.js is unchanged except: unpaired adults now pair up automatically, egg fertility odds are higher, birds face left/right by lateral movement.
+
+## v0.8 (challenge, rivals, performance)
+- Slower breeding: incubation 96 h, squab 96 h, adult at 240 h, 72 h cool-down between clutches, second egg 50%, population cap = 6 + 3 per open nest.
+- Tougher economy: start 1200 coins and 8 kg feed, feed 90 per 5 kg and 0.005 kg per hunger unit, daily upkeep 5 coins per bird, dearer birds/pairs/heal, sell price x0.85.
+- Hazards: disease (rises with dirt, spreads), cat raids (stopped by the 400-coin night guard), clean-loft chore.
+- Competition: weekly show vs 3 AI rivals that get stronger each week, leaderboard, prizes.
+- Goals: 7 long goals added to tasks.
+- Performance: static scenery baked to cached layers (about 4x less drawing time), opaque canvas, vignette cached, simulation stepped in 0.06 h chunks, saves every 15 s.
