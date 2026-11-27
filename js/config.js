@@ -8,15 +8,15 @@ BLS.CFG = {
   THIRST_RATE: 2.4,
   EAT_SPEED: 30,               // hunger units removed per real second while eating
   DRINK_SPEED: 40,
-  GRAIN_PER_UNIT: 0.003,       // kg per hunger unit
+  GRAIN_PER_UNIT: 0.005,       // kg per hunger unit
   WATER_PER_UNIT: 0.06,
   FEEDER_CAP: 3, WATER_CAP: 100,
-  EGG_INCUBATION_H: 72, SQUAB_H: 72, JUVENILE_H: 168,   // hatch at 3 d, leave nest 3 d later, adult at 7 d
+  EGG_INCUBATION_H: 96, SQUAB_H: 96, JUVENILE_H: 240,   // hatch at 3 d, leave nest 3 d later, adult at 7 d
   EGG_COLD_LIMIT_H: 18,
-  NEST_COUNT: 8, MAX_BIRDS: 40,
-  START_COINS: 2500, START_FEED: 15,
+  NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.5,
+  START_COINS: 1200, START_FEED: 8, UPKEEP_PER_BIRD: 5, GUARD_COST: 400, PRED_P: 0.10, DISEASE_P: 0.05,
   OFFLINE_MAX_H: 48,
-  PRICE: { feed5: 60, bird: 180, pair: 330, heal: 40 }
+  PRICE: { feed5: 90, bird: 220, pair: 420, heal: 60 }
 };
 BLS.NAMES = {
   en: ['Zaki','Hamama','Nour','Mazen','Salma','Yara','Omar','Laila','Karim','Dina','Adel','Rania','Tarek','Hana','Sami','Mona','Fouad','Nada','Ramy','Aya'],
@@ -45,7 +45,7 @@ BLS.TXT = {
   fed:'{0} was fed',watered:'{0} drank',healed:'{0} feels better',sold_ok:'Sold {0} for {1}',paired:'{0} and {1} are a pair now',
   bought_ok:'Bought',full:'Loft is full',nonest:'No free nest',nothing:'Nothing happening yet. Tap a bird to open its card.',
   feeder:'Feeder',waterbowl:'Water bowl',sacks:'Feed sacks',grain:'Grain',tap_hint:'Tap a bird or a nest. Drag to move, pinch to zoom.',
-  reference:'Sold price',sure:'Sure?',welcome:'Welcome back',orders:'Neighbour orders',o_want:'wants an adult {0} bird',o_pat:'{0}',o_pay:'Pays',o_fill:'Fill with',o_none:'No bird of yours matches yet. Breed one!',away:'Time away',w_eggs:'Eggs laid',w_hatch:'Hatched',w_died:'Lost',w_grain:'Grain eaten',w_water:'Water used',w_note:'The birds were looked after while you were away (up to 48 game hours, no deaths).',ok:'OK',tree:'Family tree',gone:'gone',children:'Children',grandp:'Grandparents',build:'Build',built:'Built!',nests_open:'Nests',perch_stands:'Perch stands',buy_nest:'Open a nest',buy_perch:'Add a perch stand',locked:'Locked nest',maxed:'Maximum',sound:'Sound',no_kids:'No offspring yet',
+  reference:'Sold price',sure:'Sure?',welcome:'Welcome back',ev_upkeep:'Daily upkeep paid: {0} coins',ev_disease:'Disease hit {0}! Heal it and clean the loft.',ev_pred:'A cat raided the loft and {0} was lost! Buy the night guard.',ev_pred_ok:'The night guard scared off a predator.',ev_dirty:'The loft is dirty, disease risk is high.',clean:'Clean loft',clean_done:'Loft cleaned',dirt:'Dirt',guard:'Night guard (stops raids)',guard_done:'Night guard installed',t_ten:'Own 10 birds',t_hatch10:'Hatch 10 squabs',t_win:'Win a pigeon show',t_white:'Own a white pigeon',t_rich:'Hold 3000 coins',t_nests:'Open 6 nests',t_orders3:'Fill 3 neighbour orders',comp:'Competition',comp_next:'Next show in',comp_h:'{0} h',comp_enter:'Enter',comp_entered:'Entered',comp_score:'Score',comp_rank:'Leaderboard',comp_you:'You',comp_last:'Last show',comp_place:'Place {0}',comp_prize:'Prize',comp_none:'You need an adult bird to enter.',comp_info:'A show every 7 days. The best bird wins coins. Rivals get stronger every week, so breed better birds (size, vitality, fertility, rare colours, good health).',comp_pick:'Pick a bird to enter',comp_withdraw:'Withdraw',comp_week:'Show',comp_pts:'pts',comp_result:'Show result: place {0}, prize {1}',comp_missed:'You missed the show (no bird entered)',comp_soon:'Pigeon show tomorrow! Enter a bird.',comp_ent:'Entered bird',orders:'Neighbour orders',o_want:'wants an adult {0} bird',o_pat:'{0}',o_pay:'Pays',o_fill:'Fill with',o_none:'No bird of yours matches yet. Breed one!',away:'Time away',w_eggs:'Eggs laid',w_hatch:'Hatched',w_died:'Lost',w_grain:'Grain eaten',w_water:'Water used',w_note:'The birds were looked after while you were away (up to 48 game hours, no deaths).',ok:'OK',tree:'Family tree',gone:'gone',children:'Children',grandp:'Grandparents',build:'Build',built:'Built!',nests_open:'Nests',perch_stands:'Perch stands',buy_nest:'Open a nest',buy_perch:'Add a perch stand',locked:'Locked nest',maxed:'Maximum',sound:'Sound',no_kids:'No offspring yet',
   hatch_tip:'Eggs hatch after 3 days. Keep the feeder and water full so parents can sit.'},
  ar:{nav_farm:'المزرعة',nav_birds:'الطيور',nav_breeding:'التزاوج',nav_market:'السوق',nav_manage:'الإدارة',
   male:'ذكر',female:'أنثى',egg:'بيضة',squab:'زغلول',juvenile:'يافع',adult:'بالغ',
@@ -69,6 +69,6 @@ BLS.TXT = {
   fed:'{0} اتغذى',watered:'{0} شرب',healed:'{0} بقى أحسن',sold_ok:'بعت {0} بـ {1}',paired:'{0} و {1} بقوا زوج',
   bought_ok:'تم الشراء',full:'البرج مليان',nonest:'مفيش عش فاضي',nothing:'لسه مفيش حاجة. دوس على طائر تفتح بطاقته.',
   feeder:'المعلف',waterbowl:'حوض الميه',sacks:'شكاير العلف',grain:'حبوب',tap_hint:'دوس على طائر أو عش. اسحب للتحريك، وكبّر بإصبعين.',
-  reference:'سعر البيع',sure:'متأكد؟',welcome:'عودة حميدة',orders:'طلبات الجيران',o_want:'عايز طير {0} كبير',o_pat:'{0}',o_pay:'بيدفع',o_fill:'سلّم',o_none:'مفيش طير عندك مطابق لسه. اعمل تزاوج!',away:'مدة الغياب',w_eggs:'بيض اتبيّض',w_hatch:'فقس',w_died:'نفق',w_grain:'علف اتاكل',w_water:'ميه اتشربت',w_note:'الطيور اتراعت وانت غايب (لحد 48 ساعة لعبة، من غير نفوق).',ok:'تمام',tree:'شجرة النسب',gone:'غير موجود',children:'الأبناء',grandp:'الأجداد',build:'بناء',built:'تم البناء!',nests_open:'الأعشاش',perch_stands:'أعمدة وقوف',buy_nest:'افتح عش',buy_perch:'أضف عمود وقوف',locked:'عش مقفول',maxed:'الحد الأقصى',sound:'الصوت',no_kids:'لسه مفيش ذرية',
+  reference:'سعر البيع',sure:'متأكد؟',welcome:'عودة حميدة',ev_upkeep:'اتدفع مصاريف اليوم: {0} عملة',ev_disease:'مرض أصاب {0}! عالجه ونضّف العش.',ev_pred:'قطة هاجمت الحمّام وضاع {0}! اشتري حارس الليل.',ev_pred_ok:'حارس الليل خوّف المفترس.',ev_dirty:'الحمّام وسخ، خطر المرض عالي.',clean:'نضّف الحمّام',clean_done:'الحمّام اتنضف',dirt:'الوساخة',guard:'حارس الليل (يمنع الهجمات)',guard_done:'حارس الليل اتركّب',t_ten:'املك 10 طيور',t_hatch10:'افقس 10 أزغال',t_win:'اكسب معرض حمام',t_white:'املك حمامة بيضاء',t_rich:'اجمع 3000 عملة',t_nests:'افتح 6 أعشاش',t_orders3:'نفّذ 3 طلبات جيران',comp:'المسابقة',comp_next:'المعرض الجاي بعد',comp_h:'{0} ساعة',comp_enter:'شارك',comp_entered:'اتسجّل',comp_score:'التقييم',comp_rank:'الترتيب',comp_you:'إنت',comp_last:'آخر معرض',comp_place:'المركز {0}',comp_prize:'الجايزة',comp_none:'لازم يكون عندك طير كبير عشان تشارك.',comp_info:'معرض كل ٧ أيام. أحسن طير بيكسب فلوس. المنافسين بيقووا كل أسبوع، فرَبّي طيور أحسن (حجم وحيوية وخصوبة وألوان نادرة وصحة كويسة).',comp_pick:'اختار طير تشارك بيه',comp_withdraw:'انسحاب',comp_week:'المعرض',comp_pts:'نقطة',comp_result:'نتيجة المعرض: المركز {0}، الجايزة {1}',comp_missed:'فاتك المعرض (مفيش طير مسجّل)',comp_soon:'معرض الحمام بكرة! سجّل طير.',comp_ent:'الطير المسجّل',orders:'طلبات الجيران',o_want:'عايز طير {0} كبير',o_pat:'{0}',o_pay:'بيدفع',o_fill:'سلّم',o_none:'مفيش طير عندك مطابق لسه. اعمل تزاوج!',away:'مدة الغياب',w_eggs:'بيض اتبيّض',w_hatch:'فقس',w_died:'نفق',w_grain:'علف اتاكل',w_water:'ميه اتشربت',w_note:'الطيور اتراعت وانت غايب (لحد 48 ساعة لعبة، من غير نفوق).',ok:'تمام',tree:'شجرة النسب',gone:'غير موجود',children:'الأبناء',grandp:'الأجداد',build:'بناء',built:'تم البناء!',nests_open:'الأعشاش',perch_stands:'أعمدة وقوف',buy_nest:'افتح عش',buy_perch:'أضف عمود وقوف',locked:'عش مقفول',maxed:'الحد الأقصى',sound:'الصوت',no_kids:'لسه مفيش ذرية',
   hatch_tip:'البيض بيفقس بعد 3 أيام. خلي المعلف والميه مليانين عشان الأبوين يقعدوا على البيض.'}
 };
