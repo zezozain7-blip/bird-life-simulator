@@ -3,7 +3,7 @@ var BLS = window.BLS = {};
 BLS.CFG = {
   SAVE_KEY: 'bls_save_v1',
   GRID: 12,
-  REAL_SEC_PER_HOUR: 2.5,      // at x1: 1 game hour = 2.5 real seconds (1 day = 60 s)
+  REAL_SEC_PER_HOUR: 6,        // at x1: 1 game hour = 6 real seconds (1 day = 2.4 min)
   HUNGER_RATE: 1.6,            // per game hour (0 fed .. 100 starving)
   THIRST_RATE: 2.4,
   EAT_SPEED: 30,               // hunger units removed per real second while eating
