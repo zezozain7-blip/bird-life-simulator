@@ -392,7 +392,9 @@ BLS.Sim = (function(){
   // ---------- player actions
   function mk(){ if(!G.mkt) G.mkt={feed:1,G:1,R:1,W:1}; return G.mkt; }
   function feedPrice(){ return Math.round(C.PRICE.feed5*mk().feed*((G.shortage||0)>0?1.5:1)); }
-  function dailyMarket(){ var m=mk(); ['feed','G','R','W'].forEach(function(k){ m[k]=Math.max(0.7,Math.min(1.6,m[k]+(1-m[k])*0.15+(Math.random()-0.5)*0.22)); }); if(G.shortage>0) G.shortage--; }
+  // v0.50: deterministic per game day (same day = same prices), range 0.75-1.35 (ESTIMATE band; real feed moves a few % a month), 14-day history for the sparkline
+  function hash01(n){ var x=Math.sin(n*127.1+311.7)*43758.5453; return x-Math.floor(x); }
+  function dailyMarket(){ var m=mk(), d=dayNum(), ks=['feed','G','R','W']; m.h=m.h||{}; ks.forEach(function(k,i){ var u=(hash01(d*7+i*131)+hash01((d-1)*7+i*131))/2; m[k]=Math.max(0.75,Math.min(1.35,0.75+u*0.6*1.0+(u-0.5)*0.0)); m.h[k]=(m.h[k]||[]).concat([Math.round(m[k]*100)/100]).slice(-14); }); if(G.shortage>0) G.shortage--; }
   function trend(k){ var v=mk()[k]; return v>1.12?'up':v<0.9?'down':'flat'; }
   function sellPrice(b){
     var q=(b.g.size+b.g.vit+b.g.fert)/3, col=Gen.phenoColor(b.g);
@@ -452,7 +454,7 @@ BLS.Sim = (function(){
   }
   function birdScore(b){
     var q=(b.g.size+b.g.vit+b.g.fert)/3, col=Gen.phenoColor(b.g), cb=col==='W'?12:col==='R'?6:0, pb=Gen.phenoPattern(b.g)==='C'?3:0;
-    var bb=(BLS.BREEDS[Gen.breedOf(b.g)].mul-1)*8; return Math.round((q*0.85+cb+pb+bb)*(0.7+0.3*Math.max(0,Math.min(100,b.health))/100));
+    var bb=(BLS.BREEDS[Gen.breedOf(b.g)].mul-1)*8; return Math.round((q*0.85+cb+pb+bb+Math.min(10,b.tr||0)*0.5)*(0.7+0.3*Math.max(0,Math.min(100,b.health))/100));
   }
   function enterShow(id){ ensureComp(); var b=bird(id); if(!b||stageOf(b)!=='adult') return false; G.comp.entry=id; emit('toast',T('comp_entered')+' '+b.name+' ('+birdScore(b)+')'); return true; }
   function withdrawShow(){ ensureComp(); G.comp.entry=-1; }
