@@ -20,8 +20,8 @@ BLS.CFG = {
   PRICE: { feed5: 90, bird: 260, pair: 480, egg: 25, eggBad: 5, sellK: 1.15, heal: 60 }
 };
 BLS.NAMES = {
-  en: ['Zaki','Hamama','Nour','Mazen','Salma','Yara','Omar','Laila','Karim','Dina','Adel','Rania','Tarek','Hana','Sami','Mona','Fouad','Nada','Ramy','Aya'],
-  ar: ['زكي','حمامة','نور','مازن','سلمى','يارا','عمر','ليلى','كريم','دينا','عادل','رانيا','طارق','هنا','سامي','منى','فؤاد','ندى','رامي','آية']
+  en: {M:['Zaki','Mazen','Omar','Karim','Adel','Tarek','Sami','Fouad','Ramy','Hassan','Youssef','Khaled','Ahmed','Mostafa'], F:['Hamama','Salma','Yara','Laila','Dina','Rania','Hana','Mona','Nada','Aya','Mariam','Hala','Sara','Farah']},
+  ar: {M:['زكي','مازن','عمر','كريم','عادل','طارق','سامي','فؤاد','رامي','حسن','يوسف','خالد','أحمد','مصطفى'], F:['حمامة','سلمى','يارا','ليلى','دينا','رانيا','هنا','منى','ندى','آية','مريم','هالة','سارة','فرح']}
 };
 BLS.TXT = {
  en:{nav_farm:'FARM',nav_birds:'BIRDS',nav_breeding:'BREEDING',nav_market:'MARKET',nav_manage:'MANAGEMENT',
