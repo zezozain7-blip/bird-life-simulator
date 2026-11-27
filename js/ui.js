@@ -16,14 +16,17 @@ BLS.UI = (function(){
     var G=Sim.G, el=$('alerts'); if(!el) return; var L=[], bs=G.birds;
     function f(fn){ return bs.filter(fn); }
     var sick=f(function(b){return b.dis;}), hurt=f(function(b){return !b.dis&&b.health<45;}), hu=f(function(b){return b.hunger>70;}), th=f(function(b){return b.thirst>70;}), st=f(function(b){return b.stress>70&&!b.dis;});
+    if(G.med&&G.med.left>0) L.push({k:'med',ic:'💊',n:(G.med.left/24).toFixed(1)+'d',a:function(){ toast('💊 '+T('med_on'),2500); }});
+    else if(sick.length>=2) L.push({k:'medgo',ic:'💊',n:Sim.medCost(),a:function(){ Sim.startMed(); }});
     if(sick.length) L.push({k:'sick',ic:'🤒',n:sick.length,a:function(){ showBird(sick[0].id); }});
     if(hurt.length) L.push({k:'hurt',ic:'🩹',n:hurt.length,a:function(){ showBird(hurt[0].id); }});
     if(hu.length) L.push({k:'hun',ic:'🌾',n:hu.length,a:function(){ Sim.refillFeeder(); if(Sim.G.feed<=0) showShop(); }});
     if(th.length) L.push({k:'thi',ic:'💧',n:th.length,a:function(){ Sim.refillWater(); }});
+    var gb=Sim.gearBroken(); if(gb.length) L.push({k:'gear',ic:'🔧',n:gb.length,a:function(){ showShop('gear'); }});
     if(G.dirt>=60) L.push({k:'dirt',ic:'🧹',n:Math.round(G.dirt)+'%',a:function(){ Sim.cleanLoft(); }});
     if(bs.length>Sim.popCap()*0.85) L.push({k:'crowd',ic:'👥',n:bs.length,a:function(){ showBirds(); }});
     if(st.length) L.push({k:'str',ic:'😣',n:st.length,a:function(){ showBird(st[0].id); }});
-    var sig=L.map(function(x){return x.k+x.n;}).join('|'); if(sig===alSig) return; alSig=sig; el.innerHTML='';
+    el.classList.toggle('compact',L.length>3); var sig=L.map(function(x){return x.k+x.n;}).join('|')+el.className; if(sig===alSig) return; alSig=sig; el.innerHTML='';
     L.forEach(function(x){ var d=document.createElement('button'); d.className='al al-'+x.k; d.innerHTML='<span>'+x.ic+'</span><b>'+x.n+'</b><small>'+T('al_'+x.k)+'</small>'; d.onclick=function(){ x.a(); alSig=''; alerts(); }; el.appendChild(d); });
   }
   function hud(){
@@ -179,11 +182,16 @@ BLS.UI = (function(){
     } else if(tab==='gear'){
       function gear(id,name,desc,cost,owned){ return item(art(GEAR_ART[id]),name,desc,owned?'<button class="buy owned" disabled>✔ '+T('up_owned')+'</button>':priceBtn('gear:'+id,cost),'',owned?'done':''); }
       var nf=G.nestsOpen>=C.NEST_COUNT, pf=G.perches.length>=BLS.LAYOUT.perchSpots.length;
+      var own=['guard','iso','heat','vent','nursery','vet','flight','cam'].filter(function(k){ return G.gear&&G.gear[k]; });
+      if(own.length) h+=sec('🔧 '+T('gear_maint'), own.map(function(k){ var g=G.gear[k], D=C.GEAR[k], st=g.broken?T('gear_broken'):g.c<35?T('gear_worn'):T('gear_ok'), rb=Sim.canRepair(k)?'<button class="buy'+(G.coins<Sim.repairCost(k)?' poor':'')+'" data-act="repair:'+k+'"><span>🔧</span><b>'+Sim.repairCost(k).toLocaleString('en')+'</b><i></i></button>':'<small>'+T('gear_eol')+'</small>';
+        return item(art(GEAR_ART[k]),T('gn_'+k),st+' · '+T('gear_run')+' <b dir="ltr">'+D.run+'</b> · <b dir="ltr">'+Math.round(g.c)+'%</b> / '+g.max+'%'+bar(g.c,1),rb+'<button class="buy" data-act="retire:'+k+'"><span>♻</span><b>+'+Sim.scrapValue(k)+'</b><i></i></button>',g.broken?'⚠':'',g.broken?'poor':''); }).join(''));
       h+=sec(T('build'), gear('nest',T('buy_nest'),'<b dir="ltr">'+G.nestsOpen+' / '+C.NEST_COUNT+'</b>',Sim.nestCost(),nf)+gear('perch',T('buy_perch'),'<b dir="ltr">'+G.perches.length+' / '+BLS.LAYOUT.perchSpots.length+'</b>',150,pf));
       function gearU(id,name,desc,list,costs){ var n=list.length, mx=C.EXTRA_UNIT_LV.length, btn; if(n>=mx) btn='<button class="buy owned" disabled>✔ '+T('up_owned')+'</button>'; else if(G.level<C.EXTRA_UNIT_LV[n]) btn='<button class="buy poor" disabled>🔒 '+T('lv_need',C.EXTRA_UNIT_LV[n])+'</button>'; else btn=priceBtn('gear:'+id,costs[n]); return item(art(GEAR_ART[id]),name,desc+' <b dir="ltr">'+(n+1)+' / '+(mx+1)+'</b>',btn,'',n>=mx?'done':''); }
+      function capItem(kind){ var nx=Sim.nextCap(kind), cur=kind==='f'?(Sim.feederCap()*1000)+' g':(Sim.waterCap()/1000)+' L', btn=!nx?'<button class="buy owned" disabled>✔ '+T('up_owned')+'</button>':(G.level<nx.lv?'<button class="buy poor" disabled>🔒 '+T('lv_need',nx.lv)+'</button>':priceBtn('gear:cap'+kind,nx.p)); return item(art(GEAR_ART[kind==='f'?'feeder':'water']),T(kind==='f'?'cap_feeder':'cap_water'),T('cap_now')+' <span dir="ltr" style="unicode-bidi:isolate"><b>'+cur+'</b>'+(nx?' → <b>'+(kind==='f'?(nx.kg*1000)+' g':(nx.ml/1000)+' L')+'</b>':'')+'</span>',btn,'',nx?'':'done'); }
+      h+=sec(T('cap_sec'), capItem('f')+capItem('w'));
       h+=sec(T('yard_sec'), gearU('feeder',T('buy_feeder'),T('feeder_d'),G.xf||[],C.EXTRA_FEEDER_COST)+gearU('water',T('buy_waterer'),T('waterer_d'),G.xw||[],C.EXTRA_WATER_COST));
-      h+=sec(T('farm_up'), ['heat','vent','nursery','vet','flight','cam'].map(function(k){ var d=T('up_'+k+'_d'); if(d==='up_'+k+'_d') d=T('gd_'+k); return gear(k,T('up_'+k),d,C.UP_COST[k],G.up&&G.up[k]); }).join('')
-        +gear('iso',T('iso_name'),T('gd_iso'),C.ISO_COST,G.isoUnit)+gear('guard',T('guard_name'),T('gd_guard'),C.GUARD_COST,G.guard));
+      h+=sec(T('farm_up'), ['heat','vent','nursery','vet','flight','cam'].map(function(k){ var d=T('up_'+k+'_d'); if(d==='up_'+k+'_d') d=T('gd_'+k); return gear(k,T('up_'+k),d,C.UP_COST[k],G.gear&&G.gear[k]); }).join('')
+        +gear('iso',T('iso_name'),T('gd_iso'),C.ISO_COST,G.gear&&G.gear.iso)+gear('guard',T('guard_name'),T('gd_guard'),C.GUARD_COST,G.gear&&G.gear.guard));
     } else if(tab==='sell'){
       h+='<div class="note">'+T('mk_title')+': '+T('mk_G')+' '+trendTag('G')+' '+T('mk_R')+' '+trendTag('R')+' '+T('mk_W')+' '+trendTag('W')+'</div>';
       var bs=G.birds.slice().sort(function(x,y){return Sim.sellPrice(y)-Sim.sellPrice(x);});
@@ -206,7 +214,8 @@ BLS.UI = (function(){
     sellArm=null;
     if(p[0]==='feed') Sim.buyFeed(); else if(p[0]==='mix') Sim.buyMix(); else if(p[0]==='rbird') Sim.buyBird(); else if(p[0]==='rpair') Sim.buyPair();
     else if(p[0]==='br') Sim.buyBreed(p[1],p[2]); else if(p[0]==='av') Sim.avBuy(p[1]);
-    else if(p[0]==='gear'){ var g=p[1]; if(g==='nest') Sim.buyNest(); else if(g==='perch') Sim.buyPerch(); else if(g==='feeder') Sim.buyFeederUnit(); else if(g==='water') Sim.buyWaterUnit(); else if(g==='iso') Sim.buyIso(); else if(g==='guard') Sim.buyGuard(); else Sim.buyUp(g); }
+    else if(p[0]==='repair') Sim.repairGear(p[1]); else if(p[0]==='retire'){ if(sellArm!==act){ sellArm=act; toast(T('sure')+' ♻',3000); return; } sellArm=null; Sim.retireGear(p[1]); }
+    else if(p[0]==='gear'){ var g=p[1]; if(g==='nest') Sim.buyNest(); else if(g==='perch') Sim.buyPerch(); else if(g==='capf') Sim.buyCap('f'); else if(g==='capw') Sim.buyCap('w'); else if(g==='feeder') Sim.buyFeederUnit(); else if(g==='water') Sim.buyWaterUnit(); else if(g==='iso') Sim.buyIso(); else if(g==='guard') Sim.buyGuard(); else Sim.buyUp(g); }
     else if(p[0]==='sb'){ var b=Sim.bird(+p[1]); if(b) Sim.sell(b); } else if(p[0]==='se') Sim.sellEgg(+p[1]); else if(p[0]==='sa') Sim.avSell(p[1]); else if(p[0]==='or') Sim.fillOrder(+p[1],+p[2]);
     hud(); showShop(shopTab);
   }
@@ -315,7 +324,7 @@ BLS.UI = (function(){
       Object.keys(BLS.SPECIES).forEach(function(k){ if(BLS.SPECIES[k].lv===lv) lines.push(T('unlock')+': '+T('sp_'+k)); });
       BLS.FX.levelCard(T('level')+' '+lv,lines); });
     $('b-fly').onclick=function(){ if(Sim.flyFlock()){ if(cur.kind) close(); BLS.Scene.watchSky(); setTimeout(function(){ BLS.Scene.center(); },14500); } hud(); };
-    Sim.on('event',function(m,go,id){ lastEvent={go:go,id:id}; var t=$('ticker'); $('tick-txt').innerHTML=BLS.Icons.emo(esc(m)); t.style.display='flex'; clearTimeout(t._h); t._h=setTimeout(function(){t.style.display='none';},9000); toast(m); });
+    Sim.on('event',function(m,go,id){ lastEvent={go:go,id:id}; var t=$('ticker'); $('tick-txt').innerHTML=BLS.Icons.emo(esc(m)); t.style.display='flex'; clearTimeout(t._h); t._h=setTimeout(function(){t.style.display='none';},5000); });
     $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='comp') showComp(); else if(lastEvent&&lastEvent.go==='deaths') showDeaths(); else if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); else if(lastEvent&&lastEvent.go==='market') showShop('feed'); else if(lastEvent&&lastEvent.go==='manage') showManage(); else if(lastEvent&&lastEvent.go==='aviary') showShop('aviary'); else if(lastEvent&&lastEvent.go==='farm') close(); };
     document.querySelectorAll('#nav button').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-nav'); if(k==='farm') close(); else if(k==='birds') showBirds(); else if(k==='breeding') showBreeding(); else if(k==='market') showShop(); else showManage(); }; });
     $('b-zin').onclick=function(){ BLS.Scene.cam.z*=1.25; }; $('b-zout').onclick=function(){ BLS.Scene.cam.z/=1.25; };
