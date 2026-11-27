@@ -12,8 +12,13 @@
   var last=performance.now();
   function tick(now){ var dt=(now-last)/1000; last=now; Sim.update(dt); requestAnimationFrame(tick); }
   requestAnimationFrame(tick);
-  setInterval(Sim.save,15000);
-  document.addEventListener('visibilitychange',function(){ if(document.hidden) Sim.save(); });
-  window.addEventListener('pagehide',Sim.save);
+  setInterval(function(){ if(!document.hidden) Sim.save(); },15000);
+  var hiddenSaved=false;
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){ Sim.save(); hiddenSaved=true; A.pause(true); }
+    else { A.pause(false); if(hiddenSaved){ hiddenSaved=false; if(Sim.catchUp(10)) BLS.UI.welcomeBack(); last=performance.now(); } }
+  });
+  // do not move savedAt forward while hidden, or the time away would be lost
+  window.addEventListener('pagehide',function(){ if(!document.hidden) Sim.save(); });
   window.BLS_DEBUG={Sim:Sim};
 })();
