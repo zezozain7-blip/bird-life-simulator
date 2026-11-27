@@ -166,7 +166,7 @@ BLS.UI = (function(){
     $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); };
     document.querySelectorAll('#nav button').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-nav'); if(k==='farm') close(); else if(k==='birds') showBirds(); else if(k==='breeding') showBreeding(); else if(k==='market') showMarket(); else showManage(); }; });
     $('b-zin').onclick=function(){ BLS.Scene.cam.z*=1.25; }; $('b-zout').onclick=function(){ BLS.Scene.cam.z/=1.25; };
-    $('b-center').onclick=function(){ var c=BLS.Scene.cam; c.tx=60; c.ty=215; c.tz=BLS.Scene.fitZoom(); BLS.Scene.setFollow(false); };
+    $('b-center').onclick=function(){ BLS.Scene.center(); };
     $('b-tasks').onclick=showTasks;
     $('b-speed').onclick=function(){ var G=Sim.G; G.speed=G.speed===1?2:G.speed===2?4:1; hud(); toast('x'+G.speed); };
     function sndIc(){ $('b-snd').setAttribute('data-ic',BLS.Audio.isOn()?'sound':'mute'); BLS.Icons.fill($('b-snd').parentNode); }
