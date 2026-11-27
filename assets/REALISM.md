@@ -98,3 +98,13 @@ Drawn procedurally (own code, no third-party art) for baladi, homer, roller, kin
 - Light shafts, dust motes, sun-following shadows: visual only, tied to the 96-minute day clock (no gameplay numbers).
 - Chick stages (squab, juvenile, adult), colour/trait inheritance and lineage: game mechanics (simplified genetics), not a veterinary model. Existing numbers unchanged.
 - Loft share card: shows only the player's own stats.
+
+## v0.50 (one release)
+- Market: prices now follow a deterministic per-game-day curve, 0.75 to 1.35 (the band is an ESTIMATE; real feed moves only a few % a month). Sparkline shows 14 days.
+- Training drills (+1 per day per adult bird, max 10, +0.5 score each; cost 0.02 kg feed; +8 hunger, +3 stress): GAME MECHANIC, numbers ESTIMATE.
+- Feed All uses the same per-bird numbers as hand feeding (0.01 kg, -45 hunger).
+- Pair preview: simplified Mendelian allele odds from the game's gene model: GAME MECHANIC. Incubation 18 d and clutch 1-2 are real pigeon biology (existing).
+- Achievements: 12 badges, no coin reward, so no economy effect.
+- Floor decals (feathers, droppings, cap 45) scale with the dirt level; seasonal colour wash and sun-following shadows are visual only.
+- Sources drawer in the hub lists sourced vs ESTIMATE numbers (kept in step with this file by hand).
+- NOT done: hop/head-bob/wing-flap micro animations beyond the existing walk bob and flight flap; feather particle pool (only the 26 fixed dust motes exist).
