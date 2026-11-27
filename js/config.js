@@ -14,13 +14,13 @@ BLS.CFG = {
   EGG_INCUBATION_H: 432, EGG_CANDLE_H: 99, SQUAB_H: 672, JUVENILE_H: 4320,   // natural: egg 18 d (17-19), nest ~28 d, breeding from ~6 months (CCAC: 6-7 months)
   EGG_COLD_LIMIT_H: 18,
   NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 504, SECOND_EGG_P: 0.9,
-  START_COINS: 700, START_FEED: 1.6, UPKEEP_PER_BIRD: 0, GUARD_COST: 300, ISO_COST: 200, UP_COST:{heat:250,vent:200,nursery:350,vet:400,flight:300,cam:250}, PRED_P: 0.004, DISEASE_P: 0.05,
+  START_COINS: 700, START_FEED: 1.6, UPKEEP_PER_BIRD: 0, GUARD_COST: 750, ISO_COST: 200, UP_COST:{heat:270,vent:675,nursery:350,vet:180,flight:300,cam:859}, SKIN_COST: 250, PRED_P: 0.004, DISEASE_P: 0.05,
   OFFLINE_MAX_H: 2520,   // 7 real days away = 105 game days; birds are protected while away (no deaths)
   FEEDER_TIERS:[{kg:0.5,lv:1,p:0},{kg:1,lv:3,p:80},{kg:2.5,lv:5,p:180},{kg:5,lv:8,p:380},{kg:10,lv:11,p:750}],   // dish > small hopper > hopper > automatic > barrel; EGP estimates
   WATER_TIERS:[{ml:1500,lv:1,p:0},{ml:3000,lv:3,p:70},{ml:5000,lv:6,p:150},{ml:10000,lv:9,p:300}],
   REF_WEIGHT_G: 450,            // reference adult body weight for 38 g feed + 45 ml water per day
   EXTRA_FEEDER_COST:[80,120,180], EXTRA_WATER_COST:[50,80,120], EXTRA_UNIT_LV:[2,4,6],
-  PRICE: { feed5: 20, bird: 105, pair: 200, egg: 10, eggBad: 2, sellK: 1.15, heal: 40 }   // EGP, Nov 2026: feed per kg (see assets/PRICES.md)
+  PRICE: { feed5: 16, bird: 105, pair: 200, egg: 10, eggBad: 2, sellK: 1.15, heal: 40 }   // EGP, Nov 2026: feed per kg (see assets/PRICES.md)
 };
 
 // ===== Time scaling (v0.42): every rate below is a REAL-WORLD figure converted to game time with two explicit factors.
