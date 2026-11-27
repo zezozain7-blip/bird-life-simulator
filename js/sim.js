@@ -181,7 +181,7 @@ BLS.Sim = (function(){
   function goto_(b,x,y,then){ b.tx=x; b.ty=y; b.st='walk'; b.after=then||'idle'; }
   function flyTo(b,x,y,z,then,dur){
     var d=Math.sqrt((x-b.x)*(x-b.x)+(y-b.y)*(y-b.y)+(z-b.z)*(z-b.z)); 
-    b.fl={x0:b.x,y0:b.y,z0:b.z,x1:x,y1:y,z1:z,t:0,dur:dur||Math.max(0.9,d/2.4),arc:Math.min(1.2,0.35+d*0.08)};
+    b.fl={x0:b.x,y0:b.y,z0:b.z,x1:x,y1:y,z1:z,t:0,dur:dur||Math.max(1.2,d/1.8),arc:Math.min(1.2,0.35+d*0.08)};
     b.st='fly'; b.after=then||'idle'; setFace(b,x-b.x,y-b.y); emit('sfx','flap');
   }
   function setFace(b,dx,dy){ var sx=dy; if(Math.abs(sx)>0.01) b.face=sx>=0?1:-1; }
@@ -238,7 +238,7 @@ BLS.Sim = (function(){
     var stg=stageOf(b);
     if(stg==='squab'&&b.nest>=0){ b.st='squabnest'; var p=L.nestPos(b.nest); b.x=p.x; b.y=p.y+(b.slot?0.22:-0.22); b.z=p.z; return; }
     if(b.st==='squabnest'){ b.st='idle'; }
-    var spd=(stg==='juvenile'?0.7:0.85);
+    var spd=(stg==='juvenile'?0.45:0.55);
     if(b.st==='fly'){
       var f=b.fl; f.t+=dt; var u=Math.min(1,f.t/f.dur), e=u<0.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
       b.x=f.x0+(f.x1-f.x0)*e; b.y=f.y0+(f.y1-f.y0)*e; b.z=f.z0+(f.z1-f.z0)*e+f.arc*Math.sin(Math.PI*u);
