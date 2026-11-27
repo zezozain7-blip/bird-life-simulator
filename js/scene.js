@@ -14,7 +14,7 @@ BLS.Scene = (function(){
   function rrect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
   function blob(c,x,y,r,col){ var g=c.createRadialGradient(x-r*0.3,y-r*0.35,r*0.1,x,y,r); g.addColorStop(0,shade(col,1.35)); g.addColorStop(1,shade(col,0.72)); c.fillStyle=g; c.beginPath(); c.arc(x,y,r,0,6.3); c.fill(); }
   function bush(c,x,y,r,col,seed){ var R=rng(seed||7); for(var i=0;i<9;i++){ blob(c,x+(R()-0.5)*r*1.6,y-R()*r*0.8,r*(0.42+R()*0.32),col); } }
-  function shadow(c,x,y,rx,ry,a){ c.fillStyle='rgba(30,20,10,'+a+')'; c.beginPath(); c.ellipse(x,y,rx,ry,0,0,6.3); c.fill(); }
+  function shadow(c,x,y,rx,ry,a){ var h=Sim.hourOfDay(), dx=Math.max(-1,Math.min(1,(h-12.5)/5.5)), day=h>6&&h<19; if(day){ x+=dx*rx*0.35; rx*=1+Math.abs(dx)*0.25; } c.fillStyle='rgba(30,20,10,'+(day?a:a*0.5)+')'; c.beginPath(); c.ellipse(x,y,rx,ry,0,0,6.3); c.fill(); }
   function pattern(name){ if(pats[name]) return pats[name]; var im=BLS.Art&&BLS.Art.tex(name); if(!im) return null; var p=ctx.createPattern(im,'repeat'); pats[name]=p; return p; }
   function fillTex(c,name,fallback,x,y,w,h,sx,sy){ var p=pattern(name); if(p&&p.setTransform){ p.setTransform(new DOMMatrix().translate(x,y).scale(sx,sy)); c.fillStyle=p; } else c.fillStyle=fallback; c.fillRect(x,y,w,h); }
   // --- loft geometry (world px)
@@ -80,7 +80,7 @@ BLS.Scene = (function(){
     var w=Math.max(0,Math.min(1,u.amt/Sim.waterCap())), x0=p[0], yb=p[1]-6, yt=p[1]-52;
     function bottle(){ c.beginPath(); c.moveTo(x0-11,yb); c.quadraticCurveTo(x0-14,yb-38,x0,yt); c.quadraticCurveTo(x0+14,yb-38,x0+11,yb); c.closePath(); }
     c.fillStyle='rgba(235,245,250,0.88)'; bottle(); c.fill();
-    if(w>0.01){ c.save(); bottle(); c.clip(); var ly=yb-(yb-yt)*w; c.fillStyle='rgba(90,170,230,0.85)'; c.fillRect(x0-16,ly,32,yb-ly+1); c.fillStyle='rgba(200,230,250,0.9)'; c.fillRect(x0-16,ly,32,1.6); c.fillStyle='rgba(255,255,255,0.35)'; c.fillRect(x0-8,Math.min(ly+3,yb-4),2.5,Math.max(0,yb-ly-8)); c.restore(); }
+    if(w>0.01){ c.save(); bottle(); c.clip(); var ly=yb-(yb-yt)*w; c.fillStyle=(G.med&&G.med.left>0)?'rgba(90,205,185,0.88)':'rgba(90,170,230,0.85)'; c.fillRect(x0-16,ly,32,yb-ly+1); c.fillStyle='rgba(200,230,250,0.9)'; c.fillRect(x0-16,ly,32,1.6); c.fillStyle='rgba(255,255,255,0.35)'; c.fillRect(x0-8,Math.min(ly+3,yb-4),2.5,Math.max(0,yb-ly-8)); c.restore(); }
     c.strokeStyle='rgba(120,140,150,0.75)'; c.lineWidth=1.2; bottle(); c.stroke(); }
   // ---- bought gear props (v0.40): everything in the shop shows in the loft
   function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
@@ -176,6 +176,13 @@ BLS.Scene = (function(){
     else if(w==='wind'){ c.fillStyle='rgba(150,150,60,0.8)'; for(i=0;i<18;i++){ d=drops[i]; c.beginPath(); c.ellipse(((d[0]+t*0.28*d[2])%1)*W,d[1]*H+Math.sin(t*3+i)*18,5,2.2,t*4+i,0,6.3); c.fill(); } }
     else if(w==='heat'){ c.fillStyle='rgba(255,150,40,'+(0.08+0.025*Math.sin(t*1.7))+')'; c.fillRect(0,0,W,H); }
   }
+  var MOTES=[]; for(var mi=0;mi<26;mi++) MOTES.push({x:Math.random(),y:Math.random(),s:0.4+Math.random(),p:Math.random()*6});
+  function drawLight(c,h,t){ if(h<6||h>=19) return; var k=h<9?(h-6)/3:h>16?(19-h)/3:1, warm=(h<9||h>16)?'255,214,150':'255,244,214', a=0.07+0.06*(1-Math.abs(h-12.5)/6.5); a*=Math.min(1,k);
+    var sx=W*(1-(h-6)/13)*1.0+W*0.1; // sun moves right to left across the sky with the clock
+    c.save(); c.globalCompositeOperation='lighter';
+    for(var i=0;i<3;i++){ var x0=sx+i*W*0.22-W*0.15, g=c.createLinearGradient(x0,0,x0+W*0.35,H*0.7); g.addColorStop(0,'rgba('+warm+','+a+')'); g.addColorStop(1,'rgba('+warm+',0)'); c.fillStyle=g; c.beginPath(); c.moveTo(x0,0); c.lineTo(x0+W*0.16,0); c.lineTo(x0+W*0.5,H*0.75); c.lineTo(x0+W*0.28,H*0.75); c.closePath(); c.fill(); }
+    c.fillStyle='rgba('+warm+','+Math.min(0.5,a*5)+')'; MOTES.forEach(function(m){ var x=((m.x+Math.sin(t*0.2*m.s+m.p)*0.03+t*0.004*m.s)%1)*W, y=((m.y+Math.cos(t*0.15*m.s+m.p)*0.03)%1)*H*0.8; c.beginPath(); c.arc(x,y,0.8+m.s,0,6.3); c.fill(); });
+    c.restore(); }
   function drawGlow(c,h){ var night=(h>=19||h<5.5); if(!night) return; var x=(LOFT.x1+16-cam.x)*cam.z+W/2, y=(LOFT.bodyTop+27-cam.y)*cam.z+H/2, r=130*cam.z; var g=c.createRadialGradient(x,y,2,x,y,r); g.addColorStop(0,'rgba(255,190,80,0.6)'); g.addColorStop(1,'rgba(255,150,40,0)'); c.globalCompositeOperation='lighter'; c.fillStyle=g; c.fillRect(x-r,y-r,r*2,r*2); c.globalCompositeOperation='source-over'; }
   // --- cached static layers (the expensive scenery is painted once, not every frame)
   var BK={x:-300,y:-340,w:1630,h:1240}, S=1.25, layer0=null, layerBed=null, bakedNests=-1;
@@ -229,7 +236,7 @@ BLS.Scene = (function(){
     if(!vigC||vigC.width!==cv.width||vigC.height!==cv.height){ vigC=document.createElement('canvas'); vigC.width=cv.width; vigC.height=cv.height; var vc=vigC.getContext('2d'); vc.scale(dpr,dpr); var vg=vc.createRadialGradient(W/2,H*0.5,Math.min(W,H)*0.5,W/2,H*0.5,Math.max(W,H)*0.8); vg.addColorStop(0,'rgba(20,12,0,0)'); vg.addColorStop(1,'rgba(20,12,0,0.3)'); vc.fillStyle=vg; vc.fillRect(0,0,W,H); }
     c.drawImage(vigC,0,0,W,H);
     var h=Sim.hourOfDay(), tc=tint(h); if(tc!=='rgb(255,255,255)'){ c.globalCompositeOperation='multiply'; c.fillStyle=tc; c.fillRect(0,0,W,H); c.globalCompositeOperation='source-over'; }
-    drawGlow(c,h); drawWeather(c,G,t);
+    drawLight(c,h,t); drawGlow(c,h); drawWeather(c,G,t);
   }
   // --- picking
   function pick(sx,sy){
