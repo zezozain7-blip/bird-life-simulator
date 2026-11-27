@@ -74,10 +74,10 @@ BLS.Scene = (function(){
   // --- pieces that are drawn per frame (depth sorted)
   function drawFeeder(c,G,u,pos){ u=u||G.feeder; pos=pos||L.feeder; var p=P(pos.x,pos.y,0), rx=26; shadow(c,p[0],p[1]+3,rx+6,12,0.22);
     c.fillStyle='#8a6a3f'; c.beginPath(); c.ellipse(p[0],p[1],rx,12,0,0,6.3); c.fill(); c.fillStyle='#5e4528'; c.beginPath(); c.ellipse(p[0],p[1]-3,rx-6,9,0,0,6.3); c.fill();
-    var f=Math.min(1,u.grain/C.FEEDER_CAP); if(f>0.02){ c.fillStyle='#e0b53a'; c.beginPath(); c.ellipse(p[0],p[1]-3-f*6,(rx-8)*Math.max(0.4,f),8*Math.max(0.5,f),0,0,6.3); c.fill(); c.fillStyle='rgba(255,230,140,0.6)'; for(var i=0;i<8;i++) c.fillRect(p[0]-14+((i*13)%28),p[1]-8-f*5+((i*7)%6),2,1.5); } }
+    var f=Math.min(1,u.grain/Sim.feederCap()); if(f>0.02){ c.fillStyle='#e0b53a'; c.beginPath(); c.ellipse(p[0],p[1]-3-f*6,(rx-8)*Math.max(0.4,f),8*Math.max(0.5,f),0,0,6.3); c.fill(); c.fillStyle='rgba(255,230,140,0.6)'; for(var i=0;i<8;i++) c.fillRect(p[0]-14+((i*13)%28),p[1]-8-f*5+((i*7)%6),2,1.5); } }
   function drawWater(c,G,u,pos){ u=u||G.water; pos=pos||L.water; var p=P(pos.x,pos.y,0); shadow(c,p[0],p[1]+3,26,8,0.22);
     c.fillStyle='#b32424'; c.beginPath(); c.ellipse(p[0],p[1],22,8,0,0,6.3); c.fill(); c.fillStyle='#8c1a1a'; c.beginPath(); c.ellipse(p[0],p[1]-3,17,6,0,0,6.3); c.fill();
-    var w=Math.min(1,u.amt/C.WATER_CAP); c.fillStyle='rgba(235,245,250,0.88)'; c.beginPath(); c.moveTo(p[0]-11,p[1]-6); c.quadraticCurveTo(p[0]-14,p[1]-44,p[0],p[1]-52); c.quadraticCurveTo(p[0]+14,p[1]-44,p[0]+11,p[1]-6); c.closePath(); c.fill();
+    var w=Math.min(1,u.amt/Sim.waterCap()); c.fillStyle='rgba(235,245,250,0.88)'; c.beginPath(); c.moveTo(p[0]-11,p[1]-6); c.quadraticCurveTo(p[0]-14,p[1]-44,p[0],p[1]-52); c.quadraticCurveTo(p[0]+14,p[1]-44,p[0]+11,p[1]-6); c.closePath(); c.fill();
     c.fillStyle='rgba(90,170,230,0.78)'; var wh=40*w; c.fillRect(p[0]-11.5,p[1]-6-wh,23,wh*0.95); c.strokeStyle='rgba(120,140,150,0.6)'; c.lineWidth=1; c.stroke(); }
   // ---- bought gear props (v0.40): everything in the shop shows in the loft
   function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
@@ -203,7 +203,7 @@ BLS.Scene = (function(){
     var cnt={}; G.eggs.forEach(function(e){ cnt[e.nest]=(cnt[e.nest]||0)+1; drawEgg(c,e,cnt[e.nest]-1); });
     var items=[];
     items.push({k:L.feeder.x,f:function(){ drawFeeder(c,G); }}); items.push({k:L.water.x,f:function(){ drawWater(c,G); }}); (G.xf||[]).forEach(function(u){ items.push({k:u.x,f:function(){ drawFeeder(c,G,u,u); }}); }); (G.xw||[]).forEach(function(u){ items.push({k:u.x,f:function(){ drawWater(c,G,u,u); }}); }); items.push({k:9.4,f:function(){ c.drawImage(layerBed,7.9*U,9.6*D-120,520,200); }});
-    (function(){ var gs=[]; if(G.guard) gs.push(['guard',10.6]); if(G.isoUnit) gs.push(['iso',10.4]); var u=G.up||{}; if(u.heat) gs.push(['heat',2.2]); if(u.vent) gs.push(['vent',2.2]); if(u.cam) gs.push(['cam',2.2]); if(u.vet) gs.push(['vet',2.2]); if(u.nursery) gs.push(['nursery',3.3]); if(u.flight) gs.push(['flight',11.2]); gs.forEach(function(g){ items.push({k:g[1]-0.2,f:function(){ drawProp(c,g[0],t); }}); }); })();
+    (function(){ var gs=[], X={guard:10.6,iso:10.4,heat:2.2,vent:2.2,cam:2.2,vet:2.2,nursery:3.3,flight:11.2}; for(var gk in X) if(G.gear&&G.gear[gk]) gs.push([gk,X[gk]]); gs.forEach(function(g){ items.push({k:g[1]-0.2,f:function(){ var gg=G.gear&&G.gear[g[0]]; if(gg&&(gg.broken||gg.c<35)){ c.save(); c.globalAlpha=gg.broken?0.4:0.8; drawProp(c,g[0],gg.broken?0:t); c.restore(); } else drawProp(c,g[0],t); }}); }); })();
     G.perches.forEach(function(pi){ var sp=L.perchSpots[pi]; items.push({k:sp[0]-0.1,f:function(){ drawPerch(c,sp); }}); });
     G.birds.forEach(function(b){ if(b.st!=='fly'&&b.st!=='flock') items.push({k:(b.st==='sit'||b.st==='squabnest')?2.3:(b.x<3.2&&b.z>0.3?2.4:b.x),f:function(){ drawBirdW(c,b); }}); });
     items.sort(function(a,b){return a.k-b.k;}); items.forEach(function(i){ i.f(); });
