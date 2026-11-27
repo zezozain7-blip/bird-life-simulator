@@ -2,19 +2,19 @@
 // Pigeon fields: sc = body scale, mul = value multiplier, lv = level needed to buy, f = visual features.
 BLS.BREEDS = {
   baladi:  {ar:'بلدي',    en:'Baladi',          sc:1.00, mul:1.00, lv:1, f:[]},
-  homer:   {ar:'زاجل',    en:'Racing homer',    sc:1.04, mul:1.25, lv:1, f:['band','wattle']},
-  roller:  {ar:'قلاب',    en:'Roller',          sc:0.86, mul:1.20, lv:1, f:['crest']},
-  swallow: {ar:'سنونو',   en:'Swallow',         sc:0.95, mul:1.35, lv:2, f:['mk_swallow','muff']},
-  nun:     {ar:'الراهبة', en:'Nun',             sc:0.92, mul:1.40, lv:2, f:['mk_nun','crest'], base:'W'},
-  helmet:  {ar:'أبو طاقية',en:'Helmet',         sc:0.92, mul:1.40, lv:2, f:['mk_helmet'], base:'W'},
-  king:    {ar:'كينج',    en:'King',            sc:1.20, mul:1.50, lv:3, f:['puff']},
-  fantail: {ar:'هزاز',    en:'Fantail',         sc:0.94, mul:1.60, lv:3, f:['fan']},
+  homer:   {ar:'زاجل',    en:'Racing homer',    sc:1.00, mul:1.25, lv:1, f:['band','wattle']},
+  roller:  {ar:'قلاب',    en:'Roller',          sc:0.95, mul:1.20, lv:1, f:['crest']},
+  swallow: {ar:'سنونو',   en:'Swallow',         sc:1.00, mul:1.35, lv:2, f:['mk_swallow','muff']},
+  nun:     {ar:'الراهبة', en:'Nun',             sc:1.00, mul:1.40, lv:2, f:['mk_nun','crest'], base:'W'},
+  helmet:  {ar:'أبو طاقية',en:'Helmet',         sc:1.00, mul:1.40, lv:2, f:['mk_helmet'], base:'W'},
+  king:    {ar:'كينج',    en:'King',            sc:1.00, mul:1.50, lv:3, f:[]},
+  fantail: {ar:'هزاز',    en:'Fantail',         sc:1.00, mul:1.60, lv:3, f:[]},
   magpie:  {ar:'العقعق',  en:'Magpie',          sc:0.96, mul:1.60, lv:3, f:['mk_magpie'], base:'W'},
-  maltese: {ar:'مالطي',   en:'Maltese',         sc:1.14, mul:1.70, lv:4, f:['uptail']},
-  pouter:  {ar:'نفاخ',    en:'Pouter',          sc:1.08, mul:1.80, lv:4, f:['crop']},
-  trumpet: {ar:'بخاري',   en:'Bokhara trumpeter',sc:1.05,mul:2.00, lv:5, f:['crest','rose','muff']},
-  jacobin: {ar:'يعقوبي',  en:'Jacobin',         sc:0.98, mul:2.20, lv:5, f:['ruff']},
-  roman:   {ar:'روماني',  en:'Roman runt',      sc:1.34, mul:2.40, lv:6, f:['wattle','puff']}
+  maltese: {ar:'مالطي',   en:'Maltese',         sc:1.00, mul:1.70, lv:4, f:[]},
+  pouter:  {ar:'نفاخ',    en:'Pouter',          sc:1.00, mul:1.80, lv:4, f:[]},
+  trumpet: {ar:'بخاري',   en:'Bokhara trumpeter',sc:1.00,mul:2.00, lv:5, f:['crest','rose','muff']},
+  jacobin: {ar:'يعقوبي',  en:'Jacobin',         sc:1.00, mul:2.20, lv:5, f:['ruff']},
+  roman:   {ar:'روماني',  en:'Roman runt',      sc:1.08, mul:2.40, lv:6, f:['wattle']}
 };
 BLS.BREED_PRICE = 300;   // x mul
 // Aviary birds. body / head / wing colours, len = tail length, crest flag. price = one pair.
