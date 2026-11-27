@@ -193,6 +193,10 @@ BLS.UI = (function(){
       h+=sec(T('yard_sec'), gearU('feeder',T('buy_feeder'),T('feeder_d'),G.xf||[],C.EXTRA_FEEDER_COST)+gearU('water',T('buy_waterer'),T('waterer_d'),G.xw||[],C.EXTRA_WATER_COST));
       h+=sec(T('farm_up'), ['heat','vent','nursery','vet','flight','cam'].map(function(k){ var d=T('up_'+k+'_d'); if(d==='up_'+k+'_d') d=T('gd_'+k); return gear(k,T('up_'+k),d,C.UP_COST[k],G.gear&&G.gear[k]); }).join('')
         +gear('iso',T('iso_name'),T('gd_iso'),C.ISO_COST,G.gear&&G.gear.iso)+gear('guard',T('guard_name'),T('gd_guard'),C.GUARD_COST,G.gear&&G.gear.guard));
+      var ar_=BLS.T('tasks')==='المهام', SK=[['none',ar_?'الأصلي':'Original','#a0522d'],['sand',ar_?'رملي':'Sand','#e3c27d'],['white',ar_?'أبيض جير':'Whitewash','#f4f4f0'],['blue',ar_?'أزرق':'Blue','#3f78c4'],['green',ar_?'أخضر':'Green','#4f9a5a'],['terra',ar_?'طوبي':'Terracotta','#c4623a']];
+      G.skins=G.skins||['none'];
+      h+=sec(ar_?'🎨 دهان العشة':'🎨 Loft paint', SK.map(function(k){ var own=G.skins.indexOf(k[0])>=0, on=(G.skin||'none')===k[0], btn=on?'<button class="buy owned" disabled>✔</button>':own?'<button class="buy" data-act="skin:'+k[0]+'"><b>'+(ar_?'استخدم':'Use')+'</b><i></i></button>':priceBtn('skin:'+k[0],C.SKIN_COST);
+        return item(art('<rect x="14" y="14" width="52" height="46" rx="6" fill="'+k[2]+'"/><rect x="14" y="14" width="52" height="10" rx="3" fill="#0003"/>'),k[1],'',btn,on?'':''); }).join(''));
     } else if(tab==='sell'){
       h+='<div class="note">'+T('mk_title')+': '+T('mk_G')+' '+trendTag('G')+' '+T('mk_R')+' '+trendTag('R')+' '+T('mk_W')+' '+trendTag('W')+'</div>';
       var bs=G.birds.slice().sort(function(x,y){return Sim.sellPrice(y)-Sim.sellPrice(x);});
@@ -216,6 +220,7 @@ BLS.UI = (function(){
     if(p[0]==='feed') Sim.buyFeed(); else if(p[0]==='mix') Sim.buyMix(); else if(p[0]==='rbird') Sim.buyBird(); else if(p[0]==='rpair') Sim.buyPair();
     else if(p[0]==='br') Sim.buyBreed(p[1],p[2]); else if(p[0]==='av') Sim.avBuy(p[1]);
     else if(p[0]==='repair') Sim.repairGear(p[1]); else if(p[0]==='retire'){ if(sellArm!==act){ sellArm=act; toast(T('sure')+' ♻',3000); return; } sellArm=null; Sim.retireGear(p[1]); }
+    else if(p[0]==='skin'){ var Gs=Sim.G; Gs.skins=Gs.skins||['none']; if(Gs.skins.indexOf(p[1])<0){ if(Gs.coins<C.SKIN_COST) return Sim.emit('toast',T('need_coins')); Gs.coins-=C.SKIN_COST; Gs.skins.push(p[1]); } Gs.skin=p[1]; BLS.Scene.rebuild(); Sim.emit('sfx','build'); }
     else if(p[0]==='gear'){ var g=p[1]; if(g==='nest') Sim.buyNest(); else if(g==='perch') Sim.buyPerch(); else if(g==='capf') Sim.buyCap('f'); else if(g==='capw') Sim.buyCap('w'); else if(g==='feeder') Sim.buyFeederUnit(); else if(g==='water') Sim.buyWaterUnit(); else if(g==='iso') Sim.buyIso(); else if(g==='guard') Sim.buyGuard(); else Sim.buyUp(g); }
     else if(p[0]==='sb'){ var b=Sim.bird(+p[1]); if(b) Sim.sell(b); } else if(p[0]==='se') Sim.sellEgg(+p[1]); else if(p[0]==='sa') Sim.avSell(p[1]); else if(p[0]==='or') Sim.fillOrder(+p[1],+p[2]);
     hud(); showShop(shopTab);
