@@ -28,3 +28,6 @@ Drag = move camera, pinch / +/- = zoom, tap a bird = data card, tap a nest = egg
 
 ## v0.2 additions
 Sound, family tree (bird card > Family tree), build mode (hammer button: open nests 4->8, add perch stands), start pair now sits in the loft and on the roof, polish (vignette, moss, crates, shadows). Old v0.1 saves still load.
+
+## v0.7 (flat 2D rebuild)
+The isometric scene was replaced by a flat 2D front-on farm (js/scene.js). The old isometric scene is not shipped. sim.js is unchanged except: unpaired adults now pair up automatically, egg fertility odds are higher, birds face left/right by lateral movement.
