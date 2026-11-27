@@ -2,7 +2,7 @@
 // Pigeon fields: sc = body scale, mul = value multiplier, lv = level needed to buy, f = visual features.
 BLS.BREEDS = {
   baladi:  {ar:'بلدي',    en:'Baladi',          sc:1.00, mul:1.00, lv:1, f:[]},
-  homer:   {ar:'زاجل',    en:'Racing homer',    sc:1.04, mul:1.25, lv:1, f:['band']},
+  homer:   {ar:'زاجل',    en:'Racing homer',    sc:1.04, mul:1.25, lv:1, f:['band','wattle']},
   roller:  {ar:'قلاب',    en:'Roller',          sc:0.86, mul:1.20, lv:1, f:['crest']},
   swallow: {ar:'سنونو',   en:'Swallow',         sc:0.95, mul:1.35, lv:2, f:['mk_swallow','muff']},
   nun:     {ar:'الراهبة', en:'Nun',             sc:0.92, mul:1.40, lv:2, f:['mk_nun','crest'], base:'W'},
@@ -14,7 +14,7 @@ BLS.BREEDS = {
   pouter:  {ar:'نفاخ',    en:'Pouter',          sc:1.08, mul:1.80, lv:4, f:['crop']},
   trumpet: {ar:'بخاري',   en:'Bokhara trumpeter',sc:1.05,mul:2.00, lv:5, f:['crest','rose','muff']},
   jacobin: {ar:'يعقوبي',  en:'Jacobin',         sc:0.98, mul:2.20, lv:5, f:['ruff']},
-  roman:   {ar:'روماني',  en:'Roman runt',      sc:1.34, mul:2.40, lv:6, f:[]}
+  roman:   {ar:'روماني',  en:'Roman runt',      sc:1.34, mul:2.40, lv:6, f:['wattle','puff']}
 };
 BLS.BREED_PRICE = 300;   // x mul
 // Aviary birds. body / head / wing colours, len = tail length, crest flag. price = one pair.
