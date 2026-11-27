@@ -196,6 +196,14 @@ BLS.Sim = (function(){
   function setFace(b,dx,dy){ var sx=dy; if(Math.abs(sx)>0.01) b.face=sx>=0?1:-1; }
   function aroundFeeder(){ var a=Math.random()*6.28; return {x:L.feeder.x+Math.cos(a)*0.55,y:L.feeder.y+Math.sin(a)*0.55}; }
   function aroundWater(){ var a=Math.random()*6.28; return {x:L.water.x+Math.cos(a)*0.45,y:L.water.y+Math.sin(a)*0.45}; }
+  // ---------- pairs: shared nest, turns on the eggs, moving together
+  function sitterOf(b,mate){ // who should be on the eggs now: male takes the day shift (about 9:30 to 16:30), female the rest
+    var h=hourOfDay(), want=(h>=9.5&&h<16.5)?'M':'F'; var me=b, ot=mate;
+    var first=(me.sex===want)?me:ot, second=(first===me)?ot:me;
+    if(!needy(first)) return first; if(!needy(second)) return second; return null;
+  }
+  function nestSlot(b){ var np=L.nestPos(b.nest); return {x:np.x,y:np.y+(b.sex==='M'?-0.15:0.15),z:np.z}; }
+  function nearMate(mate,spread){ for(var i=0;i<6;i++){ var x=mate.x+(Math.random()*2-1)*spread, y=mate.y+(Math.random()*2-1)*spread; if(L.walkable(x,y)) return {x:x,y:y}; } return L.randSpot(); }
   function think(b){
     var stg=stageOf(b); if(stg==='squab') return;
     var onGround=b.z<0.05;
@@ -211,19 +219,27 @@ BLS.Sim = (function(){
       if(!onGround){ var s2=L.randSpot(); return flyTo(b,s2.x,s2.y,0,'idle'); }
       var q=aroundWater(); return goto_(b,q.x,q.y,'drink');
     }
-    // 2) egg duty
-    if(hasEggs&&!needy(b)){
-      var want = b.sex==='F' || (mate&&mate.st!=='sit'&&needy(mate)) || !mate;
-      if(b.sex==='M'&&mate&&mate.st==='sit') want=false;
-      if(want){
+    // 2) egg duty: a pair shares the nest and takes turns
+    if(hasEggs&&mate){
+      var st=sitterOf(b,mate);
+      if(st===b&&!needy(b)){
         if(b.st==='sit'){ b.timer=1.5; return; }
-        var np=L.nestPos(b.nest); return flyTo(b,np.x,np.y,np.z,'sit');
+        var ns=nestSlot(b); return flyTo(b,ns.x,ns.y,ns.z,'sit');
       }
+      if(!isNight()&&!needy(b)){ // off shift: wait beside the nest, then relieve the partner
+        var fx=3.0+Math.random()*0.35, fy=L.nestPos(b.nest).y+(Math.random()*0.7-0.35);
+        if(b.st==='sit'){ var s7=L.randSpot(); return flyTo(b,fx,fy,0,'idle'); }
+        if(onGround&&Math.hypot(b.x-fx,b.y-fy)>0.9) return goto_(b,fx,fy,'idle');
+        var rr=Math.random(); if(rr<0.3){ b.st='preen'; b.timer=2+Math.random()*2; return; } if(rr<0.5){ b.st='peck'; b.timer=1.5+Math.random()*2; return; } b.st='idle'; b.timer=2+Math.random()*3; return;
+      }
+    } else if(hasEggs&&!needy(b)){
+      if(b.st==='sit'){ b.timer=1.5; return; }
+      var np=L.nestPos(b.nest); return flyTo(b,np.x,np.y,np.z,'sit');
     }
     if(b.st==='sit'&&(!hasEggs)&&isNight()&&b.nest>=0){ b.timer=3; return; }
-    // 3) night rest
+    // 3) night rest: the pair sleeps in its nest together
     if(isNight()){
-      if(b.nest>=0&&mate&&!hasEggs){ if(b.st==='sit') {b.timer=3;return;} var n2=L.nestPos(b.nest); return flyTo(b,n2.x,n2.y,n2.z,'sit'); }
+      if(b.nest>=0&&mate){ if(b.st==='sit') {b.timer=3;return;} var n2=nestSlot(b); return flyTo(b,n2.x,n2.y,n2.z,'sit'); }
       if(b.st==='perch'||b.st==='sit'){ b.timer=3; return; }
       var rp=L.roofPerch(); return flyTo(b,rp.x,rp.y,rp.z,'perch');
     }
@@ -234,8 +250,14 @@ BLS.Sim = (function(){
     }
     if(!onGround){ var s4=L.randSpot(); return flyTo(b,s4.x,s4.y,0,'idle'); }
     var r=Math.random();
+    if(mate&&mate.st!=='fly'&&mate.st!=='sit'&&mate.st!=='flock'){
+      var dm=Math.hypot(mate.x-b.x,mate.y-b.y);
+      if(mate.st==='perch'&&mate.z>0.3&&r<0.6){ var rq=L.roofPerch(); return flyTo(b,rq.x,rq.y,rq.z,'perch'); }
+      if(dm>1.7&&r<0.75&&mate.z<0.05){ var nm=nearMate(mate,0.7); return goto_(b,nm.x,nm.y,'idle'); }
+      if(dm<=1.7&&r<0.35){ b.st=Math.random()<0.5?'preen':'idle'; b.timer=2+Math.random()*3; return; }
+    }
     if(mate&&mate.st!=='fly'&&r<0.22&&mate.z<0.05){ return goto_(b,mate.x+(Math.random()*0.8-0.4),mate.y+(Math.random()*0.8-0.4),'coo'); }
-    if(r<0.5){ var s5=L.randSpot(); return goto_(b,s5.x,s5.y,'idle'); }
+    if(r<0.5){ var s5=(mate&&mate.st!=='sit'&&mate.z<0.05&&Math.random()<0.6)?nearMate(mate,1.2):L.randSpot(); return goto_(b,s5.x,s5.y,'idle'); }
     if(r<0.68){ b.st='peck'; b.timer=1.5+Math.random()*2; return; }
     if(r<0.78){ b.st='preen'; b.timer=2+Math.random()*2; return; }
     if(r<0.9){ var rp2=L.roofPerch(); return flyTo(b,rp2.x,rp2.y,rp2.z,'perch'); }
