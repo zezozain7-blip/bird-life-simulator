@@ -46,3 +46,4 @@ The isometric scene was replaced by a flat 2D front-on farm (js/scene.js). The o
 - v0.12: market price swings, feed shortage, decision events (stray, rare bird, trader, injured).
 - v0.13: collection album (6 colour/pattern types + 4 trait milestones, claim rewards). Fix: heater/fan buttons and decision-event buttons now respond.
 - v0.14: premium feed mix, egg sales, hatch odds (stress/nursery/feed), upgrades: brooding room, vet clinic, flight area, camera.
+- v0.15: calmer pace: 1 game hour = 6 s (day = 2.4 min, was 60 s); walking 35% slower, flights 25% slower.
