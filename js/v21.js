@@ -24,8 +24,8 @@ function tick(){
   if(cur<0&&!S.done){S.done=1;G.badges=G.badges||[];G.badges.push(c+1);G.coins+=300;Sim.emit('toast',(ar?'🏅 شارة الموسم ':'🏅 Season badge ')+(c+1)+' +300');fx().burst('🏅🎉⭐✨');fx().log('badge',c+1);}
   var left=15-((Sim.dayNum()-1)%15),t=TK[cur];
   el.dir=ar?'rtl':'ltr';
-  el.innerHTML=cur<0?'🏅 '+(ar?'خلّصت حدث الموسم ':'Season event complete ')+(c+1)
-    :'🎉 '+(ar?'حدث الموسم ':'Season ')+(c+1)+' · '+(ar?t.ar:t.en)+' <b>'+Math.min(t.n,t.v(G,S.b))+'/'+t.n+'</b> · '+left+(ar?' يوم':'d');
+  el.innerHTML=BLS.Icons.emo(cur<0?'🏅 '+(ar?'خلّصت حدث الموسم ':'Season event complete ')+(c+1)
+    :'🎉 '+(ar?'حدث الموسم ':'Season ')+(c+1)+' · '+(ar?t.ar:t.en)+' <b>'+Math.min(t.n,t.v(G,S.b))+'/'+t.n+'</b> · '+left+(ar?' يوم':'d'));
   el.style.display='block';
 }
 function hub(){
@@ -35,7 +35,7 @@ function hub(){
           :['Farm profile','Day','Level','Hatched','Sold','Colour combos found','Sessions','Days since first play','Season badges','None yet','Enable notifications','Close'];
   var M=ar?['💾 نسخة احتياطية','📂 استرجاع نسخة','📤 شارك أحسن طير']:['💾 Export backup','📂 Import backup','📤 Share my best bird'];
   h.dir=ar?'rtl':'ltr';
-  h.innerHTML='<div class="c"><h3>🏅 '+L[0]+'</h3>'+L[1]+': '+Sim.dayNum()+'<br>'+L[2]+': '+G.level+'<br>'+L[3]+': '+G.stats.hatched+'<br>'+L[4]+': '+(G.stats.sold||0)+'<br>'+L[5]+': '+seen+'<br>'+L[6]+': '+a.s.length+'<br>'+L[7]+': '+days+'<br>'+L[8]+': '+((G.badges||[]).map(function(n){return '🏅'+n;}).join(' ')||L[9])+'<button id="hn">'+L[10]+'</button><button id="he">'+M[0]+'</button><button id="hi">'+M[1]+'</button><button id="hs">'+M[2]+'</button><button id="hx">'+L[11]+'</button></div>';
+  h.innerHTML=BLS.Icons.emo('<div class="c"><h3>🏅 '+L[0]+'</h3>'+L[1]+': '+Sim.dayNum()+'<br>'+L[2]+': '+G.level+'<br>'+L[3]+': '+G.stats.hatched+'<br>'+L[4]+': '+(G.stats.sold||0)+'<br>'+L[5]+': '+seen+'<br>'+L[6]+': '+a.s.length+'<br>'+L[7]+': '+days+'<br>'+L[8]+': '+((G.badges||[]).map(function(n){return '🏅'+n;}).join(' ')||L[9])+'<button id="hn">'+L[10]+'</button><button id="he">'+M[0]+'</button><button id="hi">'+M[1]+'</button><button id="hs">'+M[2]+'</button><button id="hx">'+L[11]+'</button></div>');
   h.style.display='flex';
   $('hx').onclick=function(){h.style.display='none';};
   $('he').onclick=BLS_BK.exp;$('hi').onclick=BLS_BK.imp;$('hs').onclick=BLS_BK.share;
@@ -43,7 +43,7 @@ function hub(){
 }
 function init(){
   var Sim=BLS.Sim;if(ready||!Sim||!Sim.G||!window.BLS_FX)return;ready=true;
-  $('hubb').onclick=hub;
+  $('hubb').onclick=hub; $('hubb').innerHTML=BLS.Icons.emo('🏅');
   Sim.on('fx',function(k,b){
     var G=Sim.G;if(k!=='hatch'||!b||!b.g||!G)return;
     var key=BLS.Gen.phenoColor(b.g)+'|'+BLS.Gen.phenoPattern(b.g);
