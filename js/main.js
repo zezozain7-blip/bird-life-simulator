@@ -12,7 +12,7 @@
   var last=performance.now();
   function tick(now){ var dt=(now-last)/1000; last=now; Sim.update(dt); requestAnimationFrame(tick); }
   requestAnimationFrame(tick);
-  setInterval(Sim.save,5000);
+  setInterval(Sim.save,15000);
   document.addEventListener('visibilitychange',function(){ if(document.hidden) Sim.save(); });
   window.addEventListener('pagehide',Sim.save);
   window.BLS_DEBUG={Sim:Sim};
