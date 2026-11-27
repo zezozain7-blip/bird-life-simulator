@@ -130,11 +130,11 @@ BLS.Sim = (function(){
       b.clean=Math.max(0,Math.min(100,b.clean+(G.dirt>60?-1.2:G.dirt>30?-0.4:0.6)*dt));
       b.stress=Math.max(0,Math.min(100,b.stress+((b.hunger>70||b.thirst>70?2.5:0)+(crowd?1.2:0)+(G.dirt>60?1:0)+(b.health<50?1.5:0)-1.4)*dt*pm.st*((G.up&&G.up.flight)?0.7:1)));
       b.mood=Math.max(0,Math.min(100,100-b.stress*0.6-Math.max(0,b.hunger-50)*0.4-Math.max(0,b.thirst-50)*0.3-(100-b.clean)*0.2));
-      if(b.stress>80) b.health-=0.5*dt;
-      if(b.dis){ b.dis.t+=dt; var sg=Math.min(2,Math.floor(b.dis.t/24)); b.health-=(0.2+0.15*sg)*dt*(b.iso?0.8:1); b.stress=Math.min(100,b.stress+0.5*dt); if(b.dis.t>120&&b.health>45&&Math.random()<0.02*dt*((G.up&&G.up.vet)?3:1)){ b.dis=null; b.iso=false; emit('event',T('ev_recover',b.name),'birds',b.id); } }
+      if(b.stress>80){ b.health-=0.5*dt; dmg(b,'stress',0.5*dt); }
+      if(b.dis){ b.dis.t+=dt; var sg=Math.min(2,Math.floor(b.dis.t/24)); b.health-=(0.2+0.15*sg)*dt*(b.iso?0.8:1); dmg(b,'disease',(0.2+0.15*sg)*dt*(b.iso?0.8:1)); b.stress=Math.min(100,b.stress+0.5*dt); if(b.dis.t>120&&b.health>45&&Math.random()<0.02*dt*((G.up&&G.up.vet)?3:1)){ b.dis=null; b.iso=false; emit('event',T('ev_recover',b.name),'birds',b.id); } }
       if(protect){ b.hunger=Math.min(b.hunger,80); b.thirst=Math.min(b.thirst,80); }
       b.hunger=Math.min(100,b.hunger); b.thirst=Math.min(100,b.thirst);
-      if(b.hunger>90||b.thirst>90) b.health-=3*dt; else if(b.hunger<60&&b.thirst<60&&!b.dis) b.health=Math.min(100,b.health+0.6*dt);
+      if(b.hunger>90||b.thirst>90){ b.health-=3*dt; if(b.hunger>90&&b.thirst>90){ dmg(b,'hunger',1.5*dt); dmg(b,'thirst',1.5*dt); } else dmg(b,b.hunger>90?'hunger':'thirst',3*dt); } else if(b.hunger<60&&b.thirst<60&&!b.dis) b.health=Math.min(100,b.health+0.6*dt);
       if(protect&&b.health<30) b.health=30;
       if(b.health<45&&!b.sickFlag){ b.sickFlag=true; emit('event',T('ev_sick',b.name),'birds',b.id); }
       if(b.health>=60) b.sickFlag=false;
@@ -185,10 +185,21 @@ BLS.Sim = (function(){
     (G.birds||[]).forEach(function(b){ if(b.age>=240) b.age+=240; else if(b.age>96) b.age=96+(b.age-96)*(384/144); });
     G.saveVersion=4;
   }
-  function die(b){
+  function dmg(b,k,v){ if(v<=0) return; b.dmg=b.dmg||{}; b.dmg[k]=(b.dmg[k]||0)+v; }
+  // cause of death: old age and predators are explicit; otherwise the source that took the most health from this bird
+  function deathCause(b,forced){
+    if(forced) return {c:forced,why:[]};
+    if(b.oldAge) return {c:'c_old',why:[]};
+    var d=b.dmg||{}, best=null, top=0, k; for(k in d) if(d[k]>top){ top=d[k]; best=k; }
+    var why=[]; if(b.dis&&b.dis.why) why.push(b.dis.why); if(G.dirt>55&&why.indexOf('why_dirty')<0) why.push('why_dirty'); if(G.birds.length>popCap()*0.85) why.push('why_crowd'); if(G.weatherBad) why.push('why_weather');
+    return {c:best?('c_'+best):'c_unknown',why:why,dis:(b.dis&&!b.oldAge&&best==='disease')?b.dis.k:null};
+  }
+  function die(b,forced){
     var i=G.birds.indexOf(b); if(i>=0) G.birds.splice(i,1);
     if(b.mate>=0){ var m=bird(b.mate); if(m) m.mate=-1; }
-    G.stats.died++; emit('sfx','sad'); emit('event',T(b.oldAge?'ev_old':'ev_die',b.name),'birds'); releaseNests();
+    var dc=deathCause(b,forced), rec={id:b.id,name:b.name,sex:b.sex,age:Math.floor(b.age/24),day:dayNum(),c:dc.c,why:dc.why,dis:dc.dis||null,stage:stageOf(b)};
+    G.deaths=G.deaths||[]; G.deaths.unshift(rec); if(G.deaths.length>60) G.deaths.length=60; if(G.archive&&G.archive[b.id]) G.archive[b.id].death=rec;
+    G.stats.died++; emit('sfx','sad'); emit('event',T('ev_die2',b.name,T(dc.c)+(dc.dis?' ('+T(dc.dis)+')':'')),'deaths'); releaseNests();
   }
   // ---------- behaviour (real time)
   function isNight(){ var h=hourOfDay(); return h>=21||h<5; }
@@ -453,7 +464,7 @@ BLS.Sim = (function(){
   function newEvent(){
     var d=dayNum(), kinds=['stray','rare','trader','injured','shortage'], k=Gen.rnd(kinds), id=(G.evSeq=(G.evSeq||0)+1), ev={id:id,k:k,exp:d+2};
     if(k==='trader'){ var ad=G.birds.filter(function(b){return stageOf(b)==='adult'&&!b.iso;}); if(!ad.length) return null; var b=Gen.rnd(ad); ev.bid=b.id; ev.pay=Math.round(sellPrice(b)*(1.35+Math.random()*0.35)); ev.name=b.name; }
-    if(k==='injured'){ if(!G.birds.length) return null; var v=Gen.rnd(G.birds); ev.bid=v.id; ev.name=v.name; ev.cost=45; v.health=Math.max(10,v.health-35); }
+    if(k==='injured'){ if(!G.birds.length) return null; var v=Gen.rnd(G.birds); ev.bid=v.id; ev.name=v.name; ev.cost=45; var h0=v.health; v.health=Math.max(10,v.health-35); dmg(v,'injury',h0-v.health); }
     if(k==='rare'){ ev.cost=380; }
     if(k==='shortage'){ G.shortage=6; emit('event',T('ev_shortage'),'market'); return null; }
     if(k==='stray'&&G.birds.length>=popCap()) return null;
@@ -489,11 +500,11 @@ BLS.Sim = (function(){
     G.birds.forEach(function(x){
       if(x.dis||x.iso) return; ensureBird(x);
       var p=(0.01+G.dirt/100*0.05+x.stress/100*0.04+crowd*0.03+(x.hunger>70?0.02:0)+(G.weatherBad?0.02:0))*relief+(sickN?0.12:0);
-      if(Math.random()<p){ x.dis={k:DIS[(Math.random()*DIS.length)|0],t:0}; emit('event',T('ev_ill',x.name,T(whyIll(x,crowd,sickN))),'birds',x.id); }
+      if(Math.random()<p){ x.dis={k:DIS[(Math.random()*DIS.length)|0],t:0,why:whyIll(x,crowd,sickN)}; emit('event',T('ev_ill',x.name,T(whyIll(x,crowd,sickN))),'birds',x.id); }
     });
     if(n>2&&G.t>=72&&Math.random()<(G.guard?C.PRED_P*0.15:C.PRED_P)*pressure()*((G.up&&G.up.cam)?0.6:1)){
       if(G.guard){ emit('event',T('ev_pred_ok'),'farm'); }
-      else { var tg=G.birds.filter(function(b){return stageOf(b)!=='squab'&&b.nest<0;}); if(!tg.length) tg=G.birds.filter(function(b){return stageOf(b)!=='squab';}); if(tg.length){ var t0=tg[(Math.random()*tg.length)|0], nm=t0.name; die(t0); emit('event',T('ev_pred',nm),'farm'); } }
+      else { var tg=G.birds.filter(function(b){return stageOf(b)!=='squab'&&b.nest<0;}); if(!tg.length) tg=G.birds.filter(function(b){return stageOf(b)!=='squab';}); if(tg.length){ var t0=tg[(Math.random()*tg.length)|0], nm=t0.name; die(t0,'c_pred'); emit('event',T('ev_pred',nm),'farm'); } }
     }
   }
   var DIS=['d_cold','d_gut','d_pox'];
@@ -590,7 +601,7 @@ BLS.Sim = (function(){
     catchUp(1);
     return true;
   }
-  return { fixNames:fixNames, nameSex:nameSex, toss:toss, flyFlock:flyFlock, flying:flying, flockReady:flockReady, eggPrice:eggPrice, catchUp:catchUp, breedPrice:breedPrice, buyBreed:buyBreed, aviary:aviary, avCount:avCount, avBuy:avBuy, avSell:avSell, avSellPrice:avSellPrice, mixPrice:mixPrice, buyMix:buyMix, sellEgg:sellEgg, healCost:healCost, hatchOdds:hatchOdds, collList:collList, claimColl:claimColl, rollEvent:rollEvent, feedPrice:feedPrice, trend:trend, resolveEvent:resolveEvent, season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
+  return { deathCause:deathCause, fixNames:fixNames, nameSex:nameSex, toss:toss, flyFlock:flyFlock, flying:flying, flockReady:flockReady, eggPrice:eggPrice, catchUp:catchUp, breedPrice:breedPrice, buyBreed:buyBreed, aviary:aviary, avCount:avCount, avBuy:avBuy, avSell:avSell, avSellPrice:avSellPrice, mixPrice:mixPrice, buyMix:buyMix, sellEgg:sellEgg, healCost:healCost, hatchOdds:hatchOdds, collList:collList, claimColl:claimColl, rollEvent:rollEvent, feedPrice:feedPrice, trend:trend, resolveEvent:resolveEvent, season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
     bird:bird, related:related, canPair:canPair, pairUp:pairUp, unpair:unpair, nestContents:nestContents, popCap:popCap, ensureQuests:ensureQuests, qProg:qProg, claimQuest:claimQuest, claimLogin:claimLogin, loginReady:loginReady, LOGIN:LOGIN, sell:sell, ensureComp:ensureComp, birdScore:birdScore, enterShow:enterShow, withdrawShow:withdrawShow, ensureOrders:ensureOrders, orderMatch:orderMatch, fillOrder:fillOrder, sellPrice:sellPrice,
     cleanLoft:cleanLoft, buyGuard:buyGuard, buyFeed:buyFeed, buyBird:buyBird, buyPair:buyPair, refillFeeder:refillFeeder, refillWater:refillWater, feedBird:feedBird, waterBird:waterBird, healBird:healBird,
     weightOf:weightOf, TASKS:TASKS, buyNest:buyNest, nestCost:nestCost, buyPerch:buyPerch, buyFeederUnit:buyFeederUnit, buyWaterUnit:buyWaterUnit, feeders:feeders, waters:waters, extraAllowed:extraAllowed, childrenOf:childrenOf, claimable:claimable, claim:claim, skip:skip, freeNest:freeNest, covered:covered, isNight:isNight, addXp:addXp };
