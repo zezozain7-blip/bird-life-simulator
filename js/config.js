@@ -4,7 +4,7 @@ BLS.CFG = {
   SAVE_KEY: 'bls_save_v1',
   GRID: 12,
   REAL_SEC_PER_HOUR: 6,        // at x1: 1 game hour = 6 real seconds (1 day = 2.4 min)
-  HUNGER_RATE: 1.6,            // per game hour (0 fed .. 100 starving)
+  HUNGER_RATE: 1.6, REAR_EXTRA: 0.6,            // per game hour (0 fed .. 100 starving)
   THIRST_RATE: 2.4,
   EAT_SPEED: 30,               // hunger units removed per real second while eating
   DRINK_SPEED: 40,
@@ -14,10 +14,10 @@ BLS.CFG = {
   EGG_INCUBATION_H: 96, EGG_CANDLE_H: 22, SQUAB_H: 96, JUVENILE_H: 480,   // egg 4 d, nest 4 d, adult at 20 d
   EGG_COLD_LIMIT_H: 18,
   NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.9, OLD_START_D: 150, LIFE_D: 260,
-  START_COINS: 1200, START_FEED: 1.6, UPKEEP_PER_BIRD: 3, GUARD_COST: 400, ISO_COST: 250, UP_COST:{heat:350,vent:300,nursery:450,vet:500,flight:400,cam:300}, PRED_P: 0.10, DISEASE_P: 0.05,
+  START_COINS: 700, START_FEED: 1.6, UPKEEP_PER_BIRD: 0.4, GUARD_COST: 300, ISO_COST: 200, UP_COST:{heat:250,vent:200,nursery:350,vet:400,flight:300,cam:250}, PRED_P: 0.10, DISEASE_P: 0.05,
   OFFLINE_MAX_H: 48,
-  EXTRA_FEEDER_COST:[150,300,500], EXTRA_WATER_COST:[120,250,400], EXTRA_UNIT_LV:[2,4,6],
-  PRICE: { feed5: 90, bird: 260, pair: 480, egg: 25, eggBad: 5, sellK: 1.15, heal: 60 }
+  EXTRA_FEEDER_COST:[80,120,180], EXTRA_WATER_COST:[50,80,120], EXTRA_UNIT_LV:[2,4,6],
+  PRICE: { feed5: 20, bird: 105, pair: 200, egg: 10, eggBad: 2, sellK: 1.15, heal: 40 }   // EGP, Nov 2026: feed per kg (see assets/PRICES.md)
 };
 BLS.NAMES = {
   en: {M:['Zaki','Mazen','Omar','Karim','Adel','Tarek','Sami','Fouad','Ramy','Hassan','Youssef','Khaled','Ahmed','Mostafa'], F:['Hamama','Salma','Yara','Laila','Dina','Rania','Hana','Mona','Nada','Aya','Mariam','Hala','Sara','Farah']},
