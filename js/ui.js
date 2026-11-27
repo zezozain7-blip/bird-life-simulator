@@ -49,13 +49,14 @@ BLS.UI = (function(){
       +'<div class="kv"><span>'+T('parents')+'</span><span>'+(b.parents[0]>0?esc(archName(b.parents[0]))+' × '+esc(archName(b.parents[1])):T('unknown'))+'</span></div>'
       +'<div class="kv"><span>'+T('mate')+'</span><span>'+(mate?esc(mate.name)+' (🥚 '+T('nest')+' '+(b.nest+1)+')':T('none'))+'</span></div>'
       +'<div class="row" style="margin-top:10px"><button class="btn2" id="a-feed">🌾 '+T('feed')+'</button><button class="btn2" id="a-water">💧 '+T('water')+'</button>'+(b.health<95?'<button class="btn2 alt" id="a-heal">💊 '+T('heal')+' ('+C.PRICE.heal+')</button>':'')+'</div>'
-      +'<div class="row"><button class="btn2 alt" id="a-pair">'+(mate?'💔 '+T('unpair'):'❤ '+T('pair'))+'</button><button class="btn2 alt" id="a-follow">🎥 '+T('follow')+'</button><button class="btn2 alt" id="a-tree">🌳 '+T('tree')+'</button></div>'
+      +((b.dis||b.iso)?'<div class="row"><button class="btn2 alt" id="a-iso">🏥 '+T(b.iso?'iso_off':'iso_btn')+'</button></div>':'')+'<div class="row"><button class="btn2 alt" id="a-pair">'+(mate?'💔 '+T('unpair'):'❤ '+T('pair'))+'</button><button class="btn2 alt" id="a-follow">🎥 '+T('follow')+'</button><button class="btn2 alt" id="a-tree">🌳 '+T('tree')+'</button></div>'
       +'<div class="row"><input class="name" id="a-name" value="'+esc(b.name)+'" maxlength="14"><button class="btn2 alt" id="a-ren" style="flex:0 0 auto">'+T('rename')+'</button></div>'
       +'<div class="row"><button class="btn2 red" id="a-sell">'+T('sell')+' · 🪙 '+Sim.sellPrice(b)+'</button></div>';
     open('bird',T('my_birds'),h,{id:id}); $('pt').appendChild(portrait(b,120));
     $('a-feed').onclick=function(){ Sim.feedBird(b); showBird(id,1); };
     $('a-water').onclick=function(){ Sim.waterBird(b); showBird(id,1); };
     if($('a-heal')) $('a-heal').onclick=function(){ Sim.healBird(b); showBird(id,1); };
+    if($('a-iso')) $('a-iso').onclick=function(){ Sim.isolate(b,!b.iso); showBird(id,1); };
     $('a-pair').onclick=function(){ if(mate){ Sim.unpair(b); showBird(id,1); } else showPick(id); };
     $('a-tree').onclick=function(){ showTree(id); };
     $('a-follow').onclick=function(){ BLS.Scene.setFollow(!BLS.Scene.isFollow()); toast(BLS.Scene.isFollow()?'🎥 ON':'🎥 OFF'); };
@@ -135,7 +136,8 @@ BLS.UI = (function(){
       +'<h4>'+T('speed')+'</h4><div class="row"><button class="btn2 alt" data-sp="1">x1</button><button class="btn2 alt" data-sp="2">x2</button><button class="btn2 alt" data-sp="4">x4</button></div>'
       +'<h4>'+T('skip')+'</h4><div class="row"><button class="btn2 alt" id="k6">'+T('skip6')+'</button><button class="btn2 alt" id="k24">'+T('skip24')+'</button></div>'
       +'<h4>'+T('tasks')+'</h4><div id="tl"></div><div class="row" style="margin-top:14px"><button class="btn2 red" id="rs">'+T('reset')+'</button></div>';
-    open('manage',T('manage'),'<div class="row"><button class="btn2" id="m-comp">'+T('comp')+'</button></div><div class="kv"><span>'+T('dirt')+'</span><span>'+ad(Math.round(G.dirt||0))+' / 100</span></div><div class="row"><button class="btn2 alt" id="m-clean">'+T('clean')+'</button>'+(G.guard?'':'<button class="btn2 alt" id="m-guard">'+T('guard')+' · '+C.GUARD_COST+'</button>')+'</div>'+h); $('m-comp').onclick=showComp; $('m-clean').onclick=function(){ Sim.cleanLoft(); showManage(); }; if($('m-guard')) $('m-guard').onclick=function(){ Sim.buyGuard(); showManage(); };
+    open('manage',T('manage'),'<div class="row"><button class="btn2" id="m-comp">'+T('comp')+'</button></div><div class="kv"><span>'+T('farm_lv')+'</span><span>'+T(Sim.skillLabel())+'</span></div><div class="kv"><span>'+T('dirt')+'</span><span>'+ad(Math.round(G.dirt||0))+' / 100</span></div><div class="row"><button class="btn2 alt" id="m-clean">'+T('clean')+'</button>'+(G.isoUnit?'':'<button class="btn2 alt" id="m-iso">'+T('iso_buy')+' · '+C.ISO_COST+'</button>')+(G.guard?'':'<button class="btn2 alt" id="m-guard">'+T('guard')+' · '+C.GUARD_COST+'</button>')+'</div>'+h); $('m-comp').onclick=showComp; $('m-clean').onclick=function(){ Sim.cleanLoft(); showManage(); }; if($('m-iso')) $('m-iso').onclick=function(){ Sim.buyIso(); showManage(); };
+    if($('m-guard')) $('m-guard').onclick=function(){ Sim.buyGuard(); showManage(); };
     body.querySelectorAll('[data-sp]').forEach(function(e){ e.onclick=function(){ G.speed=+e.getAttribute('data-sp'); hud(); }; });
     $('k6').onclick=function(){ Sim.skip(6); toast('+6h'); showManage(); }; $('k24').onclick=function(){ Sim.skip(24); toast('+24h'); showManage(); };
     $('rs').onclick=function(){ if(confirm(T('reset_q'))){ var l=G.lang; Sim.newGame(l); BLS.UI.applyLang(); close(); location.reload(); } };
