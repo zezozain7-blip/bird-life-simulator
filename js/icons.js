@@ -35,5 +35,9 @@ BLS.Icons = (function(){
   var MAP={'🌾':'grain','💧':'drop','🪙':'coin','🥚':'egg','🪺':'egg','🐣':'egg','🕊':'birds','🌳':'tree','🎥':'center','💊':'plus','💔':'heart','❤':'heart','🔥':'sun','🪨':'minus','❄':'snow','⭐':'star','🔒':'lock','⚠':'warn','🔨':'build','🪵':'build','✅':'check','🟡':'dot','⬜':'box','🎯':'check','🏅':'star','🎉':'star','🆘':'warn','✨':'star','💾':'box','📂':'box','📤':'chev','🎓':'star','♂':null,'♀':null};
   var RX=new RegExp('('+Object.keys(MAP).filter(function(k){return MAP[k];}).join('|')+')\\uFE0F?','g');
   function emo(str){ return String(str).replace(RX,function(m,k){ return '<span class="ei">'+svg(MAP[k],15)+'</span>'; }); }
+  var busy=false, TEST=new RegExp(RX.source);
+  function walk(root){ if(!root||root.nodeType===8) return; if(root.nodeType===3){ if(TEST.test(root.nodeValue)&&root.parentNode&&!/^(SCRIPT|STYLE|TEXTAREA|INPUT|SVG)$/i.test(root.parentNode.nodeName)){ var sp=document.createElement('span'); sp.innerHTML=emo(root.nodeValue.replace(/&/g,'&amp;').replace(/</g,'&lt;')); root.parentNode.replaceChild(sp,root); } return; } if(root.nodeType!==1||/^(SCRIPT|STYLE|TEXTAREA|INPUT|SVG|CANVAS)$/i.test(root.nodeName)) return; Array.prototype.slice.call(root.childNodes).forEach(walk); }
+  function auto(){ if(typeof MutationObserver==='undefined') return; new MutationObserver(function(ms){ if(busy) return; busy=true; try{ ms.forEach(function(m){ for(var k=0;k<m.addedNodes.length;k++) walk(m.addedNodes[k]); if(m.type==='characterData') walk(m.target); }); }catch(e){} busy=false; }).observe(document.body,{childList:true,subtree:true,characterData:true}); }
+  if(document.body) auto(); else document.addEventListener('DOMContentLoaded',auto);
   return {svg:svg,fill:fill,emo:emo};
 })();
