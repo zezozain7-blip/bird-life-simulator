@@ -11,7 +11,7 @@ BLS.UI = (function(){
   function G_lang(){ return Sim.G.lang; }
   function timeStr(hh,mm){ var ar=G_lang()==='ar'; return (ar?'اليوم ':'D')+ad(Sim.dayNum())+' · '+ad(hh%12||12)+':'+ad((mm<10?'0':'')+mm)+' '+(ar?(hh<12?'ص':'م'):(hh<12?'AM':'PM')); }
   var lastCoins=null;
-  var alSig='';
+  var alSig='', alSnooze={};
   function alerts(){
     var G=Sim.G, el=$('alerts'); if(!el) return; var L=[], bs=G.birds;
     function f(fn){ return bs.filter(fn); }
@@ -23,11 +23,12 @@ BLS.UI = (function(){
     if(hu.length) L.push({k:'hun',ic:'🌾',n:hu.length,a:function(){ Sim.refillFeeder(); if(Sim.G.feed<=0) showShop(); }});
     if(th.length) L.push({k:'thi',ic:'💧',n:th.length,a:function(){ Sim.refillWater(); }});
     var gb=Sim.gearBroken(); if(gb.length) L.push({k:'gear',ic:'🔧',n:gb.length,a:function(){ showShop('gear'); }});
-    if(G.dirt>=60) L.push({k:'dirt',ic:'🧹',n:Math.round(G.dirt)+'%',a:function(){ Sim.cleanLoft(); }});
+    if(G.dirt>=75) L.push({k:'dirt',ic:'🧹',n:Math.round(G.dirt)+'%',a:function(){ Sim.cleanLoft(); }});
     if(bs.length>Sim.popCap()*0.85) L.push({k:'crowd',ic:'👥',n:bs.length,a:function(){ showBirds(); }});
     if(st.length) L.push({k:'str',ic:'😣',n:st.length,a:function(){ showBird(st[0].id); }});
+    L=L.filter(function(x){ return !(alSnooze[x.k]>G.t); });
     el.classList.toggle('compact',L.length>3); var sig=L.map(function(x){return x.k+x.n;}).join('|')+el.className; if(sig===alSig) return; alSig=sig; el.innerHTML='';
-    L.forEach(function(x){ var d=document.createElement('button'); d.className='al al-'+x.k; d.innerHTML='<span>'+x.ic+'</span><b>'+x.n+'</b><small>'+T('al_'+x.k)+'</small>'; d.onclick=function(){ x.a(); alSig=''; alerts(); }; el.appendChild(d); });
+    L.forEach(function(x){ var d=document.createElement('button'); d.className='al al-'+x.k; d.title=T('al_'+x.k); d.innerHTML='<span>'+x.ic+'</span><b>'+x.n+'</b><i class="alx">×</i>'; d.onclick=function(ev){ if(ev.target.className==='alx'){ alSnooze[x.k]=Sim.G.t+6; } else x.a(); alSig=''; alerts(); }; el.appendChild(d); });
   }
   function hud(){
     alerts(); var G=Sim.G; if(lastCoins!==null&&G.coins>lastCoins) BLS.FX.coins(G.coins-lastCoins); lastCoins=G.coins;
