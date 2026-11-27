@@ -11,8 +11,23 @@ BLS.UI = (function(){
   function G_lang(){ return Sim.G.lang; }
   function timeStr(hh,mm){ var ar=G_lang()==='ar'; return (ar?'اليوم ':'D')+ad(Sim.dayNum())+' · '+ad(hh%12||12)+':'+ad((mm<10?'0':'')+mm)+' '+(ar?(hh<12?'ص':'م'):(hh<12?'AM':'PM')); }
   var lastCoins=null;
+  var alSig='';
+  function alerts(){
+    var G=Sim.G, el=$('alerts'); if(!el) return; var L=[], bs=G.birds;
+    function f(fn){ return bs.filter(fn); }
+    var sick=f(function(b){return b.dis;}), hurt=f(function(b){return !b.dis&&b.health<45;}), hu=f(function(b){return b.hunger>70;}), th=f(function(b){return b.thirst>70;}), st=f(function(b){return b.stress>70&&!b.dis;});
+    if(sick.length) L.push({k:'sick',ic:'🤒',n:sick.length,a:function(){ showBird(sick[0].id); }});
+    if(hurt.length) L.push({k:'hurt',ic:'🩹',n:hurt.length,a:function(){ showBird(hurt[0].id); }});
+    if(hu.length) L.push({k:'hun',ic:'🌾',n:hu.length,a:function(){ Sim.refillFeeder(); if(Sim.G.feed<=0) showShop(); }});
+    if(th.length) L.push({k:'thi',ic:'💧',n:th.length,a:function(){ Sim.refillWater(); }});
+    if(G.dirt>=60) L.push({k:'dirt',ic:'🧹',n:Math.round(G.dirt)+'%',a:function(){ Sim.cleanLoft(); }});
+    if(bs.length>Sim.popCap()*0.85) L.push({k:'crowd',ic:'👥',n:bs.length,a:function(){ showBirds(); }});
+    if(st.length) L.push({k:'str',ic:'😣',n:st.length,a:function(){ showBird(st[0].id); }});
+    var sig=L.map(function(x){return x.k+x.n;}).join('|'); if(sig===alSig) return; alSig=sig; el.innerHTML='';
+    L.forEach(function(x){ var d=document.createElement('button'); d.className='al al-'+x.k; d.innerHTML='<span>'+x.ic+'</span><b>'+x.n+'</b><small>'+T('al_'+x.k)+'</small>'; d.onclick=function(){ x.a(); alSig=''; alerts(); }; el.appendChild(d); });
+  }
   function hud(){
-    var G=Sim.G; if(lastCoins!==null&&G.coins>lastCoins) BLS.FX.coins(G.coins-lastCoins); lastCoins=G.coins;
+    alerts(); var G=Sim.G; if(lastCoins!==null&&G.coins>lastCoins) BLS.FX.coins(G.coins-lastCoins); lastCoins=G.coins;
     var fb=$('b-fly'); if(fb) fb.classList.toggle('ready',G.flyDay!==Sim.dayNum()&&!Sim.isNight()&&Sim.flockReady().length>1);
     $('h-lvl').textContent=G.level; $('h-xp').style.width=(G.xp/(100*G.level)*100)+'%';
     $('h-coins').textContent=G.coins.toLocaleString('en'); $('h-feed').textContent=G.feed.toFixed(2)+' kg'; $('h-birds').textContent=G.birds.length;
@@ -77,10 +92,14 @@ BLS.UI = (function(){
       d.onclick=function(){ if(!ok) return toast(rel?T('related'):T('no_partner')); if(Sim.freeNest()<0) return toast(T('nonest')); Sim.pairUp(b,o); showBird(id,1); }; g.appendChild(d); });
   }
   // ----- panels
+  function deathCard(r){ var why=(r.why||[]).map(function(k){return T(k);}).join('، ');
+    return '<div class="item"><div style="flex:1"><div class="nm">'+(r.sex==='M'?'♂ ':'♀ ')+esc(r.name)+'</div><div class="sm">'+T('d_age_d',r.age,r.day)+'</div><div class="kv"><span>'+T('d_cause')+'</span><span><b>'+T(r.c)+(r.dis?' ('+T(r.dis)+')':'')+'</b></span></div>'+(why?'<div class="sm">'+T('d_also')+': '+why+'</div>':'')+'<div class="sm">💡 '+T('h_'+r.c)+'</div></div></div>'; }
+  function showDeaths(){ var G=Sim.G, d=G.deaths||[]; open('deaths','💀 '+T('deaths'),d.length?d.map(deathCard).join(''):'<p>'+T('no_deaths')+'</p>'); }
   function showBirds(){
     var G=Sim.G, h='<div class="grid" id="bg"></div>'; open('birds',T('my_birds')+' ('+G.birds.length+')',h); var g=$('bg');
     G.birds.slice().sort(function(a,b){return a.id-b.id;}).forEach(function(b){ var d=document.createElement('div'); d.className='card'; d.appendChild(portrait(b,96)); var n=document.createElement('div'); n.className='nm'; n.textContent=(b.sex==='M'?'♂ ':'♀ ')+b.name; d.appendChild(n); var s=document.createElement('div'); s.className='sm'; s.textContent=T('br_'+Gen.breedOf(b.g))+' · '+stageTxt(b)+(b.mate>=0?' ❤':''); d.appendChild(s); d.onclick=function(){ showBird(b.id); }; g.appendChild(d); });
     if(!G.birds.length) body.innerHTML='<p>'+T('nothing')+'</p>';
+    if((G.deaths||[]).length){ var bd=document.createElement('button'); bd.className='btn2 alt'; bd.style.marginTop='12px'; bd.textContent='💀 '+T('deaths')+' ('+G.deaths.length+')'; bd.onclick=showDeaths; body.appendChild(bd); }
   }
   function showBreeding(){
     var G=Sim.G, h='<div class="grid" id="ng"></div><p style="color:#c9b78d;font-size:12px">'+T('hatch_tip')+'</p>'; open('breeding',T('nests'),h);
@@ -266,7 +285,7 @@ BLS.UI = (function(){
     var P=a.parents||[-1,-1], gp=[]; P.forEach(function(p){ var q=(p>0&&G.archive[p])?G.archive[p].parents:[-1,-1]; gp.push(q[0],q[1]); });
     function row(ids,label){ return '<div class="tl">'+label+'</div><div class="trow">'+ids.map(function(i){ return i>0?treeNode(i):'<div class="tn gone">?</div>'; }).join('')+'</div>'; }
     var kids=Sim.childrenOf(id);
-    var h=row(gp,T('grandp'))+'<div class="tarrow">▼</div>'+row(P,T('parents'))+'<div class="tarrow">▼</div><div class="trow">'+treeNode(id,1)+'</div>'
+    var h=(a.death?deathCard(a.death):'')+row(gp,T('grandp'))+'<div class="tarrow">▼</div>'+row(P,T('parents'))+'<div class="tarrow">▼</div><div class="trow">'+treeNode(id,1)+'</div>'
       +'<div class="tarrow">▼</div><div class="tl">'+T('children')+'</div><div class="trow">'+(kids.length?kids.map(function(k){return treeNode(k);}).join(''):'<span style="color:#c9b78d">'+T('no_kids')+'</span>')+'</div>';
     open('tree','🌳 '+T('tree'),h); body.querySelectorAll('.tn[data-id]').forEach(function(e){ e.onclick=function(){ var i=+e.getAttribute('data-id'); if(Sim.bird(i)) showBird(i); else showTree(i); }; });
   }
@@ -297,7 +316,7 @@ BLS.UI = (function(){
       BLS.FX.levelCard(T('level')+' '+lv,lines); });
     $('b-fly').onclick=function(){ if(Sim.flyFlock()){ if(cur.kind) close(); BLS.Scene.watchSky(); setTimeout(function(){ BLS.Scene.center(); },14500); } hud(); };
     Sim.on('event',function(m,go,id){ lastEvent={go:go,id:id}; var t=$('ticker'); $('tick-txt').innerHTML=BLS.Icons.emo(esc(m)); t.style.display='flex'; clearTimeout(t._h); t._h=setTimeout(function(){t.style.display='none';},9000); toast(m); });
-    $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='comp') showComp(); else if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); else if(lastEvent&&lastEvent.go==='market') showShop('feed'); else if(lastEvent&&lastEvent.go==='manage') showManage(); else if(lastEvent&&lastEvent.go==='aviary') showShop('aviary'); else if(lastEvent&&lastEvent.go==='farm') close(); };
+    $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='comp') showComp(); else if(lastEvent&&lastEvent.go==='deaths') showDeaths(); else if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); else if(lastEvent&&lastEvent.go==='market') showShop('feed'); else if(lastEvent&&lastEvent.go==='manage') showManage(); else if(lastEvent&&lastEvent.go==='aviary') showShop('aviary'); else if(lastEvent&&lastEvent.go==='farm') close(); };
     document.querySelectorAll('#nav button').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-nav'); if(k==='farm') close(); else if(k==='birds') showBirds(); else if(k==='breeding') showBreeding(); else if(k==='market') showShop(); else showManage(); }; });
     $('b-zin').onclick=function(){ BLS.Scene.cam.z*=1.25; }; $('b-zout').onclick=function(){ BLS.Scene.cam.z/=1.25; };
     $('b-center').onclick=function(){ BLS.Scene.center(); };
@@ -310,5 +329,5 @@ BLS.UI = (function(){
     $('b-lang').onclick=function(){ var G=Sim.G; G.lang=G.lang==='ar'?'en':'ar'; applyLang(); if(cur.kind) close(); hud(); };
     BLS.Icons.fill(document); applyLang(); hud(); welcomeBack(); setInterval(hud,250);
   }
-  return {welcomeBack:welcomeBack,showShop:showShop,init:init,applyLang:applyLang,onPick:onPick,toast:toast,hud:hud,showBird:showBird,showBreeding:showBreeding,close:close,showNest:showNest,showTree:showTree,showBuild:showBuild,showComp:showComp,showColl:showColl,showTasks:showTasks,showManage:showManage,showBirds:showBirds};
+  return {welcomeBack:welcomeBack,showShop:showShop,init:init,applyLang:applyLang,onPick:onPick,toast:toast,hud:hud,showBird:showBird,showBreeding:showBreeding,close:close,showNest:showNest,showTree:showTree,showBuild:showBuild,showComp:showComp,showColl:showColl,showTasks:showTasks,showManage:showManage,showBirds:showBirds,showDeaths:showDeaths};
 })();
