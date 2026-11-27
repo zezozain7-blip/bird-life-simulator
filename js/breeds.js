@@ -53,3 +53,18 @@ BLS.AVIARY_CAP = 24; BLS.AVIARY_UPKEEP = 1; BLS.AVIARY_BREED_P = 0.25; BLS.AVIAR
 })();
 
 BLS.TXT=BLS.TXT||{en:{},ar:{}}; (function(){ var e=BLS.TXT.en, a=BLS.TXT.ar; e.rar0='Common';e.rar1='Uncommon';e.rar2='Rare';e.rar3='Very rare';e.pair_mkt='Market price of a pair'; a.rar0='شائع';a.rar1='غير شائع';a.rar2='نادر';a.rar3='نادر جداً';a.pair_mkt='سعر الزوج في السوق'; })();
+
+(function(){ var e=BLS.TXT.en, a=BLS.TXT.ar;
+ e.ev_die2='{0} died: {1}'; e.deaths='Deaths log'; e.no_deaths='No deaths yet'; e.d_cause='Cause'; e.d_age_d='Age {0} days, day {1}'; e.d_also='Also'; e.d_tip='How to prevent it';
+ e.c_old='old age'; e.c_pred='predator'; e.c_hunger='starvation'; e.c_thirst='dehydration'; e.c_disease='disease'; e.c_stress='stress'; e.c_injury='injury'; e.c_unknown='unknown';
+ e.why_weather='bad weather'; e.why_hunger='hunger'; e.why_crowd='crowding'; e.why_dirty='dirty loft'; e.why_stress='stress'; e.why_contact='contact with a sick bird'; e.why_chance='bad luck';
+ e.h_c_old='A natural end of life. Keep breeding so the line continues.'; e.h_c_pred='Buy the guard in Gear to keep predators away.'; e.h_c_hunger='Keep the feeder filled (add a second feeder) and watch the feed stock.'; e.h_c_thirst='Keep the water full (add a second water dispenser), more in hot weather.';
+ e.h_c_disease='Clean the loft often, isolate sick birds early and treat them; a vet kit helps.'; e.h_c_stress='Avoid crowding, keep food and water full and the loft clean; perches and a flight area lower stress.'; e.h_c_injury='Treat injured birds quickly and keep them rested.'; e.h_c_unknown='Check food, water and cleanliness regularly.';
+ a.ev_die2='{0} نفق: {1}'; a.deaths='سجل النفوق'; a.no_deaths='لسه مفيش نفوق'; a.d_cause='السبب'; a.d_age_d='العمر {0} يوم، اليوم {1}'; a.d_also='وكمان'; a.d_tip='إزاي تتجنبه';
+ a.c_old='كبر السن'; a.c_pred='حيوان مفترس'; a.c_hunger='جوع'; a.c_thirst='عطش'; a.c_disease='مرض'; a.c_stress='توتر'; a.c_injury='إصابة'; a.c_unknown='غير معروف';
+ a.why_weather='جو سيء'; a.why_hunger='الجوع'; a.why_crowd='زحمة'; a.why_dirty='البرج وسخ'; a.why_stress='توتر'; a.why_contact='عدوى من طير مريض'; a.why_chance='حظ';
+ a.h_c_old='نهاية طبيعية للعمر. كمّل تربية عشان السلالة تكمل.'; a.h_c_pred='اشتري الحارس من التجهيزات عشان يبعد المفترسات.'; a.h_c_hunger='خلّي المعلف مليان (زوّد معلف تاني) وراقب مخزون العلف.'; a.h_c_thirst='خلّي المية مليانة (زوّد مشرب تاني) وخصوصاً في الحر.';
+ a.h_c_disease='نضّف البرج كتير، اعزل الطير المريض بدري وعالجه، وعدّة البيطري بتفرق.'; a.h_c_stress='ماتزحمش البرج، خلّي الأكل والمية مليانين والبرج نضيف، والأعواد ومكان الطيران بيقللوا التوتر.'; a.h_c_injury='عالج الطير المصاب بسرعة وسيبه يرتاح.'; a.h_c_unknown='راجع الأكل والمية والنضافة بانتظام.'; })();
+(function(){ var e=BLS.TXT.en, a=BLS.TXT.ar;
+ e.al_sick='Sick: tap to treat'; e.al_hurt='Weak: tap'; e.al_hun='Hungry: fill feeder'; e.al_thi='Thirsty: fill water'; e.al_dirt='Dirty: clean'; e.al_crowd='Crowded'; e.al_str='Stressed: tap';
+ a.al_sick='مريض: اضغط للعلاج'; a.al_hurt='ضعيف: اضغط'; a.al_hun='جعان: املا المعلف'; a.al_thi='عطشان: املا المية'; a.al_dirt='وسخ: نضّف'; a.al_crowd='زحمة'; a.al_str='متوتر: اضغط'; })();
