@@ -110,6 +110,7 @@ BLS.Scene = (function(){
     var brood=b.st==='sit'&&b.nest>=0&&stg==='adult'&&Sim.G.eggs.some(function(e){return e.nest===b.nest&&!e.dead;});
     if(brood){ // brooding: body sunk into the nest, legs and belly hidden behind the straw rim, sitting on the eggs
       var nr=nestRect(b.nest), nx=nr.x+nr.w*0.5, fy=nr.y+nr.h-3, bh=50*sz;
+      var gbr=BLS.Gen.breedOf(b.g); if(BLS.Gem&&BLS.Gem.has(gbr,BLS.Gen.phenoColor(b.g),BLS.Gen.phenoPattern(b.g),stg)&&BLS.Gem.brood(c,nr,b.face,{br:gbr})) return;
       c.save(); c.beginPath(); c.rect(nr.x-6,fy-bh-30,nr.w+12,bh+30-1); c.clip();
       Spr.draw(c,nx,fy+bh*0.05,sz*1.2,b.face,{br:BLS.Gen.breedOf(b.g),col:BLS.Gen.phenoColor(b.g),pat:BLS.Gen.phenoPattern(b.g),pose:(BLS.VS&&BLS.VS.has(BLS.Gen.breedOf(b.g))?'brood':'sit'),ph:b.ph,stage:stg});
       c.restore();
