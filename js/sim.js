@@ -273,13 +273,17 @@ BLS.Sim = (function(){
     // rest birds
     G.birds.forEach(function(b){ if(stageOf(b)!=='squab'){ b.st='idle'; b.timer=0.5; if(b.z>0.05&&b.nest<0){ var s=L.randSpot(); b.x=s.x;b.y=s.y;b.z=0; } } }); }
   // ---------- player actions
+  function mk(){ if(!G.mkt) G.mkt={feed:1,G:1,R:1,W:1}; return G.mkt; }
+  function feedPrice(){ return Math.round(C.PRICE.feed5*mk().feed*((G.shortage||0)>0?1.5:1)); }
+  function dailyMarket(){ var m=mk(); ['feed','G','R','W'].forEach(function(k){ m[k]=Math.max(0.7,Math.min(1.6,m[k]+(1-m[k])*0.15+(Math.random()-0.5)*0.22)); }); if(G.shortage>0) G.shortage--; }
+  function trend(k){ var v=mk()[k]; return v>1.12?'up':v<0.9?'down':'flat'; }
   function sellPrice(b){
     var q=(b.g.size+b.g.vit+b.g.fert)/3, col=Gen.phenoColor(b.g);
-    var p=0.85*(40+q*1.1)+(col==='W'?25:col==='R'?10:0); var s=stageOf(b); p*= s==='squab'?0.4:(s==='juvenile'?0.7:1);
+    var p=(0.85*(40+q*1.1)+(col==='W'?25:col==='R'?10:0))*mk()[col]; var s=stageOf(b); p*= s==='squab'?0.4:(s==='juvenile'?0.7:1);
     return Math.round(p);
   }
   function sell(b){ var p=sellPrice(b); G.coins+=p; G.stats.sold++; addXp(10); unpair(b); var i=G.birds.indexOf(b); if(i>=0) G.birds.splice(i,1); releaseNests(); emit('toast',T('sold_ok',b.name,p)); emit('sfx','coin'); }
-  function buyFeed(){ if(G.coins<C.PRICE.feed5) return emit('toast',T('need_coins')); G.coins-=C.PRICE.feed5; G.feed+=5; G.stats.boughtFeed++; emit('toast','🌾 +5 kg'); }
+  function buyFeed(){ var fp=feedPrice(); if(G.coins<fp) return emit('toast',T('need_coins')); G.coins-=fp; G.feed+=5; G.stats.boughtFeed++; emit('toast','🌾 +5 kg'); }
   function placeNew(sex,g,age){ var s=L.randSpot(); return newBird({sex:sex,g:g,age:age,x:s.x,y:s.y,hunger:25,thirst:25}); }
   function buyBird(){
     if(G.birds.length>=C.MAX_BIRDS) return emit('toast',T('full')); if(G.coins<C.PRICE.bird) return emit('toast',T('need_coins'));
@@ -336,7 +340,26 @@ BLS.Sim = (function(){
     var prev=G.weather; G.weather=w; var bad=(w==='heat'&&!(G.up&&G.up.vent))||(w==='cold'&&!(G.up&&G.up.heat)); G.weatherBad=bad; if(w!==prev&&w!=='clear') emit('event',T('ev_w_'+w),'farm'); }
   function wMul(){ var w=G.weather, up=G.up||{}; return { th:w==='heat'?(up.vent?1.15:1.5):1, hu:w==='cold'?(up.heat?1.1:1.3):1 }; }
   function buyUp(k){ var cost=C.UP_COST[k]; G.up=G.up||{}; if(G.up[k]) return; if(G.coins<cost) return emit('toast',T('need_coins')); G.coins-=cost; G.up[k]=1; emit('sfx','build'); emit('toast',T('up_done')); }
+  function newEvent(){
+    var d=dayNum(), kinds=['stray','rare','trader','injured','shortage'], k=Gen.rnd(kinds), id=(G.evSeq=(G.evSeq||0)+1), ev={id:id,k:k,exp:d+2};
+    if(k==='trader'){ var ad=G.birds.filter(function(b){return stageOf(b)==='adult'&&!b.iso;}); if(!ad.length) return null; var b=Gen.rnd(ad); ev.bid=b.id; ev.pay=Math.round(sellPrice(b)*(1.35+Math.random()*0.35)); ev.name=b.name; }
+    if(k==='injured'){ if(!G.birds.length) return null; var v=Gen.rnd(G.birds); ev.bid=v.id; ev.name=v.name; ev.cost=45; v.health=Math.max(10,v.health-35); }
+    if(k==='rare'){ ev.cost=380; }
+    if(k==='shortage'){ G.shortage=6; emit('event',T('ev_shortage'),'market'); return null; }
+    if(k==='stray'&&G.birds.length>=popCap()) return null;
+    return ev;
+  }
+  function rollEvent(){ G.pend=(G.pend||[]).filter(function(e){return e.exp>=dayNum();}); if(G.pend.length>=3||Math.random()>0.3) return; var e=newEvent(); if(!e) return; G.pend.push(e); emit('event',T('evp_'+e.k,e.name||''),'manage'); }
+  function resolveEvent(id,opt){
+    var e=null,i; for(i=0;i<G.pend.length;i++) if(G.pend[i].id===id) e=G.pend[i]; if(!e) return false; var b=e.bid?bird(e.bid):null;
+    if(e.k==='stray'&&opt===1){ if(G.birds.length>=popCap()) return emit('toast',T('full')); var s=placeNew(Math.random()<0.5?'M':'F',Gen.randomGenes(),C.JUVENILE_H+20); emit('toast','🕊️ '+s.name); }
+    else if(e.k==='rare'&&opt===1){ if(G.coins<e.cost) return emit('toast',T('need_coins')); if(G.birds.length>=popCap()) return emit('toast',T('full')); G.coins-=e.cost; var g={c:['W','W'],p:[Gen.rnd(['B','C']),Gen.rnd(['B','C'])],size:75+Math.random()*20|0,vit:75+Math.random()*20|0,fert:70+Math.random()*20|0}; var r=placeNew(Math.random()<0.5?'M':'F',g,C.JUVENILE_H+30); r.rare=true; emit('toast','🕊️ '+r.name); }
+    else if(e.k==='trader'&&opt===1){ if(!b) return false; G.coins+=e.pay; G.stats.sold++; unpair(b); G.birds.splice(G.birds.indexOf(b),1); releaseNests(); emit('toast','🪙 +'+e.pay); emit('sfx','coin'); }
+    else if(e.k==='injured'&&opt===1){ if(G.coins<e.cost) return emit('toast',T('need_coins')); G.coins-=e.cost; if(b){ b.health=Math.min(100,b.health+40); } emit('toast',T('healed',e.name)); }
+    G.pend.splice(G.pend.indexOf(e),1); return true;
+  }
   function dailyEvents(protect){
+    dailyMarket(); if(!protect) rollEvent();
     rollWeather(); if(G.weather==='rain') G.dirt=Math.min(100,(G.dirt||0)+4);
     var n=G.birds.length; G.dirt=Math.min(100,(G.dirt||0)+3+n*1.4);
     if(n&&!protect){ var up=Math.min(G.coins,Math.round(n*C.UPKEEP_PER_BIRD)); G.coins-=up; emit('event',T('ev_upkeep',up),'farm'); }
@@ -419,7 +442,7 @@ BLS.Sim = (function(){
     {id:'nests6',k:'t_nests',r:700,ok:function(){return G.nestsOpen>=6;}},
     {id:'win',k:'t_win',r:1000,ok:function(){return G.comp&&G.comp.wins>=1;}},
     {id:'rich',k:'t_rich',r:800,ok:function(){return G.coins>=3000;}}];
-  function claimable(){ return TASKS.filter(function(t){return !G.tasks[t.id]&&t.ok();}).length+questBadge(); }
+  function claimable(){ return TASKS.filter(function(t){return !G.tasks[t.id]&&t.ok();}).length+questBadge()+((G.pend||[]).length); }
   function claim(id){ TASKS.forEach(function(t){ if(t.id===id&&!G.tasks[id]&&t.ok()){ G.tasks[id]=1; G.coins+=t.r; addXp(20); emit('toast','🪙 +'+t.r); } }); }
   // ---------- save / load
   function save(){
@@ -433,13 +456,14 @@ BLS.Sim = (function(){
     if(!G||!G.birds) return false;
     ensureOrders(); ensureComp(); ensureQuests(); G.birds.forEach(ensureBird); G.saveVersion=3;
     if(!G.weather){ G.weather='clear'; G.up={}; }
+    mk(); if(!G.pend) G.pend=[];
     if(G.nestsOpen===undefined){ G.nestsOpen=8; G.perches=[]; }
     var away=Math.max(0,(Date.now()-(G.savedAt||Date.now()))/1000/C.REAL_SEC_PER_HOUR); away=Math.min(away,C.OFFLINE_MAX_H);
     G.birds.forEach(function(b){ if(b.st==='fly'||b.st==='walk'||b.st==='eat'||b.st==='drink'||b.st==='sit'||b.st==='perch'||b.st==='peck'||b.st==='preen'||b.st==='coo') { b.st='idle'; b.timer=0.5; if(b.z>0.05&&stageOf(b)!=='squab'){ var s=L.randSpot(); b.x=s.x;b.y=s.y;b.z=0; } } });
     if(away>=1){ var s0={eggs:G.stats.eggs||0,hat:G.stats.hatched,died:G.stats.died,grain:G.feeder.grain,water:G.water.amt,birds:G.birds.length}; skip(Math.floor(away)); G.savedAt=Date.now(); G.welcome={h:Math.floor(away),eggs:(G.stats.eggs||0)-s0.eggs,hatched:G.stats.hatched-s0.hat,died:G.stats.died-s0.died,grain:Math.max(0,s0.grain-G.feeder.grain),water:Math.max(0,s0.water-G.water.amt),birds:G.birds.length-s0.birds}; }
     return true;
   }
-  return { season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
+  return { rollEvent:rollEvent, feedPrice:feedPrice, trend:trend, resolveEvent:resolveEvent, season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
     bird:bird, related:related, canPair:canPair, pairUp:pairUp, unpair:unpair, nestContents:nestContents, popCap:popCap, ensureQuests:ensureQuests, qProg:qProg, claimQuest:claimQuest, claimLogin:claimLogin, loginReady:loginReady, LOGIN:LOGIN, sell:sell, ensureComp:ensureComp, birdScore:birdScore, enterShow:enterShow, withdrawShow:withdrawShow, ensureOrders:ensureOrders, orderMatch:orderMatch, fillOrder:fillOrder, sellPrice:sellPrice,
     cleanLoft:cleanLoft, buyGuard:buyGuard, buyFeed:buyFeed, buyBird:buyBird, buyPair:buyPair, refillFeeder:refillFeeder, refillWater:refillWater, feedBird:feedBird, waterBird:waterBird, healBird:healBird,
     weightOf:weightOf, TASKS:TASKS, buyNest:buyNest, nestCost:nestCost, buyPerch:buyPerch, childrenOf:childrenOf, claimable:claimable, claim:claim, skip:skip, freeNest:freeNest, covered:covered, isNight:isNight, addXp:addXp };
