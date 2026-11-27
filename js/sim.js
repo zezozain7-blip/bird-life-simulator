@@ -117,7 +117,7 @@ BLS.Sim = (function(){
       b.hunger+=hungerAdd*(stg==='squab'?0.8:1); b.thirst+=thirstAdd*(stg==='squab'?0.8:1);
       if(stg==='squab'){
         var par=[bird(b.parents[0]),bird(b.parents[1])].filter(function(p){return p&&p.hunger<78&&p.thirst<85;});
-        if(par.length){ b.hunger=Math.max(0,b.hunger-6*dt); b.thirst=Math.max(0,b.thirst-6*dt); }
+        if(par.length){ b.hunger=Math.max(0,b.hunger-6*dt); b.thirst=Math.max(0,b.thirst-6*dt); par.forEach(function(p){ p.hunger+=C.REAR_EXTRA*dt/par.length; }); }  // raising squabs costs the parents extra feed (a real pair eats about 35-40 kg a year)
       }
       if(auto){
         var fU=feeders().filter(function(u){return u.grain>0;}).sort(function(a,b2){return b2.grain-a.grain;})[0];
@@ -373,7 +373,7 @@ BLS.Sim = (function(){
   function trend(k){ var v=mk()[k]; return v>1.12?'up':v<0.9?'down':'flat'; }
   function sellPrice(b){
     var q=(b.g.size+b.g.vit+b.g.fert)/3, col=Gen.phenoColor(b.g);
-    var p=(C.PRICE.sellK*(40+q*1.1)+(col==='W'?25:col==='R'?10:0))*mk()[col]*BLS.BREEDS[Gen.breedOf(b.g)].mul; var s=stageOf(b); p*= s==='squab'?0.4:(s==='juvenile'?0.7:1);
+    var s=stageOf(b), p=BLS.BREEDS[Gen.breedOf(b.g)].pp/2*(0.8+q/250)*(col==='W'?1.12:col==='R'?1.05:1)*mk()[col]; p*= s==='squab'?0.5:(s==='juvenile'?0.8:1);
     return Math.round(p);
   }
   function sell(b){ var p=sellPrice(b); G.coins+=p; G.stats.sold++; addXp(10); unpair(b); var i=G.birds.indexOf(b); if(i>=0) G.birds.splice(i,1); releaseNests(); emit('toast',T('sold_ok',b.name,p)); emit('sfx','coin'); }
@@ -393,7 +393,7 @@ BLS.Sim = (function(){
     G.coins-=C.PRICE.pair; G.stats.bought+=2; var a=placeNew('M',Gen.randomGenes(),C.JUVENILE_H+10+Math.random()*30), b=placeNew('F',Gen.randomGenes(),C.JUVENILE_H+10+Math.random()*30);
     emit('toast','🕊️🕊️ '+T('bought_ok')+': '+a.name+' + '+b.name);
   }
-  function breedPrice(k){ return Math.round(BLS.BREED_PRICE*BLS.BREEDS[k].mul); }
+  function breedPrice(k){ return Math.round(BLS.BREEDS[k].pp/2*1.1); }
   function buyBreed(k,sex){ var B=BLS.BREEDS[k]; if(!B||G.level<B.lv) return false; if(G.birds.length>=Math.min(C.MAX_BIRDS,popCap())) return emit('toast',T('full')); var p=breedPrice(k); if(G.coins<p) return emit('toast',T('need_coins'));
     G.coins-=p; G.stats.bought++; var g=Gen.randomGenes(); g.br=k; if(B.base) g.c=[B.base,B.base]; var b=placeNew(sex,g,C.JUVENILE_H+20); emit('sfx','coin'); emit('toast','🕊️ '+T('bought_ok')+': '+b.name+' ('+T('br_'+k)+')'); return b; }
   function aviary(){ return G.av||(G.av={}); }
@@ -414,9 +414,9 @@ BLS.Sim = (function(){
   function healCost(){ return (G.up&&G.up.vet)?30:C.PRICE.heal; }
   function healBird(b){ var hp=healCost(); if(G.coins<hp) return emit('toast',T('need_coins')); G.coins-=hp; b.health=Math.min(100,b.health+50); b.dis=null; b.iso=false; emit('toast',T('healed',b.name)); }
   function weightOf(b){ var s=stageOf(b); var base=(300+b.g.size*2.6)*BLS.BREEDS[Gen.breedOf(b.g)].sc; var f=s==='squab'?Math.min(1,0.08+b.age/C.SQUAB_H*0.5):(s==='juvenile'?0.6+0.4*(b.age-C.SQUAB_H)/(C.JUVENILE_H-C.SQUAB_H):1); return Math.round(base*f); }
-  function buyNest(){ if(G.nestsOpen>=C.NEST_COUNT) return; var cost=250+(G.nestsOpen-4)*100; if(G.coins<cost) return emit('toast',T('need_coins')); G.coins-=cost; G.nestsOpen++; emit('sfx','build'); emit('toast','🪺 '+T('built')); }
-  function nestCost(){ return 250+(G.nestsOpen-4)*100; }
-  function buyPerch(){ if(G.perches.length>=L.perchSpots.length) return; if(G.coins<150) return emit('toast',T('need_coins')); G.coins-=150; for(var i=0;i<L.perchSpots.length;i++) if(G.perches.indexOf(i)<0){ G.perches.push(i); break; } emit('sfx','build'); emit('toast','🪵 '+T('built')); }
+  function buyNest(){ if(G.nestsOpen>=C.NEST_COUNT) return; var cost=nestCost(); if(G.coins<cost) return emit('toast',T('need_coins')); G.coins-=cost; G.nestsOpen++; emit('sfx','build'); emit('toast','🪺 '+T('built')); }
+  function nestCost(){ return 120+(G.nestsOpen-4)*40; }
+  function buyPerch(){ if(G.perches.length>=L.perchSpots.length) return; if(G.coins<40) return emit('toast',T('need_coins')); G.coins-=40; for(var i=0;i<L.perchSpots.length;i++) if(G.perches.indexOf(i)<0){ G.perches.push(i); break; } emit('sfx','build'); emit('toast','🪵 '+T('built')); }
   function childrenOf(id){ var out=[]; for(var k in G.archive){ var a=G.archive[k]; if(a.parents&&(a.parents[0]===id||a.parents[1]===id)) out.push(+k); } return out; }
   // ---------- competition: weekly pigeon show against AI rival breeders (gets harder every week)
   var RIVAL_NAMES=['الحاج فتحي','أبو علي','عم رمضان','أستاذ سمير','Mr. Samir','Haji Fathy'];
@@ -437,7 +437,7 @@ BLS.Sim = (function(){
     var mine=(me&&stageOf(me)==='adult')?birdScore(me):0; res.push({n:null,score:mine,you:true});
     res.sort(function(a,b){return b.score-a.score;});
     var place=0; res.forEach(function(r,i){ if(r.you) place=i+1; var pts=[3,2,1,0][i]||0; if(r.you) K.pts+=pts; else r.rival.pts+=pts; });
-    var prize=0; if(mine>0){ prize=Math.round([600,300,150,0][place-1]*(1+0.1*w)); }
+    var prize=0; if(mine>0){ prize=Math.round([400,200,100,0][place-1]*(1+0.1*w)); }
     if(prize){ G.coins+=prize; addXp([60,30,15,0][place-1]); } if(place===1&&mine>0) K.wins++;
     K.last={week:w,place:mine>0?place:0,score:mine,bird:me?me.name:'',prize:prize,res:res.map(function(r){return {n:r.n,score:r.score,you:!!r.you};})};
     K.entry=-1; K.warned=false; K.nextShow+=168; if(K.nextShow<=G.t) K.nextShow=G.t+168;
@@ -515,8 +515,8 @@ BLS.Sim = (function(){
   var NEIGHBOURS=['أبو أحمد','الحاج سيد','عم محمود','أستاذ هاني','مدحت','أبو يوسف','Mr. Karim','Haji Sayed'];
   function newOrder(){
     var col=Gen.rnd(['G','G','R','R','W']), pat=Math.random()<0.5?Gen.rnd(['B','C']):null;
-    var base=40+60*0.5+(col==='W'?25:col==='R'?10:0);
-    var mult=2+Math.random()*2; if(pat) mult+=0.4;
+    var base=95+(col==='W'?25:col==='R'?10:0);
+    var mult=1.4+Math.random()*1.0; if(pat) mult+=0.3;
     G.orderSeq=(G.orderSeq||0)+1;
     return {id:G.orderSeq,who:Gen.rnd(NEIGHBOURS),col:col,pat:pat,pay:Math.round(base*mult/5)*5,minQ:pat?55:0};
   }
