@@ -20,7 +20,7 @@ BLS.UI = (function(){
   }
   function open(kind,title,html,opts){ if(!cur.kind){ try{ history.pushState({bls:1},''); }catch(e){} } cur={kind:kind,args:opts||{}}; $('sheet-title').innerHTML=BLS.Icons.emo(esc(title)); body.innerHTML=BLS.Icons.emo(html); sheet.classList.remove('hidden'); body.scrollTop=0; setNav(kind); }
   function close(fromPop){ var was=cur.kind; sheet.classList.add('hidden'); cur={kind:null}; if(was&&fromPop!==true){ try{ if(history.state&&history.state.bls) history.back(); }catch(e){} } BLS.Scene.select(-1); setNav('farm'); }
-  function setNav(k){ var m={build:'farm',tree:'birds',bird:'birds',birds:'birds',breeding:'breeding',nest:'breeding',egg:'breeding',market:'market',manage:'manage',tasks:'manage',pick:'birds'}[k]||'farm'; document.querySelectorAll('#nav button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-nav')===m); }); }
+  function setNav(k){ var m={build:'farm',tree:'birds',bird:'birds',birds:'birds',breeding:'breeding',nest:'breeding',egg:'breeding',market:'market',manage:'manage',comp:'manage',tasks:'manage',pick:'birds'}[k]||'farm'; document.querySelectorAll('#nav button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-nav')===m); }); }
   function bar(v,good){ v=Math.max(0,Math.min(100,v)); var col=good?(v>60?'#6fcf4a':v>30?'#e6c03a':'#e0553a'):(v<40?'#6fcf4a':v<70?'#e6c03a':'#e0553a'); return '<div class="bar"><i style="width:'+v+'%;background:'+col+'"></i></div>'; }
   function portrait(b,size){ var cn=document.createElement('canvas'); cn.width=size*2; cn.height=size*1.7; cn.style.width=size+'px'; cn.style.height=(size*0.85)+'px'; var c=cn.getContext('2d'); c.scale(2,2); c.fillStyle='#00000030'; c.beginPath(); c.ellipse(size*0.5,size*0.78,size*0.28,size*0.06,0,0,6.3); c.fill();
     Spr.draw(c,size*0.5,size*0.78,size/46,1,{col:Gen.phenoColor(b.g),pat:Gen.phenoPattern(b.g),pose:'stand',ph:0,stage:Sim.stageOf(b)==='squab'?'squab':Sim.stageOf(b)}); return cn; }
@@ -109,13 +109,28 @@ BLS.UI = (function(){
     body.querySelectorAll('[data-o]').forEach(function(e){ e.onclick=function(){ Sim.fillOrder(+e.getAttribute('data-o'),+e.getAttribute('data-ob')); showMarket(); }; });
     $('m-f').onclick=function(){ Sim.buyFeed(); showMarket(); }; $('m-b').onclick=function(){ Sim.buyBird(); showMarket(); }; $('m-p').onclick=function(){ Sim.buyPair(); showMarket(); };
   }
+  function showComp(){
+    var G=Sim.G; Sim.ensureComp(); var K=G.comp, left=Math.max(0,Math.ceil(K.nextShow-G.t)), me=Sim.bird(K.entry);
+    var h='<div class="kv"><span>'+T('comp_week')+' #'+(K.week+1)+'</span><span>'+T('comp_next')+' '+T('comp_h',ad(left))+'</span></div>';
+    h+='<p style="color:#c9b78d;font-size:12px">'+T('comp_info')+'</p>';
+    if(me&&Sim.stageOf(me)==='adult') h+='<div class="row"><div style="flex:1">'+T('comp_ent')+': <b>'+esc(me.name)+'</b> · '+T('comp_score')+' '+ad(Sim.birdScore(me))+'</div><button class="btn2 red" id="c-wd" style="flex:0 0 auto">'+T('comp_withdraw')+'</button></div>';
+    var ad_=G.birds.filter(function(b){return Sim.stageOf(b)==='adult';}).sort(function(a,b){return Sim.birdScore(b)-Sim.birdScore(a);});
+    h+='<h4>'+T('comp_pick')+'</h4>'; if(!ad_.length) h+='<p>'+T('comp_none')+'</p>';
+    ad_.slice(0,8).forEach(function(b){ h+='<div class="row"><div style="flex:1">'+esc(b.name)+' <span style="color:#c9b78d;font-size:12px">'+T('comp_score')+' '+ad(Sim.birdScore(b))+'</span></div><button class="btn2'+(b.id===K.entry?' alt':'')+'" data-e="'+b.id+'" style="flex:0 0 auto">'+T('comp_enter')+'</button></div>'; });
+    var board=[{n:T('comp_you'),p:K.pts,you:1}].concat(K.rivals.map(function(r){return {n:r.n,p:r.pts};})).sort(function(a,b){return b.p-a.p;});
+    h+='<h4>'+T('comp_rank')+'</h4>'; board.forEach(function(r,i){ h+='<div class="kv"><span>'+ad(i+1)+'. '+esc(r.n)+(r.you?' ★':'')+'</span><span>'+ad(r.p)+' '+T('comp_pts')+'</span></div>'; });
+    if(K.last){ var L=K.last; h+='<h4>'+T('comp_last')+' #'+ad(L.week)+'</h4>'; if(L.place) h+='<div class="kv"><span>'+T('comp_place',ad(L.place))+' · '+esc(L.bird)+'</span><span>'+T('comp_prize')+' '+ad(L.prize)+'</span></div>'; else h+='<p>'+T('comp_missed')+'</p>'; L.res.forEach(function(r){ h+='<div class="kv"><span>'+(r.you?'★ '+T('comp_you'):esc(r.n))+'</span><span>'+ad(r.score)+'</span></div>'; }); }
+    open('comp',T('comp'),h);
+    body.querySelectorAll('[data-e]').forEach(function(e){ e.onclick=function(){ Sim.enterShow(+e.getAttribute('data-e')); showComp(); }; });
+    var wd=$('c-wd'); if(wd) wd.onclick=function(){ Sim.withdrawShow(); showComp(); };
+  }
   function showManage(){
     var G=Sim.G, s=G.stats;
     var h='<h4>'+T('stats')+'</h4><div class="kv"><span>'+T('level')+'</span><span>'+G.level+'</span></div><div class="kv"><span>'+T('day')+'</span><span>'+Sim.dayNum()+'</span></div><div class="kv"><span>'+T('hatched')+'</span><span>'+s.hatched+'</span></div><div class="kv"><span>'+T('sold')+'</span><span>'+s.sold+'</span></div><div class="kv"><span>'+T('bought')+'</span><span>'+s.bought+'</span></div><div class="kv"><span>'+T('died')+'</span><span>'+s.died+'</span></div>'
       +'<h4>'+T('speed')+'</h4><div class="row"><button class="btn2 alt" data-sp="1">x1</button><button class="btn2 alt" data-sp="2">x2</button><button class="btn2 alt" data-sp="4">x4</button></div>'
       +'<h4>'+T('skip')+'</h4><div class="row"><button class="btn2 alt" id="k6">'+T('skip6')+'</button><button class="btn2 alt" id="k24">'+T('skip24')+'</button></div>'
       +'<h4>'+T('tasks')+'</h4><div id="tl"></div><div class="row" style="margin-top:14px"><button class="btn2 red" id="rs">'+T('reset')+'</button></div>';
-    open('manage',T('manage'),h);
+    open('manage',T('manage'),'<div class="row"><button class="btn2" id="m-comp">'+T('comp')+'</button></div><div class="kv"><span>'+T('dirt')+'</span><span>'+ad(Math.round(G.dirt||0))+' / 100</span></div><div class="row"><button class="btn2 alt" id="m-clean">'+T('clean')+'</button>'+(G.guard?'':'<button class="btn2 alt" id="m-guard">'+T('guard')+' · '+C.GUARD_COST+'</button>')+'</div>'+h); $('m-comp').onclick=showComp; $('m-clean').onclick=function(){ Sim.cleanLoft(); showManage(); }; if($('m-guard')) $('m-guard').onclick=function(){ Sim.buyGuard(); showManage(); };
     body.querySelectorAll('[data-sp]').forEach(function(e){ e.onclick=function(){ G.speed=+e.getAttribute('data-sp'); hud(); }; });
     $('k6').onclick=function(){ Sim.skip(6); toast('+6h'); showManage(); }; $('k24').onclick=function(){ Sim.skip(24); toast('+24h'); showManage(); };
     $('rs').onclick=function(){ if(confirm(T('reset_q'))){ var l=G.lang; Sim.newGame(l); BLS.UI.applyLang(); close(); location.reload(); } };
@@ -125,7 +140,15 @@ BLS.UI = (function(){
     Sim.TASKS.forEach(function(t){ var done=Sim.G.tasks[t.id], ok=t.ok(); var r=document.createElement('div'); r.className='row'; r.innerHTML='<div style="flex:1">'+(done?'✅ ':ok?'🟡 ':'⬜ ')+T(t.k)+'<div style="font-size:11px;color:#c9b78d">'+T('reward')+': 🪙 '+t.r+'</div></div>'+(done?'<span class="ok">'+T('claimed')+'</span>':'<button class="btn2" style="flex:0 0 auto" '+(ok?'':'disabled')+'>'+T('claim')+'</button>');
       var b=r.querySelector('button'); if(b) b.onclick=function(){ Sim.claim(t.id); again(); }; el.appendChild(r); });
   }
-  function showTasks(){ open('tasks',T('tasks'),'<div id="tl"></div>'); tasksInto($('tl'),showTasks); }
+  function showTasks(){
+    Sim.ensureQuests(); var Q=Sim.G.quests, h='';
+    if(Sim.loginReady()) h+='<div class="row"><button class="btn2" id="q-login">'+T('login_claim',ad(Q.streak%7+1),ad(Sim.LOGIN[Q.streak%7]))+'</button></div>'; else h+='<div class="kv"><span>'+T('login')+'</span><span>'+T('login_done')+'</span></div>';
+    function sec(title,arr,base,kind){ h+='<h4>'+title+'</h4>'; arr.forEach(function(q,i){ var pg=Sim.qProg(q,base), ok=pg>=q.t; h+='<div class="row"><div style="flex:1">'+(q.got?'✅ ':ok?'🟡 ':'⬜ ')+T(q.k)+' ('+ad(pg)+'/'+ad(q.t)+')<div style="font-size:11px;color:#c9b78d">'+T('reward')+': 🪙 '+ad(q.r)+'</div></div>'+(q.got?'<span class="ok">'+T('claimed')+'</span>':'<button class="btn2" style="flex:0 0 auto" data-q="'+kind+i+'" '+(ok?'':'disabled')+'>'+T('claim')+'</button>')+'</div>'; }); }
+    sec(T('daily'),Q.dq,Q.dbase,'d'); sec(T('weekly'),Q.wq,Q.wbase,'w'); h+='<h4>'+T('goals')+'</h4><div id="tl"></div>';
+    open('tasks',T('tasks'),h); tasksInto($('tl'),showTasks);
+    var lg=$('q-login'); if(lg) lg.onclick=function(){ Sim.claimLogin(); showTasks(); };
+    body.querySelectorAll('[data-q]').forEach(function(e){ e.onclick=function(){ var a=e.getAttribute('data-q'); Sim.claimQuest(a[0],+a.slice(1)); showTasks(); }; });
+  }
   function showBuild(){
     var G=Sim.G, nc=Sim.nestCost(), full=G.nestsOpen>=C.NEST_COUNT, pf=G.perches.length>=BLS.LAYOUT.perchSpots.length;
     var h='<div class="kv"><span>🪙 '+T('coins')+'</span><span>'+G.coins+'</span></div>'
@@ -163,7 +186,7 @@ BLS.UI = (function(){
     var G0=Sim.G; if(!G0.seenHint){ var hn=document.createElement('div'); hn.id='hint'; hn.innerHTML='<b>🕊️</b> '+T('tap_hint')+'<br><small>'+T('hatch_tip')+'</small>'; hn.onclick=function(){ hn.remove(); G0.seenHint=1; }; document.body.appendChild(hn); }
     Sim.on('toast',toast);
     Sim.on('event',function(m,go,id){ lastEvent={go:go,id:id}; var t=$('ticker'); $('tick-txt').innerHTML=BLS.Icons.emo(esc(m)); t.style.display='flex'; clearTimeout(t._h); t._h=setTimeout(function(){t.style.display='none';},9000); toast(m); });
-    $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); };
+    $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='comp') showComp(); else if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); };
     document.querySelectorAll('#nav button').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-nav'); if(k==='farm') close(); else if(k==='birds') showBirds(); else if(k==='breeding') showBreeding(); else if(k==='market') showMarket(); else showManage(); }; });
     $('b-zin').onclick=function(){ BLS.Scene.cam.z*=1.25; }; $('b-zout').onclick=function(){ BLS.Scene.cam.z/=1.25; };
     $('b-center').onclick=function(){ BLS.Scene.center(); };
