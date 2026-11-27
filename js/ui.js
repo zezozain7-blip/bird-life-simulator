@@ -10,8 +10,11 @@ BLS.UI = (function(){
   function ad(n){ return G_lang()==='ar'?String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];}):String(n); }
   function G_lang(){ return Sim.G.lang; }
   function timeStr(hh,mm){ var ar=G_lang()==='ar'; return (ar?'اليوم ':'D')+ad(Sim.dayNum())+' · '+ad(hh%12||12)+':'+ad((mm<10?'0':'')+mm)+' '+(ar?(hh<12?'ص':'م'):(hh<12?'AM':'PM')); }
+  var lastCoins=null;
   function hud(){
-    var G=Sim.G; $('h-lvl').textContent=G.level; $('h-xp').style.width=(G.xp/(100*G.level)*100)+'%';
+    var G=Sim.G; if(lastCoins!==null&&G.coins>lastCoins) BLS.FX.coins(G.coins-lastCoins); lastCoins=G.coins;
+    var fb=$('b-fly'); if(fb) fb.classList.toggle('ready',G.flyDay!==Sim.dayNum()&&!Sim.isNight()&&Sim.flockReady().length>1);
+    $('h-lvl').textContent=G.level; $('h-xp').style.width=(G.xp/(100*G.level)*100)+'%';
     $('h-coins').textContent=G.coins.toLocaleString('en'); $('h-feed').textContent=G.feed.toFixed(1)+' kg'; $('h-birds').textContent=G.birds.length;
     var h=Sim.hourOfDay(), hh=Math.floor(h), mm=Math.floor((h-hh)*60); $('h-time').textContent=timeStr(hh,mm)+' · '+T('w_'+(G.weather||'clear'));
     var wi=(h>=19||h<5)?'moon':(h<7||h>=17)?'dusk':'sun'; if($('h-wic').getAttribute('data-ic')!==wi){ $('h-wic').setAttribute('data-ic',wi); BLS.Icons.fill($('h-wic').parentNode); }
@@ -264,6 +267,7 @@ BLS.UI = (function(){
   }
   // ----- events
   function onPick(hit){
+    if(hit&&hit.type==='ground'){ if(cur.kind) return close(); if(Sim.toss(hit.x,hit.y)) hud(); return; }
     if(!hit){ if(cur.kind==='bird'||cur.kind==='pick') close(); else if(cur.kind) close(); return; }
     if(hit.type==='bird') showBird(hit.id);
     else if(hit.type==='nest') { if(hit.n>=Sim.G.nestsOpen) showBuild(); else showNest(hit.n); }
@@ -277,6 +281,12 @@ BLS.UI = (function(){
     sheet=$('sheet'); body=$('sheet-body'); $('sheet-x').onclick=function(){ close(); }; window.addEventListener('popstate',function(){ if(cur.kind) close(true); });
     var G0=Sim.G; if(!G0.seenHint){ var hn=document.createElement('div'); hn.id='hint'; hn.innerHTML='<b>🕊️</b> '+T('tap_hint')+'<br><small>'+T('hatch_tip')+'</small>'; hn.onclick=function(){ hn.remove(); G0.seenHint=1; }; document.body.appendChild(hn); }
     Sim.on('toast',toast);
+    Sim.on('fx',BLS.Scene.fx);
+    Sim.on('levelup',function(lv,gift){ var lines=['+'+gift+' '+T('coins')];
+      Object.keys(BLS.BREEDS).forEach(function(k){ if(BLS.BREEDS[k].lv===lv) lines.push(T('unlock')+': '+T('br_'+k)); });
+      Object.keys(BLS.SPECIES).forEach(function(k){ if(BLS.SPECIES[k].lv===lv) lines.push(T('unlock')+': '+T('sp_'+k)); });
+      BLS.FX.levelCard(T('level')+' '+lv,lines); });
+    $('b-fly').onclick=function(){ if(Sim.flyFlock()){ if(cur.kind) close(); BLS.Scene.watchSky(); setTimeout(function(){ BLS.Scene.center(); },14500); } hud(); };
     Sim.on('event',function(m,go,id){ lastEvent={go:go,id:id}; var t=$('ticker'); $('tick-txt').innerHTML=BLS.Icons.emo(esc(m)); t.style.display='flex'; clearTimeout(t._h); t._h=setTimeout(function(){t.style.display='none';},9000); toast(m); });
     $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='comp') showComp(); else if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); else if(lastEvent&&lastEvent.go==='market') showShop('feed'); else if(lastEvent&&lastEvent.go==='manage') showManage(); else if(lastEvent&&lastEvent.go==='aviary') showShop('aviary'); else if(lastEvent&&lastEvent.go==='farm') close(); };
     document.querySelectorAll('#nav button').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-nav'); if(k==='farm') close(); else if(k==='birds') showBirds(); else if(k==='breeding') showBreeding(); else if(k==='market') showShop(); else showManage(); }; });
