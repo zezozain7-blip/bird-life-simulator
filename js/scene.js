@@ -176,12 +176,20 @@ BLS.Scene = (function(){
     else if(w==='wind'){ c.fillStyle='rgba(150,150,60,0.8)'; for(i=0;i<18;i++){ d=drops[i]; c.beginPath(); c.ellipse(((d[0]+t*0.28*d[2])%1)*W,d[1]*H+Math.sin(t*3+i)*18,5,2.2,t*4+i,0,6.3); c.fill(); } }
     else if(w==='heat'){ c.fillStyle='rgba(255,150,40,'+(0.08+0.025*Math.sin(t*1.7))+')'; c.fillRect(0,0,W,H); }
   }
+  // pooled feather/dust particles, hard cap 60 (no allocation per frame)
+  var PCAP=60, POOL=[]; for(var pk=0;pk<PCAP;pk++) POOL.push({a:0,k:0,x:0,y:0,z:0,l:0,m:1,r:0,s:0});
+  function pSpawn(kind,x,y,z){ if(BLS.REDUCED) return; for(var i=0;i<PCAP;i++){ var q=POOL[i]; if(!q.a){ q.a=1; q.k=kind; q.x=x+(Math.random()-0.5)*0.4; q.y=y+(Math.random()-0.5)*0.4; q.z=z; q.l=q.m=kind===1?1.6:0.7; q.r=Math.random()*6.3; q.s=Math.random()*6.3; return; } } }
+  function pLive(){ var n=0; for(var i=0;i<PCAP;i++) if(POOL[i].a) n++; return n; }
+  function pStep(G,dt){ if(!BLS.REDUCED&&dt>0){ var bs=G.birds; for(var i=0;i<bs.length;i++){ var b=bs[i], fl=(b.st==='fly'||b.st==='flock'); if(b._ls!==undefined&&b._ls!==b.st){ var wasFl=(b._ls==='fly'||b._ls==='flock'); if(fl&&!wasFl){ pSpawn(1,b.x,b.y,b.z+0.4); pSpawn(1,b.x,b.y,b.z+0.5); } else if(!fl&&wasFl){ pSpawn(0,b.x,b.y,0); pSpawn(0,b.x,b.y,0); } } b._ls=b.st; if(fl&&Math.random()<dt*0.5) pSpawn(1,b.x,b.y,b.z); } }
+    for(var j=0;j<PCAP;j++){ var p=POOL[j]; if(!p.a) continue; p.l-=dt; if(p.l<=0){ p.a=0; continue; } if(p.k===1){ p.z=Math.max(0,p.z-0.32*dt); p.y+=Math.sin(p.s+p.l*3)*0.25*dt; } }
+  }
+  function pDraw(c){ for(var i=0;i<PCAP;i++){ var p=POOL[i]; if(!p.a) continue; var q=P(p.x,p.y,p.z), al=Math.min(1,p.l/p.m*1.5); c.save(); if(p.k===1){ c.fillStyle='rgba(240,238,230,'+(al*0.9)+')'; c.translate(q[0],q[1]); c.rotate(p.r+Math.sin(p.s+p.l*4)*0.8); c.beginPath(); c.ellipse(0,0,4,1.5,0,0,6.3); c.fill(); } else { var rr=3+(1-p.l/p.m)*8; c.fillStyle='rgba(190,165,120,'+(al*0.45)+')'; c.beginPath(); c.arc(q[0],q[1],rr,0,6.3); c.fill(); } c.restore(); } }
   var MOTES=[]; for(var mi=0;mi<26;mi++) MOTES.push({x:Math.random(),y:Math.random(),s:0.4+Math.random(),p:Math.random()*6});
   function drawLight(c,h,t){ if(h<6||h>=19) return; var k=h<9?(h-6)/3:h>16?(19-h)/3:1, warm=(h<9||h>16)?'255,214,150':'255,244,214', a=0.07+0.06*(1-Math.abs(h-12.5)/6.5); a*=Math.min(1,k);
     var sx=W*(1-(h-6)/13)*1.0+W*0.1; // sun moves right to left across the sky with the clock
     c.save(); c.globalCompositeOperation='lighter';
     for(var i=0;i<3;i++){ var x0=sx+i*W*0.22-W*0.15, g=c.createLinearGradient(x0,0,x0+W*0.35,H*0.7); g.addColorStop(0,'rgba('+warm+','+a+')'); g.addColorStop(1,'rgba('+warm+',0)'); c.fillStyle=g; c.beginPath(); c.moveTo(x0,0); c.lineTo(x0+W*0.16,0); c.lineTo(x0+W*0.5,H*0.75); c.lineTo(x0+W*0.28,H*0.75); c.closePath(); c.fill(); }
-    c.fillStyle='rgba('+warm+','+Math.min(0.5,a*5)+')'; MOTES.forEach(function(m){ var x=((m.x+Math.sin(t*0.2*m.s+m.p)*0.03+t*0.004*m.s)%1)*W, y=((m.y+Math.cos(t*0.15*m.s+m.p)*0.03)%1)*H*0.8; c.beginPath(); c.arc(x,y,0.8+m.s,0,6.3); c.fill(); });
+    c.fillStyle='rgba('+warm+','+Math.min(0.5,a*5)+')'; MOTES.forEach(function(m){ var tm=BLS.REDUCED?0:t, x=((m.x+Math.sin(tm*0.2*m.s+m.p)*0.03+tm*0.004*m.s)%1)*W, y=((m.y+Math.cos(tm*0.15*m.s+m.p)*0.03)%1)*H*0.8; c.beginPath(); c.arc(x,y,0.8+m.s,0,6.3); c.fill(); });
     c.restore(); }
   function drawGlow(c,h){ var night=(h>=19||h<5.5); if(!night) return; var x=(LOFT.x1+16-cam.x)*cam.z+W/2, y=(LOFT.bodyTop+27-cam.y)*cam.z+H/2, r=130*cam.z; var g=c.createRadialGradient(x,y,2,x,y,r); g.addColorStop(0,'rgba(255,190,80,0.6)'); g.addColorStop(1,'rgba(255,150,40,0)'); c.globalCompositeOperation='lighter'; c.fillStyle=g; c.fillRect(x-r,y-r,r*2,r*2); c.globalCompositeOperation='source-over'; }
   // --- cached static layers (the expensive scenery is painted once, not every frame)
@@ -222,14 +230,16 @@ BLS.Scene = (function(){
     var R=rng(99), nd=Math.min(70,((G.dirt||0)*0.7)|0); for(var q=0;q<nd;q++){ var dx=90+R()*620, dy=76+R()*100; c.fillStyle='rgba(72,66,44,0.7)'; c.beginPath(); c.ellipse(dx,dy,3.5+R()*3,2+R()*1.5,R()*3,0,6.3); c.fill(); c.fillStyle='rgba(238,238,225,0.85)'; c.beginPath(); c.arc(dx+1,dy-0.5,1.6,0,6.3); c.fill(); }
     var cnt={}; G.eggs.forEach(function(e){ cnt[e.nest]=(cnt[e.nest]||0)+1; drawEgg(c,e,cnt[e.nest]-1); });
     var items=[];
-    items.push({k:L.feeder.x,f:function(){ drawFeeder(c,G); }}); items.push({k:L.water.x,f:function(){ drawWater(c,G); }}); (G.xf||[]).forEach(function(u){ items.push({k:u.x,f:function(){ drawFeeder(c,G,u,u); }}); }); (G.xw||[]).forEach(function(u){ items.push({k:u.x,f:function(){ drawWater(c,G,u,u); }}); }); items.push({k:9.4,f:function(){ c.drawImage(layerBed,7.9*U,9.6*D-120,520,200); }});
+    var lf=function(id,fn){ return function(){ var E=window.BLS_EDIT, d=E&&E.on&&E.drag&&E.drag.id===id; if(d){ c.save(); c.translate(0,-12); fn(); c.restore(); } else fn(); }; };
+    items.push({k:L.feeder.x,f:lf('f0',function(){ drawFeeder(c,G); })}); items.push({k:L.water.x,f:lf('w0',function(){ drawWater(c,G); })}); (G.xf||[]).forEach(function(u,i){ items.push({k:u.x,f:lf('f'+(i+1),function(){ drawFeeder(c,G,u,u); })}); }); (G.xw||[]).forEach(function(u,i){ items.push({k:u.x,f:lf('w'+(i+1),function(){ drawWater(c,G,u,u); })}); }); items.push({k:9.4,f:function(){ c.drawImage(layerBed,7.9*U,9.6*D-120,520,200); }});
     (function(){ var gs=[], X={guard:10.6,iso:10.4,heat:2.2,vent:2.2,cam:2.2,vet:2.2,nursery:3.3,flight:11.2}; for(var gk in X) if(G.gear&&G.gear[gk]) gs.push([gk,X[gk]]); gs.forEach(function(g){ items.push({k:g[1]-0.2,f:function(){ var gg=G.gear&&G.gear[g[0]]; if(gg&&(gg.broken||gg.c<35)){ c.save(); c.globalAlpha=gg.broken?0.4:0.8; drawProp(c,g[0],gg.broken?0:t); c.restore(); } else drawProp(c,g[0],t); }}); }); })();
     (function(){ var n=Math.min(45,Math.round((G.dirt||0)*0.45)); if(n<1) return; items.push({k:0.05,f:function(){ for(var i=0;i<n;i++){ var u=Math.abs(Math.sin(i*12.9898)*43758.5453)%1, v=Math.abs(Math.sin(i*78.233+1.7)*12345.678)%1, p=P(3+u*8.4,3.6+v*7.8,0); if(i%3===0){ c.fillStyle='rgba(245,240,225,0.5)'; c.beginPath(); c.ellipse(p[0],p[1],4.5,1.4,(u*3)-1.5,0,6.3); c.fill(); } else { c.fillStyle='rgba(235,232,220,0.55)'; c.beginPath(); c.ellipse(p[0],p[1],2.2,1,0,0,6.3); c.fill(); c.fillStyle='rgba(80,70,55,0.4)'; c.beginPath(); c.ellipse(p[0],p[1],0.9,0.45,0,0,6.3); c.fill(); } } }}); })();
     if(window.BLS_EDIT&&BLS_EDIT.on){ items.push({k:0.02,f:function(){ BLS_EDIT.draw(c,P,'grid'); }}); items.push({k:99,f:function(){ BLS_EDIT.draw(c,P,'rings'); }}); }
-    G.perches.forEach(function(pi){ var sp=L.perchSpots[pi]; items.push({k:sp[0]-0.1,f:function(){ drawPerch(c,sp); }}); });
+    G.perches.forEach(function(pi){ var sp=L.perchSpots[pi]; items.push({k:sp[0]-0.1,f:lf('p'+pi,function(){ drawPerch(c,sp); })}); });
     G.birds.forEach(function(b){ if(b.st!=='fly'&&b.st!=='flock') items.push({k:(b.st==='sit'||b.st==='squabnest')?2.3:(b.x<3.2&&b.z>0.3?2.4:b.x),f:function(){ drawBirdW(c,b); }}); });
     items.sort(function(a,b){return a.k-b.k;}); items.forEach(function(i){ i.f(); });
     G.birds.forEach(function(b){ if(b.st==='fly'||b.st==='flock') drawBirdW(c,b); });
+    pStep(G,fdt); pDraw(c);
     // cooing couples show hearts now and then
     G.birds.forEach(function(b){ if(b.st==='coo'&&Math.random()<fdt*1.2){ var hp=P(b.x,b.y,b.z); BLS.FX.burst('heart',hp[0],hp[1]-48); } });
     BLS.FX.draw(c,fdt);
@@ -272,5 +282,5 @@ BLS.Scene = (function(){
     document.addEventListener('visibilitychange',function(){ if(!document.hidden&&!running){ running=true; requestAnimationFrame(loop); } });
     requestAnimationFrame(loop);
   }
-  return { rebuild:function(){ layer0=null; }, restore:restore, fx:fx, watchSky:watchSky, init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, gridAt:function(sx,sy){ return {x:((sy-H/2)/cam.z+cam.y)/D, y:((sx-W/2)/cam.z+cam.x)/U}; }, rebuild:function(){ pats={}; layer0=null; } };
+  return { rebuild:function(){ layer0=null; }, restore:restore, fx:fx, watchSky:watchSky, init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, particles:function(){ return {live:pLive(),cap:PCAP,spawn:pSpawn}; }, gridAt:function(sx,sy){ return {x:((sy-H/2)/cam.z+cam.y)/D, y:((sx-W/2)/cam.z+cam.x)/U}; }, rebuild:function(){ pats={}; layer0=null; } };
 })();
