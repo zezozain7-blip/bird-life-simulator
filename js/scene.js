@@ -98,7 +98,7 @@ BLS.Scene = (function(){
   // --- background
   function drawBackdrop(c){
     var tb=BLS.Art&&(BLS.Art.tex('town'+Sim.season())||BLS.Art.tex('town'));
-    if(tb){ var k=Math.max(W/tb.width,H/tb.height)*1.06, dw=tb.width*k, dh=tb.height*k, sh=(cam.x-WW/2)*0.04; c.drawImage(tb,(W-dw)/2-sh,Math.min(0,(H-dh)*0.18),dw,dh); return; }
+    if(tb){ var k=Math.max(W/tb.width,H/tb.height*0.75)*1.06, dw=tb.width*k, dh=tb.height*k, sh=(cam.x-WW/2)*0.04, wt=(2.0*D-96-cam.y)*cam.z+H/2; c.fillStyle='#6fa4d4'; c.fillRect(0,0,W,H); c.drawImage(tb,Math.max(W-dw,Math.min(0,(W-dw)-sh*0.5)),wt+8-tb.height*0.62*k,dw,dh); return; }
     var g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#6fa4d4'); g.addColorStop(0.5,'#f6d9a4'); g.addColorStop(1,'#8fb35a'); c.fillStyle=g; c.fillRect(0,0,W,H);
   }
   function drawGround(c){
@@ -110,8 +110,7 @@ BLS.Scene = (function(){
     fillTex(c,'floor','#cdb68f',-700,gy,2500,1400,0.62,0.4);
     var sg=c.createLinearGradient(0,gy,0,gy+160); sg.addColorStop(0,'rgba(40,25,10,0.38)'); sg.addColorStop(1,'rgba(40,25,10,0)'); c.fillStyle=sg; c.fillRect(-700,gy,2500,160);
     // grass strip along the front, flowers
-    var fy=12.4*D; var gg=c.createLinearGradient(0,fy,0,fy+300); gg.addColorStop(0,'#78c04a'); gg.addColorStop(1,'#4f9a3a'); c.fillStyle=gg; c.beginPath(); c.moveTo(-700,fy+8); for(var x=-700;x<=1800;x+=40) c.lineTo(x,fy+Math.sin(x*0.05)*6); c.lineTo(1800,fy+700); c.lineTo(-700,fy+700); c.closePath(); c.fill();
-    for(var i=0;i<46;i++){ var px=-100+R()*1250, py=fy+14+R()*70; c.fillStyle=['#ff6f91','#ffd23f','#ffffff','#8fd4ff'][i%4]; c.beginPath(); c.arc(px,py,3.5,0,6.3); c.fill(); }
+    var fy=12.4*D; fillTex(c,'floor','#b79f78',-700,fy+8,2500,700,0.62,0.4); c.fillStyle='rgba(60,35,10,0.30)'; c.fillRect(-700,fy+8,2500,700); c.fillStyle='#d9b98c'; c.fillRect(-700,fy+2,2500,8); c.fillStyle='rgba(0,0,0,0.25)'; c.fillRect(-700,fy+10,2500,5);
   }
   // --- loft and yard details (baked once into the static layer)
   function plank(c,x,y,w,h,col){ c.fillStyle=col; c.fillRect(x,y,w,h); c.fillStyle='rgba(255,225,170,0.22)'; c.fillRect(x,y,w,2); c.fillStyle='rgba(20,8,0,0.35)'; c.fillRect(x,y+h-2,w,2); }
