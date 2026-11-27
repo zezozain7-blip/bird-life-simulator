@@ -8,13 +8,13 @@ BLS.CFG = {
   THIRST_RATE: 2.4,
   EAT_SPEED: 30,               // hunger units removed per real second while eating
   DRINK_SPEED: 40,
-  GRAIN_PER_UNIT: 0.005,       // kg per hunger unit
+  GRAIN_PER_UNIT: 0.001,       // kg per hunger unit (about 38 g per bird per game day, like a real pigeon)
   WATER_PER_UNIT: 0.06,
-  FEEDER_CAP: 3, WATER_CAP: 100,
-  EGG_INCUBATION_H: 96, SQUAB_H: 96, JUVENILE_H: 240,   // hatch at 3 d, leave nest 3 d later, adult at 7 d
+  FEEDER_CAP: 0.6, FEED_BAG: 1, WATER_CAP: 100,
+  EGG_INCUBATION_H: 96, SQUAB_H: 96, JUVENILE_H: 480,   // egg 4 d, nest 4 d, adult at 20 d
   EGG_COLD_LIMIT_H: 18,
-  NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.5,
-  START_COINS: 1200, START_FEED: 8, UPKEEP_PER_BIRD: 3, GUARD_COST: 400, ISO_COST: 250, UP_COST:{heat:350,vent:300,nursery:450,vet:500,flight:400,cam:300}, PRED_P: 0.10, DISEASE_P: 0.05,
+  NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.9, OLD_START_D: 150, LIFE_D: 260,
+  START_COINS: 1200, START_FEED: 1.6, UPKEEP_PER_BIRD: 3, GUARD_COST: 400, ISO_COST: 250, UP_COST:{heat:350,vent:300,nursery:450,vet:500,flight:400,cam:300}, PRED_P: 0.10, DISEASE_P: 0.05,
   OFFLINE_MAX_H: 48,
   PRICE: { feed5: 90, bird: 260, pair: 480, egg: 25, eggBad: 5, sellK: 1.15, heal: 60 }
 };
@@ -32,14 +32,14 @@ BLS.TXT = {
   my_birds:'My birds',nests:'Nests',nest:'Nest',empty:'Empty',free:'Free',new_pair:'New pair',pick_partner:'Choose a partner',
   no_partner:'No eligible partner (needs an adult of the other sex, not related, not paired).',related:'Related',
   incubating:'Incubating',cold:'Cooling',infertile:'Infertile',fertile:'Fertile',hatch_in:'Hatches in {0}h',
-  market:'Market',buy_feed:'Buy 5 kg feed',buy_bird:'Buy a pigeon',buy_pair:'Buy a young pair',buy_heal:'Medicine',
+  market:'Market',buy_feed:'Buy 1 kg feed',buy_bird:'Buy a pigeon',buy_pair:'Buy a young pair',buy_heal:'Medicine',
   manage:'Management',stats:'Statistics',speed:'Game speed',skip:'Skip time',skip6:'+6 hours',skip24:'+1 day',
   reset:'Start a new farm',reset_q:'Delete all progress and start over?',language:'Language',
   tasks:'Tasks',claim:'Claim',claimed:'Done',reward:'Reward',level:'Level',coins:'Coins',feedstock:'Feed stock',
   hatched:'Hatched',sold:'Sold',bought:'Bought',died:'Died',time:'Time',day:'Day',
   t_hatch:'Hatch your first squab',t_six:'Own 6 birds',t_sell:'Sell a bird',t_buyfeed:'Buy feed',t_lvl3:'Reach level 3',t_hand:'Hand-feed a bird',
   ev_egg:'New egg in nest {0}',ev_hatch:'Squab hatched in nest {0}!',ev_cold:'An egg went cold in nest {0}',ev_bad:'Infertile egg removed (nest {0})',
-  ev_die:'{0} died',ev_sick:'{0} is sick',ev_adult:'{0} is now an adult',ev_hungry:'Feeder is empty',ev_dry:'Water bowl is empty',ev_grow:'{0} left the nest',
+  ev_die:'{0} died',ev_old:'{0} died of old age',ev_sick:'{0} is sick',ev_adult:'{0} is now an adult',ev_hungry:'Feeder is empty',ev_dry:'Water bowl is empty',ev_grow:'{0} left the nest',
   ev_offline:'While you were away: {0} h passed',
   need_coins:'Not enough coins',need_feed:'No feed in stock',feeder_filled:'Feeder filled',water_filled:'Water refilled',
   fed:'{0} was fed',watered:'{0} drank',healed:'{0} feels better',sold_ok:'Sold {0} for {1}',paired:'{0} and {1} are a pair now',
@@ -56,14 +56,14 @@ BLS.TXT = {
   my_birds:'طيوري',nests:'الأعشاش',nest:'عش',empty:'فاضي',free:'متاح',new_pair:'زوج جديد',pick_partner:'اختار الشريك',
   no_partner:'مفيش شريك مناسب (لازم بالغ من الجنس التاني، مش قريب، وغير متزوج).',related:'قرابة',
   incubating:'بتفقس',cold:'بتبرد',infertile:'غير مخصبة',fertile:'مخصبة',hatch_in:'تفقس بعد {0} ساعة',
-  market:'السوق',buy_feed:'اشتري 5 كجم علف',buy_bird:'اشتري حمامة',buy_pair:'اشتري زوج صغير',buy_heal:'دواء',
+  market:'السوق',buy_feed:'اشتري 1 كجم علف',buy_bird:'اشتري حمامة',buy_pair:'اشتري زوج صغير',buy_heal:'دواء',
   manage:'الإدارة',stats:'الإحصائيات',speed:'سرعة اللعبة',skip:'تخطي الوقت',skip6:'+6 ساعات',skip24:'+يوم',
   reset:'ابدأ مزرعة جديدة',reset_q:'تمسح كل التقدم وتبدأ من الأول؟',language:'اللغة',
   tasks:'المهام',claim:'استلم',claimed:'تم',reward:'الجائزة',level:'المستوى',coins:'العملات',feedstock:'مخزون العلف',
   hatched:'فقس',sold:'مباع',bought:'مشترى',died:'نفق',time:'الوقت',day:'اليوم',
   t_hatch:'افقس أول زغلول',t_six:'املك 6 طيور',t_sell:'بيع طائر',t_buyfeed:'اشتري علف',t_lvl3:'وصل للمستوى 3',t_hand:'أطعم طائر بإيدك',
   ev_egg:'بيضة جديدة في العش {0}',ev_hatch:'زغلول فقس في العش {0}!',ev_cold:'بيضة بردت في العش {0}',ev_bad:'اتشالت بيضة غير مخصبة (عش {0})',
-  ev_die:'{0} نفق',ev_sick:'{0} تعبان',ev_adult:'{0} بقى بالغ',ev_hungry:'المعلف فاضي',ev_dry:'حوض الميه فاضي',ev_grow:'{0} طلع من العش',
+  ev_die:'{0} نفق',ev_old:'{0} مات من كبر السن',ev_sick:'{0} تعبان',ev_adult:'{0} بقى بالغ',ev_hungry:'المعلف فاضي',ev_dry:'حوض الميه فاضي',ev_grow:'{0} طلع من العش',
   ev_offline:'وانت غايب عدّى {0} ساعة',
   need_coins:'العملات مش كفاية',need_feed:'مفيش علف في المخزن',feeder_filled:'المعلف اتملا',water_filled:'الميه اتملت',
   fed:'{0} اتغذى',watered:'{0} شرب',healed:'{0} بقى أحسن',sold_ok:'بعت {0} بـ {1}',paired:'{0} و {1} بقوا زوج',
