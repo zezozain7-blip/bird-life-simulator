@@ -280,13 +280,15 @@ BLS.Sim = (function(){
   function trend(k){ var v=mk()[k]; return v>1.12?'up':v<0.9?'down':'flat'; }
   function sellPrice(b){
     var q=(b.g.size+b.g.vit+b.g.fert)/3, col=Gen.phenoColor(b.g);
-    var p=(0.85*(40+q*1.1)+(col==='W'?25:col==='R'?10:0))*mk()[col]*BLS.BREEDS[Gen.breedOf(b.g)].mul; var s=stageOf(b); p*= s==='squab'?0.4:(s==='juvenile'?0.7:1);
+    var p=(C.PRICE.sellK*(40+q*1.1)+(col==='W'?25:col==='R'?10:0))*mk()[col]*BLS.BREEDS[Gen.breedOf(b.g)].mul; var s=stageOf(b); p*= s==='squab'?0.4:(s==='juvenile'?0.7:1);
     return Math.round(p);
   }
   function sell(b){ var p=sellPrice(b); G.coins+=p; G.stats.sold++; addXp(10); unpair(b); var i=G.birds.indexOf(b); if(i>=0) G.birds.splice(i,1); releaseNests(); emit('toast',T('sold_ok',b.name,p)); emit('sfx','coin'); }
   function mixPrice(){ return Math.round(feedPrice()*1.7); }
   function buyMix(){ var p=mixPrice(); if(G.coins<p) return emit('toast',T('need_coins')); G.coins-=p; G.feedQ=((G.feedQ||0)*G.feed+5)/(G.feed+5); G.feed+=5; G.stats.boughtFeed++; emit('toast','🌾 +5 kg '+T('mix')); }
-  function sellEgg(id){ var e=null,i; for(i=0;i<G.eggs.length;i++) if(G.eggs[i].id===id) e=G.eggs[i]; if(!e) return false; var p=e.fertile&&!e.dead?30:10; G.coins+=p; G.eggs.splice(G.eggs.indexOf(e),1); emit('toast','🪙 +'+p); emit('sfx','coin'); return true; }
+  // an egg's value follows its breed; the price must not reveal fertility before candling (24 h)
+  function eggPrice(e){ var known=e.dead||e.prog>24; if(e.dead||(known&&!e.fertile)) return C.PRICE.eggBad; return Math.round(C.PRICE.egg*BLS.BREEDS[Gen.breedOf(e.g)].mul); }
+  function sellEgg(id){ var e=null,i; for(i=0;i<G.eggs.length;i++) if(G.eggs[i].id===id) e=G.eggs[i]; if(!e) return false; var p=eggPrice(e); G.coins+=p; G.eggs.splice(G.eggs.indexOf(e),1); emit('toast','🪙 +'+p); emit('sfx','coin'); return true; }
   function buyFeed(){ var fp=feedPrice(); if(G.coins<fp) return emit('toast',T('need_coins')); G.coins-=fp; G.feed+=5; G.stats.boughtFeed++; emit('toast','🌾 +5 kg'); }
   function placeNew(sex,g,age){ var s=L.randSpot(); return newBird({sex:sex,g:g,age:age,x:s.x,y:s.y,hunger:25,thirst:25}); }
   function buyBird(){
@@ -381,7 +383,7 @@ BLS.Sim = (function(){
   function collList(){ scanColl(); var o=[]; CKEYS.forEach(function(k){ o.push({k:k,type:'breed',have:!!G.coll[k],got:G.coll[k]&&G.coll[k].got,r:CREW[k]}); }); Object.keys(BLS.BREEDS).forEach(function(b){ if(b==='baladi') return; var k='br_'+b; o.push({k:k,type:'trait',have:!!G.coll[k],got:G.coll[k]&&G.coll[k].got,r:breedRew(b)}); }); CTRAIT.forEach(function(t){ o.push({k:t.k,type:'trait',have:!!G.coll[t.k],got:G.coll[t.k]&&G.coll[t.k].got,r:t.r}); }); return o; }
   function collBadge(){ return collList().filter(function(x){return x.have&&!x.got;}).length; }
   function dailyEvents(protect){
-    scanColl(); avDaily(protect);
+    scanColl(); avDaily(protect); dailyOrder();
     dailyMarket(); if(!protect) rollEvent();
     rollWeather(); if(G.weather==='rain') G.dirt=Math.min(100,(G.dirt||0)+4);
     var n=G.birds.length; G.dirt=Math.min(100,(G.dirt||0)+3+n*1.4);
@@ -425,13 +427,14 @@ BLS.Sim = (function(){
     G.orderSeq=(G.orderSeq||0)+1;
     return {id:G.orderSeq,who:Gen.rnd(NEIGHBOURS),col:col,pat:pat,pay:Math.round(base*mult/5)*5,minQ:pat?55:0};
   }
-  function ensureOrders(){ if(!G.orders) G.orders=[]; while(G.orders.length<3) G.orders.push(newOrder()); }
+  function ensureOrders(){ if(!G.orders){ G.orders=[]; while(G.orders.length<3) G.orders.push(newOrder()); } }
+  function dailyOrder(){ ensureOrders(); if(G.orders.length<3) G.orders.push(newOrder()); }
   function orderMatch(b,o){ var q=(b.g.size+b.g.vit+b.g.fert)/3; return stageOf(b)==='adult'&&Gen.phenoColor(b.g)===o.col&&(!o.pat||Gen.phenoPattern(b.g)===o.pat)&&q>=o.minQ; }
   function fillOrder(oid,bid){
     var o=null,i; for(i=0;i<G.orders.length;i++) if(G.orders[i].id===oid) o=G.orders[i];
     var b=bird(bid); if(!o||!b||!orderMatch(b,o)) return false;
     G.coins+=o.pay; G.stats.sold++; G.stats.orders=(G.stats.orders||0)+1; addXp(40); unpair(b);
-    G.birds.splice(G.birds.indexOf(b),1); releaseNests(); G.orders.splice(G.orders.indexOf(o),1); ensureOrders();
+    G.birds.splice(G.birds.indexOf(b),1); releaseNests(); G.orders.splice(G.orders.indexOf(o),1);
     emit('toast',T('sold_ok',b.name,o.pay)); emit('sfx','coin'); return true;
   }
   // ---------- daily / weekly quests and login reward (real calendar days, so they work offline)
@@ -493,7 +496,7 @@ BLS.Sim = (function(){
     catchUp(1);
     return true;
   }
-  return { catchUp:catchUp, breedPrice:breedPrice, buyBreed:buyBreed, aviary:aviary, avCount:avCount, avBuy:avBuy, avSell:avSell, avSellPrice:avSellPrice, mixPrice:mixPrice, buyMix:buyMix, sellEgg:sellEgg, healCost:healCost, hatchOdds:hatchOdds, collList:collList, claimColl:claimColl, rollEvent:rollEvent, feedPrice:feedPrice, trend:trend, resolveEvent:resolveEvent, season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
+  return { eggPrice:eggPrice, catchUp:catchUp, breedPrice:breedPrice, buyBreed:buyBreed, aviary:aviary, avCount:avCount, avBuy:avBuy, avSell:avSell, avSellPrice:avSellPrice, mixPrice:mixPrice, buyMix:buyMix, sellEgg:sellEgg, healCost:healCost, hatchOdds:hatchOdds, collList:collList, claimColl:claimColl, rollEvent:rollEvent, feedPrice:feedPrice, trend:trend, resolveEvent:resolveEvent, season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
     bird:bird, related:related, canPair:canPair, pairUp:pairUp, unpair:unpair, nestContents:nestContents, popCap:popCap, ensureQuests:ensureQuests, qProg:qProg, claimQuest:claimQuest, claimLogin:claimLogin, loginReady:loginReady, LOGIN:LOGIN, sell:sell, ensureComp:ensureComp, birdScore:birdScore, enterShow:enterShow, withdrawShow:withdrawShow, ensureOrders:ensureOrders, orderMatch:orderMatch, fillOrder:fillOrder, sellPrice:sellPrice,
     cleanLoft:cleanLoft, buyGuard:buyGuard, buyFeed:buyFeed, buyBird:buyBird, buyPair:buyPair, refillFeeder:refillFeeder, refillWater:refillWater, feedBird:feedBird, waterBird:waterBird, healBird:healBird,
     weightOf:weightOf, TASKS:TASKS, buyNest:buyNest, nestCost:nestCost, buyPerch:buyPerch, childrenOf:childrenOf, claimable:claimable, claim:claim, skip:skip, freeNest:freeNest, covered:covered, isNight:isNight, addXp:addXp };
