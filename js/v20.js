@@ -44,7 +44,7 @@ function tick(){
 }
 function init(){
   var Sim=BLS.Sim;if(ready||!Sim||!Sim.G)return;ready=true;
-  Object.defineProperty(BLS.CFG,'UPKEEP_PER_BIRD',{configurable:true,get:function(){var G=Sim.G;return 3+Math.floor(((G&&G.level)||1)/3);}});
+  Object.defineProperty(BLS.CFG,'UPKEEP_PER_BIRD',{configurable:true,get:function(){var G=Sim.G;return 0.4;}});
   Sim.on('fx',function(k){
     var G=Sim.G;if(k==='seed'&&G&&G.ftue)G.ftue.seeds++;
     if(k==='hatch'){burst('🐣🐥✨');log('hatch');}
