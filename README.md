@@ -39,3 +39,4 @@ The isometric scene was replaced by a flat 2D front-on farm (js/scene.js). The o
 - Competition: weekly show vs 3 AI rivals that get stronger each week, leaderboard, prizes.
 - Goals: 7 long goals added to tasks.
 - Performance: static scenery baked to cached layers (about 4x less drawing time), opaque canvas, vignette cached, simulation stepped in 0.06 h chunks, saves every 15 s.
+- v0.8.1: daily (3) and weekly (2) quests, 7-day login streak reward.
