@@ -71,7 +71,7 @@ BLS.Scene = (function(){
     c.fillStyle='#d9b98c'; c.fillRect(x0-4,yb-h-6,w+8,8); }
   function drawPot(c,x,y,r,seed){ shadow(c,x,y+1,18,5,0.22); c.fillStyle='#b4643b'; c.beginPath(); c.moveTo(x-14,y-26); c.lineTo(x+14,y-26); c.lineTo(x+10,y); c.lineTo(x-10,y); c.fill(); bush(c,x,y-34,r,'#4f9a3a',seed); }
   // --- pieces that are drawn per frame (depth sorted)
-  function drawFeeder(c,G){ var p=P(L.feeder.x,L.feeder.y,0), rx=34; shadow(c,p[0],p[1]+3,rx+6,12,0.22);
+  function drawFeeder(c,G){ var p=P(L.feeder.x,L.feeder.y,0), rx=26; shadow(c,p[0],p[1]+3,rx+6,12,0.22);
     c.fillStyle='#8a6a3f'; c.beginPath(); c.ellipse(p[0],p[1],rx,12,0,0,6.3); c.fill(); c.fillStyle='#5e4528'; c.beginPath(); c.ellipse(p[0],p[1]-3,rx-6,9,0,0,6.3); c.fill();
     var f=Math.min(1,G.feeder.grain/C.FEEDER_CAP); if(f>0.02){ c.fillStyle='#e0b53a'; c.beginPath(); c.ellipse(p[0],p[1]-3-f*6,(rx-8)*Math.max(0.4,f),8*Math.max(0.5,f),0,0,6.3); c.fill(); c.fillStyle='rgba(255,230,140,0.6)'; for(var i=0;i<8;i++) c.fillRect(p[0]-14+((i*13)%28),p[1]-8-f*5+((i*7)%6),2,1.5); } }
   function drawWater(c,G){ var p=P(L.water.x,L.water.y,0); shadow(c,p[0],p[1]+3,26,8,0.22);
@@ -80,7 +80,7 @@ BLS.Scene = (function(){
     c.fillStyle='rgba(90,170,230,0.78)'; var wh=40*w; c.fillRect(p[0]-11.5,p[1]-6-wh,23,wh*0.95); c.strokeStyle='rgba(120,140,150,0.6)'; c.lineWidth=1; c.stroke(); }
   function drawPerch(c,sp){ var a=P(sp[0],sp[1],0), top=P(sp[0],sp[1],0.95); shadow(c,a[0],a[1]+1,24,7,0.22); c.strokeStyle='#6b4526'; c.lineWidth=6; c.lineCap='round'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(top[0],top[1]); c.stroke(); c.lineWidth=5; c.beginPath(); c.moveTo(top[0]-24,top[1]); c.lineTo(top[0]+24,top[1]); c.stroke(); }
   function poseOf(b){ var st=b.st; if(st==='eat'||st==='drink'||st==='peck') return 'peck'; if(st==='walk') return 'walk'; if(st==='fly') return 'fly'; if(st==='sit'||st==='perch') return 'sit'; if(st==='squabnest') return 'squab'; if(st==='preen') return 'preen'; if(st==='coo') return 'coo'; return 'stand'; }
-  function szOf(b){ if(b.st==='fly') return 1.35; if(b.st==='sit') return 0.72; if(b.st==='squabnest') return 1.1; return 1.9; }
+  function szOf(b){ if(b.st==='fly') return 0.95; if(b.st==='sit') return 0.78; if(b.st==='squabnest') return 0.95; return 0.85; }
   function drawBirdW(c,b){
     var sz=szOf(b), p=P(b.x,b.y,b.z), stg=Sim.stageOf(b), gp=P(b.x,b.y,0);
     var sc=(stg==='adult'?1:stg==='juvenile'?0.78:0.5);
@@ -114,7 +114,7 @@ BLS.Scene = (function(){
   }
   // --- camera
   function resize(){ dpr=Math.min(2,window.devicePixelRatio||1); W=window.innerWidth; H=window.innerHeight; cv.width=W*dpr; cv.height=H*dpr; }
-  function fitZoom(){ return Math.max(0.6,Math.min(1.6,W/470)); }
+  function fitZoom(){ return Math.max(0.6,Math.min(1.6,W/410)); }
   function toScreen(wx,wy,wz){ var p=P(wx,wy,wz); return [(p[0]-cam.x)*cam.z+W/2,(p[1]-cam.y)*cam.z+H/2]; }
   function clampCam(){
     cam.z=Math.max(fitZoom()*0.7,Math.min(2.0,cam.z)); var hw=W/2/cam.z;
@@ -145,7 +145,7 @@ BLS.Scene = (function(){
     G.birds.forEach(function(b){ if(b.st!=='fly') items.push({k:(b.st==='sit'||b.st==='squabnest')?2.3:(b.x<3.2&&b.z>0.3?2.4:b.x),f:function(){ drawBirdW(c,b); }}); });
     items.sort(function(a,b){return a.k-b.k;}); items.forEach(function(i){ i.f(); });
     G.birds.forEach(function(b){ if(b.st==='fly') drawBirdW(c,b); });
-    ambient.forEach(function(a){ a.x+=a.sp*0.016; if(a.x>1300){ a.x=-250; a.y=-290-Math.random()*110; } Spr.draw(c,a.x,a.y+Math.sin(t+a.ph)*14,1.3,1,{col:a.col,pat:'B',pose:'fly',ph:t+a.ph}); });
+    ambient.forEach(function(a){ a.x+=a.sp*0.016; if(a.x>1300){ a.x=-250; a.y=-290-Math.random()*110; } Spr.draw(c,a.x,a.y+Math.sin(t+a.ph)*14,0.9,1,{col:a.col,pat:'B',pose:'fly',ph:t+a.ph}); });
     c.setTransform(dpr,0,0,dpr,0,0);
     var vg=c.createRadialGradient(W/2,H*0.5,Math.min(W,H)*0.5,W/2,H*0.5,Math.max(W,H)*0.8); vg.addColorStop(0,'rgba(20,12,0,0)'); vg.addColorStop(1,'rgba(20,12,0,0.3)'); c.fillStyle=vg; c.fillRect(0,0,W,H);
     var h=Sim.hourOfDay(), tc=tint(h); if(tc!=='rgb(255,255,255)'){ c.globalCompositeOperation='multiply'; c.fillStyle=tc; c.fillRect(0,0,W,H); c.globalCompositeOperation='source-over'; }
