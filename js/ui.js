@@ -111,6 +111,8 @@ BLS.UI = (function(){
   function art(inner,bg){ return '<svg viewBox="0 0 80 64" class="art">'+inner+'</svg>'; }
   function sackArt(col,mark,star){ return art('<ellipse cx="40" cy="58" rx="26" ry="4" fill="#0005"/><path d="M22 57Q14 34 27 19H53Q66 34 58 57Z" fill="'+col+'" stroke="#6b4a1e" stroke-width="2"/><path d="M27 19L24 9Q40 15 56 9L53 19Z" fill="'+col+'" stroke="#6b4a1e" stroke-width="2"/><path d="M27 20H53" stroke="#6b4a1e" stroke-width="4"/><circle cx="40" cy="39" r="11" fill="#fff4cf"/><path d="M40 48V31M40 36l-6-5M40 36l6-5M40 42l-6-5M40 42l6-5" stroke="'+mark+'" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+(star?'<path d="M62 8l3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z" fill="#ffd23f" stroke="#8a5a00"/>':'')); }
   var GEAR_ART={
+    feeder:'<ellipse cx="40" cy="52" rx="30" ry="11" fill="#8a6a3f"/><ellipse cx="40" cy="50" rx="24" ry="8" fill="#5e4528"/><ellipse cx="40" cy="44" rx="18" ry="7" fill="#e0b53a"/><circle cx="32" cy="40" r="3" fill="#f0cf5a"/><circle cx="46" cy="39" r="3" fill="#f0cf5a"/>',
+    water:'<ellipse cx="40" cy="56" rx="24" ry="8" fill="#b32424"/><rect x="28" y="14" width="24" height="42" rx="9" fill="#e8f3f9"/><rect x="30" y="26" width="20" height="28" rx="7" fill="#5aaae6"/>',
     nest:'<ellipse cx="40" cy="46" rx="28" ry="13" fill="#b98b3e"/><ellipse cx="40" cy="43" rx="20" ry="8" fill="#6e4c1c"/><ellipse cx="34" cy="37" rx="7" ry="10" fill="#fdf8ea"/><ellipse cx="48" cy="38" rx="7" ry="10" fill="#eee5cd"/><path d="M14 46q26 16 52 0M18 52q22 10 44 0" stroke="#e8c26a" stroke-width="2" fill="none"/>',
     perch:'<rect x="36" y="22" width="8" height="36" fill="#7a5028"/><rect x="14" y="16" width="52" height="9" rx="4" fill="#a8743f"/><rect x="24" y="56" width="32" height="5" rx="2" fill="#5b3a1c"/>',
     heat:'<rect x="18" y="16" width="44" height="42" rx="6" fill="#8a2c20"/><path d="M26 24v26M34 24v26M42 24v26M50 24v26" stroke="#ffb03a" stroke-width="4"/><path d="M30 12q-5-5 0-9M44 12q-5-5 0-9" stroke="#ff8a3a" stroke-width="2.5" fill="none"/>',
@@ -155,6 +157,8 @@ BLS.UI = (function(){
       function gear(id,name,desc,cost,owned){ return item(art(GEAR_ART[id]),name,desc,owned?'<button class="buy owned" disabled>✔ '+T('up_owned')+'</button>':priceBtn('gear:'+id,cost),'',owned?'done':''); }
       var nf=G.nestsOpen>=C.NEST_COUNT, pf=G.perches.length>=BLS.LAYOUT.perchSpots.length;
       h+=sec(T('build'), gear('nest',T('buy_nest'),'<b dir="ltr">'+G.nestsOpen+' / '+C.NEST_COUNT+'</b>',Sim.nestCost(),nf)+gear('perch',T('buy_perch'),'<b dir="ltr">'+G.perches.length+' / '+BLS.LAYOUT.perchSpots.length+'</b>',150,pf));
+      function gearU(id,name,desc,list,costs){ var n=list.length, mx=C.EXTRA_UNIT_LV.length, btn; if(n>=mx) btn='<button class="buy owned" disabled>✔ '+T('up_owned')+'</button>'; else if(G.level<C.EXTRA_UNIT_LV[n]) btn='<button class="buy poor" disabled>🔒 '+T('lv_need',C.EXTRA_UNIT_LV[n])+'</button>'; else btn=priceBtn('gear:'+id,costs[n]); return item(art(GEAR_ART[id]),name,desc+' <b dir="ltr">'+(n+1)+' / '+(mx+1)+'</b>',btn,'',n>=mx?'done':''); }
+      h+=sec(T('yard_sec'), gearU('feeder',T('buy_feeder'),T('feeder_d'),G.xf||[],C.EXTRA_FEEDER_COST)+gearU('water',T('buy_waterer'),T('waterer_d'),G.xw||[],C.EXTRA_WATER_COST));
       h+=sec(T('farm_up'), ['heat','vent','nursery','vet','flight','cam'].map(function(k){ var d=T('up_'+k+'_d'); if(d==='up_'+k+'_d') d=T('gd_'+k); return gear(k,T('up_'+k),d,C.UP_COST[k],G.up&&G.up[k]); }).join('')
         +gear('iso',T('iso_name'),T('gd_iso'),C.ISO_COST,G.isoUnit)+gear('guard',T('guard_name'),T('gd_guard'),C.GUARD_COST,G.guard));
     } else if(tab==='sell'){
@@ -179,7 +183,7 @@ BLS.UI = (function(){
     sellArm=null;
     if(p[0]==='feed') Sim.buyFeed(); else if(p[0]==='mix') Sim.buyMix(); else if(p[0]==='rbird') Sim.buyBird(); else if(p[0]==='rpair') Sim.buyPair();
     else if(p[0]==='br') Sim.buyBreed(p[1],p[2]); else if(p[0]==='av') Sim.avBuy(p[1]);
-    else if(p[0]==='gear'){ var g=p[1]; if(g==='nest') Sim.buyNest(); else if(g==='perch') Sim.buyPerch(); else if(g==='iso') Sim.buyIso(); else if(g==='guard') Sim.buyGuard(); else Sim.buyUp(g); }
+    else if(p[0]==='gear'){ var g=p[1]; if(g==='nest') Sim.buyNest(); else if(g==='perch') Sim.buyPerch(); else if(g==='feeder') Sim.buyFeederUnit(); else if(g==='water') Sim.buyWaterUnit(); else if(g==='iso') Sim.buyIso(); else if(g==='guard') Sim.buyGuard(); else Sim.buyUp(g); }
     else if(p[0]==='sb'){ var b=Sim.bird(+p[1]); if(b) Sim.sell(b); } else if(p[0]==='se') Sim.sellEgg(+p[1]); else if(p[0]==='sa') Sim.avSell(p[1]); else if(p[0]==='or') Sim.fillOrder(+p[1],+p[2]);
     hud(); showShop(shopTab);
   }
