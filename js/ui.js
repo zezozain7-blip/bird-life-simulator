@@ -34,7 +34,7 @@ BLS.UI = (function(){
     alerts(); var G=Sim.G; if(lastCoins!==null&&G.coins>lastCoins) BLS.FX.coins(G.coins-lastCoins); lastCoins=G.coins;
     var fb=$('b-fly'); if(fb) fb.classList.toggle('ready',G.flyDay!==Sim.dayNum()&&!Sim.isNight()&&Sim.flockReady().length>1);
     $('h-lvl').textContent=G.level; $('h-xp').style.width=(G.xp/(100*G.level)*100)+'%';
-    $('h-coins').textContent=G.coins.toLocaleString('en'); $('h-feed').textContent=G.feed.toFixed(2)+' kg'; $('h-birds').textContent=G.birds.length;
+    $('h-coins').textContent=G.coins.toLocaleString('en'); $('h-feed').textContent=G.feed.toFixed(2)+' kg'; $('h-birds').textContent=G.birds.length+' / '+Sim.popCap();
     var h=Sim.hourOfDay(), hh=Math.floor(h), mm=Math.floor((h-hh)*60); $('h-time').textContent=timeStr(hh,mm)+' · '+T('w_'+(G.weather||'clear'));
     var wi=(h>=19||h<5)?'moon':(h<7||h>=17)?'dusk':'sun'; if($('h-wic').getAttribute('data-ic')!==wi){ $('h-wic').setAttribute('data-ic',wi); BLS.Icons.fill($('h-wic').parentNode); }
     var n=Sim.claimable(); var bd=$('h-badge'); bd.style.display=n?'flex':'none'; bd.textContent=n;
