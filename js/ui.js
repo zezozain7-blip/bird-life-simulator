@@ -7,7 +7,7 @@ BLS.UI = (function(){
   function toast(m){ var t=$('toast'); t.innerHTML=BLS.Icons.emo(esc(m)); t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove('show');},2200); }
   function applyLang(){ var G=Sim.G; document.documentElement.lang=G.lang; $('b-lang').textContent=G.lang==='ar'?'EN':'ع';
     document.querySelectorAll('[data-i]').forEach(function(e){ e.textContent=T(e.getAttribute('data-i')); }); sheet.classList.toggle('rtl',G.lang==='ar'); $('nav').classList.toggle('rtl-nav',G.lang==='ar'); }
-  function ad(n){ return G_lang()==='ar'?String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];}):String(n); }
+  function ad(n){ return String(n); }
   function G_lang(){ return Sim.G.lang; }
   function timeStr(hh,mm){ var ar=G_lang()==='ar'; return (ar?'اليوم ':'D')+ad(Sim.dayNum())+' · '+ad(hh%12||12)+':'+ad((mm<10?'0':'')+mm)+' '+(ar?(hh<12?'ص':'م'):(hh<12?'AM':'PM')); }
   var lastCoins=null;
@@ -22,7 +22,7 @@ BLS.UI = (function(){
     $('b-speed').textContent='x'+G.speed;
   }
   function open(kind,title,html,opts){ var hh0=document.getElementById('hint'); if(hh0){ hh0.remove(); if(Sim.G) Sim.G.seenHint=1; } if(!cur.kind){ try{ history.pushState({bls:1},''); }catch(e){} } cur={kind:kind,args:opts||{}}; $('sheet-title').innerHTML=BLS.Icons.emo(esc(title)); body.innerHTML=BLS.Icons.emo(html); sheet.classList.toggle('shop',kind==='shop'); sheet.classList.remove('hidden'); body.scrollTop=0; setNav(kind); }
-  function close(fromPop){ var was=cur.kind; sheet.classList.add('hidden'); cur={kind:null}; if(was&&fromPop!==true){ try{ if(history.state&&history.state.bls) history.back(); }catch(e){} } BLS.Scene.select(-1); setNav('farm'); }
+  function close(fromPop){ var was=cur.kind; sheet.classList.add('hidden'); cur={kind:null}; if(was&&fromPop!==true){ try{ if(history.state&&history.state.bls) history.back(); }catch(e){} } BLS.Scene.restore(); BLS.Scene.select(-1); setNav('farm'); }
   function setNav(k){ var m={build:'farm',tree:'birds',bird:'birds',birds:'birds',breeding:'breeding',nest:'breeding',egg:'breeding',shop:'market',manage:'manage',comp:'manage',tasks:'manage',pick:'birds'}[k]||'farm'; document.querySelectorAll('#nav button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-nav')===m); }); }
   function bar(v,good){ v=Math.max(0,Math.min(100,v)); var col=good?(v>60?'#6fcf4a':v>30?'#e6c03a':'#e0553a'):(v<40?'#6fcf4a':v<70?'#e6c03a':'#e0553a'); return '<div class="bar"><i style="width:'+v+'%;background:'+col+'"></i></div>'; }
   function portrait(b,size){ var cn=document.createElement('canvas'); cn.width=size*2; cn.height=size*1.7; cn.style.width=size+'px'; cn.style.height=(size*0.85)+'px'; var c=cn.getContext('2d'); c.scale(2,2); c.fillStyle='#00000030'; c.beginPath(); c.ellipse(size*0.5,size*0.78,size*0.28,size*0.06,0,0,6.3); c.fill();
@@ -301,5 +301,5 @@ BLS.UI = (function(){
     $('b-lang').onclick=function(){ var G=Sim.G; G.lang=G.lang==='ar'?'en':'ar'; applyLang(); if(cur.kind) close(); hud(); };
     BLS.Icons.fill(document); applyLang(); hud(); welcomeBack(); setInterval(hud,250);
   }
-  return {welcomeBack:welcomeBack,showShop:showShop,init:init,applyLang:applyLang,onPick:onPick,toast:toast,hud:hud,showBird:showBird,showBreeding:showBreeding,close:close,showNest:showNest,showTree:showTree,showBuild:showBuild};
+  return {welcomeBack:welcomeBack,showShop:showShop,init:init,applyLang:applyLang,onPick:onPick,toast:toast,hud:hud,showBird:showBird,showBreeding:showBreeding,close:close,showNest:showNest,showTree:showTree,showBuild:showBuild,showComp:showComp,showColl:showColl,showTasks:showTasks,showManage:showManage,showBirds:showBirds};
 })();
