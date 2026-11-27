@@ -14,7 +14,7 @@ function imp(){
     r.onload=function(){
       try{
         var d=JSON.parse(r.result);
-        if(!d||!Array.isArray(d.birds)||typeof d.coins!=='number'||!Array.isArray(d.eggs)||(d.saveVersion||0)>4)throw 0;
+        if(!d||!Array.isArray(d.birds)||typeof d.coins!=='number'||!Array.isArray(d.eggs)||(d.saveVersion||0)>6)throw 0;
         if(!confirm(ar()?'هيتم استبدال تقدمك الحالي بالنسخة دي. متأكد؟':'This replaces your current progress. Continue?'))return;
         try{localStorage.setItem('bls_before_import',JSON.stringify(S.G));}catch(e){}var G=S.G;Object.keys(G).forEach(function(k){delete G[k];});Object.assign(G,d);S.save();location.reload();
       }catch(e){S.emit('toast',ar()?'⚠️ الملف مش نسخة صالحة':'⚠️ Not a valid save file');}
