@@ -132,6 +132,8 @@ BLS.Scene = (function(){
     bg=document.createElement('canvas'); bg.width=W*dpr; bg.height=H*dpr; var c=bg.getContext('2d'); c.scale(dpr,dpr);
     var g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#6fa4d4'); g.addColorStop(0.35,'#bcd5e6'); g.addColorStop(0.5,'#f6d9a4'); g.addColorStop(0.62,'#d4b57a'); g.addColorStop(1,'#6e8a42'); c.fillStyle=g; c.fillRect(0,0,W,H);
     var sg=c.createRadialGradient(W*0.2,H*0.42,5,W*0.2,H*0.42,W*0.6); sg.addColorStop(0,'rgba(255,240,190,0.9)'); sg.addColorStop(1,'rgba(255,240,190,0)'); c.fillStyle=sg; c.fillRect(0,0,W,H);
+    var tb=BLS.Art&&BLS.Art.tex('town');
+    if(tb){ var k=Math.max(W/tb.width,H/tb.height), dw=tb.width*k, dh=tb.height*k; c.drawImage(tb,(W-dw)/2,0,dw,dh); c.fillStyle='rgba(60,40,20,0.12)'; c.fillRect(0,0,W,H); return; }
     var R=rng(77), hy=H*0.47;
     for(var i=0;i<30;i++){ var x=R()*W, w=18+R()*34, h=14+R()*30; c.fillStyle='rgb('+(190+R()*30|0)+','+(150+R()*30|0)+','+(120+R()*20|0)+')'; c.fillRect(x,hy-h,w,h); c.fillStyle='rgba(120,70,40,0.5)'; c.fillRect(x,hy-h,w,3); }
     c.fillStyle='#e8dcc4'; c.fillRect(W*0.78,hy-92,9,92); c.beginPath(); c.moveTo(W*0.78-3,hy-92); c.lineTo(W*0.78+4.5,hy-112); c.lineTo(W*0.78+12,hy-92); c.fill(); c.fillStyle='#d9ccb0'; c.beginPath(); c.arc(W*0.86,hy-18,22,Math.PI,0); c.fill(); c.fillRect(W*0.86-22,hy-18,44,18);
@@ -239,5 +241,5 @@ BLS.Scene = (function(){
     cv.addEventListener('wheel',function(e){ e.preventDefault(); cam.z*=e.deltaY<0?1.1:0.9; },{passive:false});
     function loop(now){ frame(now); requestAnimationFrame(loop); } requestAnimationFrame(loop);
   }
-  return { init:init, focus:focus, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ buildLayers(); } };
+  return { init:init, focus:focus, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ buildBg(); buildLayers(); } };
 })();
