@@ -105,7 +105,7 @@ BLS.Sim = (function(){
   }
   function stepLife(dt,auto,protect){
     G.t+=dt; if(G.lastDay===undefined) G.lastDay=Math.floor(G.t/24); while(Math.floor(G.t/24)>G.lastDay){ G.lastDay++; dailyEvents(protect); }
-    var i, b, hungerAdd=C.HUNGER_RATE*dt, thirstAdd=C.THIRST_RATE*dt;
+    var i, b, wm=wMul(), hungerAdd=C.HUNGER_RATE*dt*wm.hu, thirstAdd=C.THIRST_RATE*dt*wm.th;
     for(i=G.birds.length-1;i>=0;i--){
       b=G.birds[i]; var st0=stageOf(b);
       b.age+=dt; var stg=stageOf(b);
@@ -330,7 +330,14 @@ BLS.Sim = (function(){
     emit('event',mine>0?T('comp_result',place,prize):T('comp_missed'),'comp'); emit('sfx',place===1&&mine>0?'level':'click');
   }
   // ---------- hazards and upkeep (once per game day, never during offline catch-up)
+  var WTAB=[[['clear',.5],['rain',.3],['wind',.2]],[['clear',.6],['heat',.3],['wind',.1]],[['clear',.4],['rain',.35],['wind',.25]],[['clear',.4],['cold',.4],['rain',.2]]];
+  function season(){ return Math.floor((dayNum()-1)/15)%4; }
+  function rollWeather(){ var tb=WTAB[season()], r=Math.random(), acc=0, w='clear'; for(var i=0;i<tb.length;i++){ acc+=tb[i][1]; if(r<acc){ w=tb[i][0]; break; } }
+    var prev=G.weather; G.weather=w; var bad=(w==='heat'&&!(G.up&&G.up.vent))||(w==='cold'&&!(G.up&&G.up.heat)); G.weatherBad=bad; if(w!==prev&&w!=='clear') emit('event',T('ev_w_'+w),'farm'); }
+  function wMul(){ var w=G.weather, up=G.up||{}; return { th:w==='heat'?(up.vent?1.15:1.5):1, hu:w==='cold'?(up.heat?1.1:1.3):1 }; }
+  function buyUp(k){ var cost=C.UP_COST[k]; G.up=G.up||{}; if(G.up[k]) return; if(G.coins<cost) return emit('toast',T('need_coins')); G.coins-=cost; G.up[k]=1; emit('sfx','build'); emit('toast',T('up_done')); }
   function dailyEvents(protect){
+    rollWeather(); if(G.weather==='rain') G.dirt=Math.min(100,(G.dirt||0)+4);
     var n=G.birds.length; G.dirt=Math.min(100,(G.dirt||0)+3+n*1.4);
     if(n&&!protect){ var up=Math.min(G.coins,Math.round(n*C.UPKEEP_PER_BIRD)); G.coins-=up; emit('event',T('ev_upkeep',up),'farm'); }
     if(protect||!n) return;
@@ -425,13 +432,14 @@ BLS.Sim = (function(){
     try{ G=JSON.parse(raw); }catch(e){ try{ G=JSON.parse(localStorage.getItem(C.SAVE_KEY+'_bak')); }catch(e2){ return false; } }
     if(!G||!G.birds) return false;
     ensureOrders(); ensureComp(); ensureQuests(); G.birds.forEach(ensureBird); G.saveVersion=3;
+    if(!G.weather){ G.weather='clear'; G.up={}; }
     if(G.nestsOpen===undefined){ G.nestsOpen=8; G.perches=[]; }
     var away=Math.max(0,(Date.now()-(G.savedAt||Date.now()))/1000/C.REAL_SEC_PER_HOUR); away=Math.min(away,C.OFFLINE_MAX_H);
     G.birds.forEach(function(b){ if(b.st==='fly'||b.st==='walk'||b.st==='eat'||b.st==='drink'||b.st==='sit'||b.st==='perch'||b.st==='peck'||b.st==='preen'||b.st==='coo') { b.st='idle'; b.timer=0.5; if(b.z>0.05&&stageOf(b)!=='squab'){ var s=L.randSpot(); b.x=s.x;b.y=s.y;b.z=0; } } });
     if(away>=1){ var s0={eggs:G.stats.eggs||0,hat:G.stats.hatched,died:G.stats.died,grain:G.feeder.grain,water:G.water.amt,birds:G.birds.length}; skip(Math.floor(away)); G.savedAt=Date.now(); G.welcome={h:Math.floor(away),eggs:(G.stats.eggs||0)-s0.eggs,hatched:G.stats.hatched-s0.hat,died:G.stats.died-s0.died,grain:Math.max(0,s0.grain-G.feeder.grain),water:Math.max(0,s0.water-G.water.amt),birds:G.birds.length-s0.birds}; }
     return true;
   }
-  return { buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
+  return { season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
     bird:bird, related:related, canPair:canPair, pairUp:pairUp, unpair:unpair, nestContents:nestContents, popCap:popCap, ensureQuests:ensureQuests, qProg:qProg, claimQuest:claimQuest, claimLogin:claimLogin, loginReady:loginReady, LOGIN:LOGIN, sell:sell, ensureComp:ensureComp, birdScore:birdScore, enterShow:enterShow, withdrawShow:withdrawShow, ensureOrders:ensureOrders, orderMatch:orderMatch, fillOrder:fillOrder, sellPrice:sellPrice,
     cleanLoft:cleanLoft, buyGuard:buyGuard, buyFeed:buyFeed, buyBird:buyBird, buyPair:buyPair, refillFeeder:refillFeeder, refillWater:refillWater, feedBird:feedBird, waterBird:waterBird, healBird:healBird,
     weightOf:weightOf, TASKS:TASKS, buyNest:buyNest, nestCost:nestCost, buyPerch:buyPerch, childrenOf:childrenOf, claimable:claimable, claim:claim, skip:skip, freeNest:freeNest, covered:covered, isNight:isNight, addXp:addXp };
