@@ -5,6 +5,7 @@ BLS.Sim = (function(){
   var L = BLS.LAYOUT = {
     nestPos: function(i){ var col=i%4,row=(i/4)|0; return {x:2.2,y:1.3+col*1.05+0.45,z:0.45+row*0.9+0.04}; },
     feeder:{x:6.2,y:6.0}, water:{x:4.3,y:7.2},
+    feederSlots:[{x:8.4,y:4.6},{x:8.4,y:7.2},{x:10.4,y:5.8}], waterSlots:[{x:4.5,y:4.7},{x:5.4,y:9.6},{x:10.4,y:7.2}],
     roofZ:2.72,
     perchSpots:[[4.2,4.3],[9.6,4.8],[8.6,6.8],[4.2,9.5]],
     roofPerch: function(){ var pl=G&&G.perches||[]; if(pl.length&&Math.random()<0.5){ var q=pl[(Math.random()*pl.length)|0], sp=L.perchSpots[q]; return {x:sp[0]+(Math.random()-0.5)*0.5,y:sp[1],z:0.95}; } return {x:1.0+Math.random()*1.5,y:1.2+Math.random()*4.4,z:L.roofZ}; },
@@ -40,7 +41,7 @@ BLS.Sim = (function(){
       feeder:{grain:0.3}, water:{amt:80}, tasks:{}, stats:{hatched:0,sold:0,bought:0,died:0,hand:0,boughtFeed:0},
       lang:lang||'ar', speed:1, archive:{}, log:[], savedAt:Date.now(), nestsOpen:4, perches:[] };
     for(var i=0;i<C.NEST_COUNT;i++) G.nests.push(null);
-    ensureComp();
+    ensureUnits(); ensureComp();
     var gm={c:['G','R'],p:['B','C'],size:66,vit:70,fert:72}, gf={c:['G','G'],p:['B','B'],size:60,vit:68,fert:74};
     var np=L.nestPos(0), rp=L.roofPerch();
     var m=newBird({sex:'M',g:gm,age:400,x:rp.x,y:rp.y,z:L.roofZ}), f=newBird({sex:'F',g:gf,age:400,x:np.x,y:np.y,z:np.z});
@@ -116,8 +117,10 @@ BLS.Sim = (function(){
         if(par.length){ b.hunger=Math.max(0,b.hunger-6*dt); b.thirst=Math.max(0,b.thirst-6*dt); }
       }
       if(auto){
-        if(b.hunger>35&&G.feeder.grain>0){ var need=b.hunger-10,kg=Math.min(G.feeder.grain,need*C.GRAIN_PER_UNIT); G.feeder.grain-=kg; var fqq=G.feeder.q||0; b.hunger-=kg/C.GRAIN_PER_UNIT*(1+0.3*fqq); if(fqq>0&&!b.dis) b.health=Math.min(100,b.health+0.5*fqq*dt); }
-        if(b.thirst>35&&G.water.amt>0){ var nw=b.thirst-10,w=Math.min(G.water.amt,nw*C.WATER_PER_UNIT); G.water.amt-=w; b.thirst-=w/C.WATER_PER_UNIT; }
+        var fU=feeders().filter(function(u){return u.grain>0;}).sort(function(a,b2){return b2.grain-a.grain;})[0];
+        if(b.hunger>35&&fU){ var need=b.hunger-10,kg=Math.min(fU.grain,need*C.GRAIN_PER_UNIT); fU.grain-=kg; var fqq=fU.q||G.feeder.q||0; b.hunger-=kg/C.GRAIN_PER_UNIT*(1+0.3*fqq); if(fqq>0&&!b.dis) b.health=Math.min(100,b.health+0.5*fqq*dt); }
+        var wU=waters().filter(function(u){return u.amt>0;}).sort(function(a,b2){return b2.amt-a.amt;})[0];
+        if(b.thirst>35&&wU){ var nw=b.thirst-10,w=Math.min(wU.amt,nw*C.WATER_PER_UNIT); wU.amt-=w; b.thirst-=w/C.WATER_PER_UNIT; }
       }
       ensureBird(b);
       var crowd=G.birds.length>popCap()*0.85?1:0, pm=PERS[b.pers];
@@ -168,8 +171,8 @@ BLS.Sim = (function(){
     });
     releaseNests();
     if(G.comp){ if(!G.comp.warned&&G.t>=G.comp.nextShow-24&&G.comp.entry<0){ G.comp.warned=true; emit('event',T('comp_soon'),'comp'); } if(G.t>=G.comp.nextShow) resolveShow(); }
-    if(G.feeder.grain<=0.001&&!stepLife._fw){ stepLife._fw=1; emit('event',T('ev_hungry'),'farm'); } if(G.feeder.grain>0.04) stepLife._fw=0;
-    if(G.water.amt<=0.5&&!stepLife._ww){ stepLife._ww=1; emit('event',T('ev_dry'),'farm'); } if(G.water.amt>10) stepLife._ww=0;
+    if(totalGrain()<=0.001&&!stepLife._fw){ stepLife._fw=1; emit('event',T('ev_hungry'),'farm'); } if(totalGrain()>0.04) stepLife._fw=0;
+    if(totalWater()<=0.5&&!stepLife._ww){ stepLife._ww=1; emit('event',T('ev_dry'),'farm'); } if(totalWater()>10) stepLife._ww=0;
   }
   function lifeD(b){ ensureBird(b); return C.LIFE_D*(0.8+(b.g.vit||50)/250); }
   function oldStart(b){ return C.OLD_START_D*(0.8+(b.g.vit||50)/250); }
@@ -194,8 +197,17 @@ BLS.Sim = (function(){
     b.st='fly'; b.after=then||'idle'; if(b.z<0.05) emit('fx','feather',b); setFace(b,x-b.x,y-b.y); emit('sfx','flap');
   }
   function setFace(b,dx,dy){ var sx=dy; if(Math.abs(sx)>0.01) b.face=sx>=0?1:-1; }
-  function aroundFeeder(){ var a=Math.random()*6.28; return {x:L.feeder.x+Math.cos(a)*0.55,y:L.feeder.y+Math.sin(a)*0.55}; }
-  function aroundWater(){ var a=Math.random()*6.28; return {x:L.water.x+Math.cos(a)*0.45,y:L.water.y+Math.sin(a)*0.45}; }
+  function ensureUnits(){ if(!G) return; G.xf=G.xf||[]; G.xw=G.xw||[]; G.feeder.x=L.feeder.x; G.feeder.y=L.feeder.y; G.water.x=L.water.x; G.water.y=L.water.y; }
+  function feeders(){ ensureUnits(); return [G.feeder].concat(G.xf); }
+  function waters(){ ensureUnits(); return [G.water].concat(G.xw); }
+  function totalGrain(){ return feeders().reduce(function(a,u){return a+(u.grain||0);},0); }
+  function totalWater(){ return waters().reduce(function(a,u){return a+(u.amt||0);},0); }
+  function pickUnit(list,b,key,min){ var best=-1,bs=1e9; for(var i=0;i<list.length;i++){ var u=list[i]; if((u[key]||0)<=min) continue; var sc=Math.hypot(u.x-b.x,u.y-b.y)+Math.random()*2.2+((u.crowd||0)*0.6); if(sc<bs){ bs=sc; best=i; } } return best; }
+  function aroundFeeder(i){ var u=feeders()[i||0]||G.feeder, a=Math.random()*6.28; return {x:u.x+Math.cos(a)*0.55,y:u.y+Math.sin(a)*0.55}; }
+  function aroundWater(i){ var u=waters()[i||0]||G.water, a=Math.random()*6.28; return {x:u.x+Math.cos(a)*0.45,y:u.y+Math.sin(a)*0.45}; }
+  function extraAllowed(){ var lv=G.level||1, n=0; C.EXTRA_UNIT_LV.forEach(function(l){ if(lv>=l) n++; }); return n; }
+  function buyFeederUnit(){ var n=G.xf.length; if(n>=C.EXTRA_UNIT_LV.length) return emit('toast',T('unit_max')); if((G.level||1)<C.EXTRA_UNIT_LV[n]) return emit('toast',T('lv_need',C.EXTRA_UNIT_LV[n])); var p=C.EXTRA_FEEDER_COST[n]; if(G.coins<p) return emit('toast',T('need_coins')); G.coins-=p; var s=L.feederSlots[n]; G.xf.push({x:s.x,y:s.y,grain:0}); emit('sfx','build'); emit('toast','🌾 '+T('built')); return true; }
+  function buyWaterUnit(){ var n=G.xw.length; if(n>=C.EXTRA_UNIT_LV.length) return emit('toast',T('unit_max')); if((G.level||1)<C.EXTRA_UNIT_LV[n]) return emit('toast',T('lv_need',C.EXTRA_UNIT_LV[n])); var p=C.EXTRA_WATER_COST[n]; if(G.coins<p) return emit('toast',T('need_coins')); G.coins-=p; var s=L.waterSlots[n]; G.xw.push({x:s.x,y:s.y,amt:0}); emit('sfx','build'); emit('toast','💧 '+T('built')); return true; }
   // ---------- pairs: shared nest, turns on the eggs, moving together
   function sitterOf(b,mate){ // who should be on the eggs now: male takes the day shift (about 9:30 to 16:30), female the rest
     var h=hourOfDay(), want=(h>=9.5&&h<16.5)?'M':'F'; var me=b, ot=mate;
@@ -211,13 +223,15 @@ BLS.Sim = (function(){
     var hasEggs=b.nest>=0&&G.eggs.some(function(e){return e.nest===b.nest&&!e.dead;});
     // 1) needs first
     var fed=b.hunger<=42, wat=b.thirst<=42;
-    if(!fed&&G.feeder.grain>0.01){
+    var fi=!fed?pickUnit(feeders(),b,'grain',0.01):-1;
+    if(!fed&&fi>=0){
       if(!onGround){ var s=L.randSpot(); return flyTo(b,s.x,s.y,0,'idle'); }
-      var p=aroundFeeder(); return goto_(b,p.x,p.y,'eat');
+      b.fi=fi; var p=aroundFeeder(fi); return goto_(b,p.x,p.y,'eat');
     }
-    if(!wat&&G.water.amt>1){
+    var wi=!wat?pickUnit(waters(),b,'amt',1):-1;
+    if(!wat&&wi>=0){
       if(!onGround){ var s2=L.randSpot(); return flyTo(b,s2.x,s2.y,0,'idle'); }
-      var q=aroundWater(); return goto_(b,q.x,q.y,'drink');
+      b.wi=wi; var q=aroundWater(wi); return goto_(b,q.x,q.y,'drink');
     }
     // 2) egg duty: a pair shares the nest and takes turns
     if(hasEggs&&mate){
@@ -326,13 +340,15 @@ BLS.Sim = (function(){
     }
     b.timer-=dt;
     if(b.st==='eat'){
-      if(G.feeder.grain<=0.002||b.hunger<8||b.timer<=0){ b.st='idle'; b.timer=0.4; }
-      else { var amt=Math.min(b.hunger,C.EAT_SPEED*dt); b.hunger-=amt; G.feeder.grain=Math.max(0,G.feeder.grain-amt*C.GRAIN_PER_UNIT); face2(b,L.feeder); }
+      var fu=feeders()[b.fi||0]||G.feeder;
+      if(fu.grain<=0.002||b.hunger<8||b.timer<=0){ b.st='idle'; b.timer=0.4; }
+      else { var amt=Math.min(b.hunger,C.EAT_SPEED*dt); b.hunger-=amt; fu.grain=Math.max(0,fu.grain-amt*C.GRAIN_PER_UNIT); face2(b,fu); }
       return;
     }
     if(b.st==='drink'){
-      if(G.water.amt<=0.2||b.thirst<8||b.timer<=0){ b.st='idle'; b.timer=0.4; }
-      else { var a2=Math.min(b.thirst,C.DRINK_SPEED*dt); b.thirst-=a2; G.water.amt=Math.max(0,G.water.amt-a2*C.WATER_PER_UNIT); face2(b,L.water); }
+      var wu=waters()[b.wi||0]||G.water;
+      if(wu.amt<=0.2||b.thirst<8||b.timer<=0){ b.st='idle'; b.timer=0.4; }
+      else { var a2=Math.min(b.thirst,C.DRINK_SPEED*dt); b.thirst-=a2; wu.amt=Math.max(0,wu.amt-a2*C.WATER_PER_UNIT); face2(b,wu); }
       return;
     }
     if(b.timer<=0){ think(b); }
@@ -385,11 +401,11 @@ BLS.Sim = (function(){
   function avDaily(protect){ var a=aviary(), n=avCount(); if(!n) return; if(!protect) G.coins-=Math.min(G.coins,n*BLS.AVIARY_UPKEEP);
     for(var k in a){ for(var i=(a[k]/2)|0;i>0;i--){ if(avCount()<BLS.AVIARY_CAP&&Math.random()<BLS.AVIARY_BREED_P){ a[k]++; addXp(8); emit('event',T('av_chick',T('sp_'+k)),'aviary'); } } } }
   function refillFeeder(){
-    var room=C.FEEDER_CAP-G.feeder.grain; if(room<0.01) return emit('toast',T('feeder_filled'));
+    var us=feeders(), room=us.reduce(function(a,u){return a+Math.max(0,C.FEEDER_CAP-u.grain);},0); if(room<0.01) return emit('toast',T('feeder_filled'));
     if(G.feed<=0) return emit('toast',T('need_feed'));
-    var kg=Math.min(room,G.feed); var fq=G.feedQ||0, tot=G.feeder.grain+kg; G.feeder.q=((G.feeder.q||0)*G.feeder.grain+fq*kg)/tot; G.feed-=kg; if(G.feed<=0.002) G.feedQ=0; G.feeder.grain+=kg; emit('toast','🌾 '+T('feeder_filled')+' (+'+kg.toFixed(2)+' kg)');
+    var added=0, fq=G.feedQ||0; us.slice().sort(function(a,b){return a.grain-b.grain;}).forEach(function(u){ var r=Math.min(C.FEEDER_CAP-u.grain,G.feed); if(r<=0.0005) return; var tot=u.grain+r; u.q=((u.q||0)*u.grain+fq*r)/tot; G.feed-=r; u.grain+=r; added+=r; }); if(G.feed<=0.002){ G.feedQ=0; G.feed=Math.max(0,G.feed); } emit('toast','🌾 '+T('feeder_filled')+' (+'+added.toFixed(2)+' kg)');
   }
-  function refillWater(){ G.water.amt=C.WATER_CAP; emit('toast','💧 '+T('water_filled')); }
+  function refillWater(){ waters().forEach(function(u){ u.amt=C.WATER_CAP; }); emit('toast','💧 '+T('water_filled')); }
   function feedBird(b){ if(G.feed<0.01) return emit('toast',T('need_feed')); G.feed-=0.01; b.hunger=Math.max(0,b.hunger-45); G.stats.hand++; emit('toast',T('fed',b.name)); }
   function waterBird(b){ b.thirst=0; emit('toast',T('watered',b.name)); }
   function healCost(){ return (G.up&&G.up.vet)?30:C.PRICE.heal; }
@@ -550,7 +566,7 @@ BLS.Sim = (function(){
   function catchUp(reportFrom){
     var away=Math.max(0,(Date.now()-(G.savedAt||Date.now()))/1000/C.REAL_SEC_PER_HOUR); away=Math.min(away,C.OFFLINE_MAX_H); if(away<1) return false;
     G.birds.forEach(function(b){ if(b.st==='fly'||b.st==='walk'||b.st==='eat'||b.st==='drink'||b.st==='sit'||b.st==='perch'||b.st==='peck'||b.st==='preen'||b.st==='coo') { b.st='idle'; b.timer=0.5; if(b.z>0.05&&stageOf(b)!=='squab'){ var s=L.randSpot(); b.x=s.x;b.y=s.y;b.z=0; } } });
-    var s0={eggs:G.stats.eggs||0,hat:G.stats.hatched,died:G.stats.died,grain:G.feeder.grain,water:G.water.amt,birds:G.birds.length}; skip(Math.floor(away)); G.savedAt=Date.now();
+    var s0={eggs:G.stats.eggs||0,hat:G.stats.hatched,died:G.stats.died,grain:totalGrain(),water:totalWater(),birds:G.birds.length}; skip(Math.floor(away)); G.savedAt=Date.now();
     if(away>=(reportFrom||1)) G.welcome={h:Math.floor(away),eggs:(G.stats.eggs||0)-s0.eggs,hatched:G.stats.hatched-s0.hat,died:G.stats.died-s0.died,grain:Math.max(0,s0.grain-G.feeder.grain),water:Math.max(0,s0.water-G.water.amt),birds:G.birds.length-s0.birds};
     return true;
   }
@@ -564,7 +580,7 @@ BLS.Sim = (function(){
     try{ G=JSON.parse(raw); }catch(e){ try{ G=JSON.parse(localStorage.getItem(C.SAVE_KEY+'_bak')); }catch(e2){ return false; } }
     if(!G||!G.birds) return false;
     if((G.saveVersion||0)<4){ migrate4(); }
-    ensureOrders(); ensureComp(); ensureQuests(); G.birds.forEach(ensureBird); G.saveVersion=4;
+    ensureUnits(); ensureOrders(); ensureComp(); ensureQuests(); G.birds.forEach(ensureBird); G.saveVersion=4;
     if(!G.weather){ G.weather='clear'; G.up={}; }
     mk(); if(!G.pend) G.pend=[];
     if(G.nestsOpen===undefined){ G.nestsOpen=8; G.perches=[]; }
@@ -574,5 +590,5 @@ BLS.Sim = (function(){
   return { toss:toss, flyFlock:flyFlock, flying:flying, flockReady:flockReady, eggPrice:eggPrice, catchUp:catchUp, breedPrice:breedPrice, buyBreed:buyBreed, aviary:aviary, avCount:avCount, avBuy:avBuy, avSell:avSell, avSellPrice:avSellPrice, mixPrice:mixPrice, buyMix:buyMix, sellEgg:sellEgg, healCost:healCost, hatchOdds:hatchOdds, collList:collList, claimColl:claimColl, rollEvent:rollEvent, feedPrice:feedPrice, trend:trend, resolveEvent:resolveEvent, season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
     bird:bird, related:related, canPair:canPair, pairUp:pairUp, unpair:unpair, nestContents:nestContents, popCap:popCap, ensureQuests:ensureQuests, qProg:qProg, claimQuest:claimQuest, claimLogin:claimLogin, loginReady:loginReady, LOGIN:LOGIN, sell:sell, ensureComp:ensureComp, birdScore:birdScore, enterShow:enterShow, withdrawShow:withdrawShow, ensureOrders:ensureOrders, orderMatch:orderMatch, fillOrder:fillOrder, sellPrice:sellPrice,
     cleanLoft:cleanLoft, buyGuard:buyGuard, buyFeed:buyFeed, buyBird:buyBird, buyPair:buyPair, refillFeeder:refillFeeder, refillWater:refillWater, feedBird:feedBird, waterBird:waterBird, healBird:healBird,
-    weightOf:weightOf, TASKS:TASKS, buyNest:buyNest, nestCost:nestCost, buyPerch:buyPerch, childrenOf:childrenOf, claimable:claimable, claim:claim, skip:skip, freeNest:freeNest, covered:covered, isNight:isNight, addXp:addXp };
+    weightOf:weightOf, TASKS:TASKS, buyNest:buyNest, nestCost:nestCost, buyPerch:buyPerch, buyFeederUnit:buyFeederUnit, buyWaterUnit:buyWaterUnit, feeders:feeders, waters:waters, extraAllowed:extraAllowed, childrenOf:childrenOf, claimable:claimable, claim:claim, skip:skip, freeNest:freeNest, covered:covered, isNight:isNight, addXp:addXp };
 })();
