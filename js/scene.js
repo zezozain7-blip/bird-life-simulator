@@ -80,8 +80,8 @@ BLS.Scene = (function(){
     var w=Math.min(1,G.water.amt/C.WATER_CAP); c.fillStyle='rgba(235,245,250,0.88)'; c.beginPath(); c.moveTo(p[0]-11,p[1]-6); c.quadraticCurveTo(p[0]-14,p[1]-44,p[0],p[1]-52); c.quadraticCurveTo(p[0]+14,p[1]-44,p[0]+11,p[1]-6); c.closePath(); c.fill();
     c.fillStyle='rgba(90,170,230,0.78)'; var wh=40*w; c.fillRect(p[0]-11.5,p[1]-6-wh,23,wh*0.95); c.strokeStyle='rgba(120,140,150,0.6)'; c.lineWidth=1; c.stroke(); }
   function drawPerch(c,sp){ var a=P(sp[0],sp[1],0), top=P(sp[0],sp[1],0.95); shadow(c,a[0],a[1]+1,24,7,0.22); c.strokeStyle='#6b4526'; c.lineWidth=6; c.lineCap='round'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(top[0],top[1]); c.stroke(); c.lineWidth=5; c.beginPath(); c.moveTo(top[0]-24,top[1]); c.lineTo(top[0]+24,top[1]); c.stroke(); }
-  function poseOf(b){ var st=b.st; if(st==='eat'||st==='drink'||st==='peck') return 'peck'; if(st==='walk') return 'walk'; if(st==='fly') return 'fly'; if(st==='sit'||st==='perch') return 'sit'; if(st==='squabnest') return 'squab'; if(st==='preen') return 'preen'; if(st==='coo') return 'coo'; return 'stand'; }
-  function szOf(b){ if(b.st==='fly') return 0.95; if(b.st==='sit') return 0.78; if(b.st==='squabnest') return 0.95; return 0.85; }
+  function poseOf(b){ var st=b.st; if(st==='eat'||st==='drink'||st==='peck') return 'peck'; if(st==='walk') return 'walk'; if(st==='fly'||st==='flock') return 'fly'; if(st==='sit'||st==='perch') return 'sit'; if(st==='squabnest') return 'squab'; if(st==='preen') return 'preen'; if(st==='coo') return 'coo'; return 'stand'; }
+  function szOf(b){ if(b.st==='flock') return 1.15; if(b.st==='fly') return 0.95; if(b.st==='sit') return 0.78; if(b.st==='squabnest') return 0.95; return 0.85; }
   function drawBirdW(c,b){
     var sz=szOf(b), p=P(b.x,b.y,b.z), stg=Sim.stageOf(b), gp=P(b.x,b.y,0);
     var sc=(stg==='adult'?1:stg==='juvenile'?0.78:0.5);
@@ -182,13 +182,17 @@ BLS.Scene = (function(){
     var t=now/1000, fdt=Math.min(0.05,Math.max(0,t-lastNow)); lastNow=t;
     if(!layer0||bakedNests!==G.nestsOpen) buildLayers(G);
     c.drawImage(layer0,BK.x,BK.y,BK.w,BK.h); drawAviaryBirds(c,G,t);
+    var R=rng(99), nd=Math.min(70,((G.dirt||0)*0.7)|0); for(var q=0;q<nd;q++){ var dx=90+R()*620, dy=76+R()*100; c.fillStyle='rgba(72,66,44,0.7)'; c.beginPath(); c.ellipse(dx,dy,3.5+R()*3,2+R()*1.5,R()*3,0,6.3); c.fill(); c.fillStyle='rgba(238,238,225,0.85)'; c.beginPath(); c.arc(dx+1,dy-0.5,1.6,0,6.3); c.fill(); }
     var cnt={}; G.eggs.forEach(function(e){ cnt[e.nest]=(cnt[e.nest]||0)+1; drawEgg(c,e,cnt[e.nest]-1); });
     var items=[];
     items.push({k:L.feeder.x,f:function(){ drawFeeder(c,G); }}); items.push({k:L.water.x,f:function(){ drawWater(c,G); }}); items.push({k:9.4,f:function(){ c.drawImage(layerBed,7.9*U,9.6*D-120,520,200); }});
     G.perches.forEach(function(pi){ var sp=L.perchSpots[pi]; items.push({k:sp[0]-0.1,f:function(){ drawPerch(c,sp); }}); });
-    G.birds.forEach(function(b){ if(b.st!=='fly') items.push({k:(b.st==='sit'||b.st==='squabnest')?2.3:(b.x<3.2&&b.z>0.3?2.4:b.x),f:function(){ drawBirdW(c,b); }}); });
+    G.birds.forEach(function(b){ if(b.st!=='fly'&&b.st!=='flock') items.push({k:(b.st==='sit'||b.st==='squabnest')?2.3:(b.x<3.2&&b.z>0.3?2.4:b.x),f:function(){ drawBirdW(c,b); }}); });
     items.sort(function(a,b){return a.k-b.k;}); items.forEach(function(i){ i.f(); });
-    G.birds.forEach(function(b){ if(b.st==='fly') drawBirdW(c,b); });
+    G.birds.forEach(function(b){ if(b.st==='fly'||b.st==='flock') drawBirdW(c,b); });
+    // cooing couples show hearts now and then
+    G.birds.forEach(function(b){ if(b.st==='coo'&&Math.random()<fdt*1.2){ var hp=P(b.x,b.y,b.z); BLS.FX.burst('heart',hp[0],hp[1]-48); } });
+    BLS.FX.draw(c,fdt);
     ambient.forEach(function(a){ a.x+=a.sp*fdt; if(a.x>1300){ a.x=-250; a.y=-290-Math.random()*110; } Spr.draw(c,a.x,a.y+Math.sin(t+a.ph)*14,0.9,1,{col:a.col,pat:'B',pose:'fly',ph:t+a.ph}); });
     c.setTransform(dpr,0,0,dpr,0,0);
     if(!vigC||vigC.width!==cv.width||vigC.height!==cv.height){ vigC=document.createElement('canvas'); vigC.width=cv.width; vigC.height=cv.height; var vc=vigC.getContext('2d'); vc.scale(dpr,dpr); var vg=vc.createRadialGradient(W/2,H*0.5,Math.min(W,H)*0.5,W/2,H*0.5,Math.max(W,H)*0.8); vg.addColorStop(0,'rgba(20,12,0,0)'); vg.addColorStop(1,'rgba(20,12,0,0.3)'); vc.fillStyle=vg; vc.fillRect(0,0,W,H); }
@@ -206,8 +210,11 @@ BLS.Scene = (function(){
     var w=toScreen(L.water.x,L.water.y,0); if(Math.abs(sx-w[0])<26*cam.z&&sy<w[1]+10*cam.z&&sy>w[1]-56*cam.z) return {type:'water'};
     var sk=[(0.55*U+20-cam.x)*cam.z+W/2,(3.25*D+6-30-cam.y)*cam.z+H/2]; if(Math.hypot(sx-sk[0],sy-sk[1])<62*cam.z) return {type:'sacks'};
     var ax0=(12.3*U-cam.x)*cam.z+W/2, ax1=(15.7*U-cam.x)*cam.z+W/2, ay1=(3.9*D+10-cam.y)*cam.z+H/2, ay0=ay1-185*cam.z; if(sx>=ax0&&sx<=ax1&&sy>=ay0&&sy<=ay1) return {type:'aviary'};
+    var gx=((sy-H/2)/cam.z+cam.y)/D, gy=((sx-W/2)/cam.z+cam.x)/U; if(L.walkable(gx,gy)) return {type:'ground',x:gx,y:gy};
     return null;
   }
+  function fx(kind,b){ if(kind==='spark'){ BLS.FX.burst(kind,6*U,120); return; } if(!b) return; var p=P(b.x,b.y,b.z||0); BLS.FX.burst(kind,p[0],p[1]-(kind==='heart'?46:kind==='seed'?0:8)); }
+  function watchSky(){ follow=false; cam.tx=6.2*U; cam.ty=-140; cam.tz=fitZoom()*0.72; }
   function init(canvas){
     cv=canvas; ctx=cv.getContext('2d',{alpha:false}); resize(); window.addEventListener('resize',function(){ resize(); });
     cam.z=fitZoom(); cam.x=4.2*U; cam.y=20;
@@ -224,5 +231,5 @@ BLS.Scene = (function(){
     document.addEventListener('visibilitychange',function(){ if(!document.hidden&&!running){ running=true; requestAnimationFrame(loop); } });
     requestAnimationFrame(loop);
   }
-  return { init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ pats={}; layer0=null; } };
+  return { fx:fx, watchSky:watchSky, init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ pats={}; layer0=null; } };
 })();
