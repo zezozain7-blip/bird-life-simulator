@@ -166,7 +166,7 @@ BLS.UI = (function(){
     if(tab==='feed'){
       h+=sec(T('tab_feed'), item(sackArt('#d9b46e','#8a5a14'),T('feed_sack'),T('feed_sack_d')+' '+trendTag('feed'),priceBtn('feed',Sim.feedPrice()),C.FEED_BAG+' kg')
         +item(sackArt('#8fbf5a','#2f6a1c',1),T('mix_sack'),T('mix_sack_d'),priceBtn('mix',Sim.mixPrice()),C.FEED_BAG+' kg','gold'));
-      h+='<div class="note">'+T('feedstock')+': <b dir="ltr">'+G.feed.toFixed(2)+' kg</b></div>';
+      h+='<div class="note">'+T('feedstock')+': <b dir="ltr">'+G.feed.toFixed(2)+' kg</b> <small dir="ltr">('+Math.round(G.feed*1000/38)+' '+T('bird_days')+(G.birds.length?', ~'+(G.feed*1000/38/G.birds.length).toFixed(1)+' '+T('days_left'):'')+')</small></div>';
     } else if(tab==='pigeons'){
       h+='<div class="note">'+T('loft_room')+': <b dir="ltr">'+G.birds.length+' / '+room+'</b></div>';
       h+=sec(T('quick_buy'), item(slot('br:baladi'),T('buy_bird'),T('rand_d'),priceBtn('rbird',P.bird))+item(slot('br:homer'),T('buy_pair'),T('pair_d'),priceBtn('rpair',P.pair),'×2','gold'));
@@ -290,7 +290,7 @@ BLS.UI = (function(){
     open('tree','🌳 '+T('tree'),h); body.querySelectorAll('.tn[data-id]').forEach(function(e){ e.onclick=function(){ var i=+e.getAttribute('data-id'); if(Sim.bird(i)) showBird(i); else showTree(i); }; });
   }
   function showWelcome(w){
-    var h='<div class="wel"><div><span>'+T('away')+'</span><b>'+ad(w.h)+' h</b></div><div><span>'+T('w_eggs')+'</span><b>'+ad(w.eggs)+'</b></div><div><span>'+T('w_hatch')+'</span><b>'+ad(w.hatched)+'</b></div><div><span>'+T('w_died')+'</span><b>'+ad(w.died)+'</b></div><div><span>'+T('w_grain')+'</span><b>'+ad(w.grain.toFixed(2))+' kg</b></div><div><span>'+T('w_water')+'</span><b>'+ad(Math.round(w.water))+'</b></div></div><p style="color:#c9b78d;font-size:12px">'+T('w_note')+'</p><div class="row"><button class="btn2" id="w-ok">'+T('ok')+'</button></div>';
+    var h='<div class="wel"><div><span>'+T('away')+'</span><b>'+ad(w.h)+' h</b></div><div><span>'+T('w_eggs')+'</span><b>'+ad(w.eggs)+'</b></div><div><span>'+T('w_hatch')+'</span><b>'+ad(w.hatched)+'</b></div><div><span>'+T('w_died')+'</span><b>'+ad(w.died)+'</b></div><div><span>'+T('w_grain')+'</span><b>'+ad(w.grain.toFixed(2))+' kg</b></div><div><span>'+T('w_water')+'</span><b>'+ad(Math.round(w.water))+' ml</b></div></div><p style="color:#c9b78d;font-size:12px">'+T('w_note')+'</p><div class="row"><button class="btn2" id="w-ok">'+T('ok')+'</button></div>';
     open('welcome',T('welcome'),h); var wok=$('w-ok'); var wc=function(e){ if(e&&e.preventDefault) e.preventDefault(); close(); }; wok.onclick=wc; wok.onpointerup=wc;
   }
   // ----- events
