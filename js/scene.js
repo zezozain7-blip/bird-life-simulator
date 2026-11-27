@@ -3,7 +3,7 @@
 BLS.Scene = (function(){
   var C=BLS.CFG, L=BLS.LAYOUT, Sim=BLS.Sim, Spr=BLS.Sprites;
   var U=64, ZU=64, D=22, WW=1030;
-  var vigC=null, cv, ctx, W=800, H=600, dpr=1, cam={x:400,y:30,z:0.7,tx:null,ty:null,tz:null}, sel=-1, follow=false, pats={}, bgFall=null;
+  var vigC=null, cv, ctx, W=800, H=600, dpr=1, cam={x:400,y:30,z:0.7,tx:null,ty:null,tz:null}, sel=-1, follow=false, home=null, hReady=false, pats={}, bgFall=null;
   var ambient=[]; for(var i=0;i<7;i++) ambient.push({x:-200+Math.random()*1400,y:-290-Math.random()*110,sp:30+Math.random()*30,ph:Math.random()*9,col:['W','G','G','R','G','W','G'][i]});
   var lastNow=0;
   // depth on screen: things behind the yard (loft roof area) are flattened onto the loft line
@@ -157,15 +157,16 @@ BLS.Scene = (function(){
     layerBed=bake(520,200,7.9*U,9.6*D-120,function(c){ drawBed(c); });
     bakedNests=G.nestsOpen; }
   // --- camera
-  function resize(){ dpr=Math.min(2,window.devicePixelRatio||1); W=window.innerWidth; H=window.innerHeight; cv.width=W*dpr; cv.height=H*dpr; }
+  function resize(){ var oldH=H; dpr=Math.min(2,window.devicePixelRatio||1); W=window.innerWidth; H=window.innerHeight; cv.width=W*dpr; cv.height=H*dpr; if(hReady&&oldH!==H){ var d=(H-oldH)/2/(cam.z||1); cam.y+=d; if(cam.ty!==null) cam.ty+=d; if(home) home.y+=d; } hReady=true; }
   function fitZoom(){ return Math.max(0.6,Math.min(1.6,W/410)); }
   function toScreen(wx,wy,wz){ var p=P(wx,wy,wz); return [(p[0]-cam.x)*cam.z+W/2,(p[1]-cam.y)*cam.z+H/2]; }
   function clampCam(){
     cam.z=Math.max(fitZoom()*0.7,Math.min(2.0,cam.z)); var hw=W/2/cam.z;
     cam.x=(WW<=2*hw)?WW/2:Math.max(hw,Math.min(WW-hw,cam.x)); cam.y=Math.max(-160,Math.min(200,cam.y));
   }
-  function focus(wx,wy,wz,z){ var p=P(wx,wy,wz); cam.tx=p[0]; cam.ty=p[1]+(sheetOpen()?H*0.28/cam.z:0); if(z) cam.tz=Math.min(z,1.6); }
-  function center(){ cam.tx=4.2*U; cam.ty=20; cam.tz=fitZoom(); follow=false; }
+  function focus(wx,wy,wz,z){ if(!home) home={x:cam.x,y:cam.y,z:cam.z}; var p=P(wx,wy,wz); cam.tx=p[0]; cam.ty=p[1]+(sheetOpen()?H*0.28/cam.z:0); if(z) cam.tz=Math.min(z,1.6); }
+  function restore(){ if(home){ cam.tx=home.x; cam.ty=home.y; cam.tz=home.z; home=null; } follow=false; }
+  function center(){ home=null; cam.tx=4.2*U; cam.ty=20; cam.tz=fitZoom(); follow=false; }
   function sheetOpen(){ return !document.getElementById('sheet').classList.contains('hidden'); }
   function tint(h){ var n=[100,115,175],w=[255,255,255],d=[255,196,150];
     function mix(a,b,u){ return [a[0]+(b[0]-a[0])*u|0,a[1]+(b[1]-a[1])*u|0,a[2]+(b[2]-a[2])*u|0]; }
@@ -214,7 +215,7 @@ BLS.Scene = (function(){
     return null;
   }
   function fx(kind,b){ if(kind==='spark'){ BLS.FX.burst(kind,6*U,120); return; } if(!b) return; var p=P(b.x,b.y,b.z||0); BLS.FX.burst(kind,p[0],p[1]-(kind==='heart'?46:kind==='seed'?0:8)); }
-  function watchSky(){ follow=false; cam.tx=6.2*U; cam.ty=-140; cam.tz=fitZoom()*0.72; }
+  function watchSky(){ home=null; follow=false; cam.tx=6.2*U; cam.ty=-140; cam.tz=fitZoom()*0.72; }
   function init(canvas){
     cv=canvas; ctx=cv.getContext('2d',{alpha:false}); resize(); window.addEventListener('resize',function(){ resize(); });
     cam.z=fitZoom(); cam.x=4.2*U; cam.y=20;
@@ -231,5 +232,5 @@ BLS.Scene = (function(){
     document.addEventListener('visibilitychange',function(){ if(!document.hidden&&!running){ running=true; requestAnimationFrame(loop); } });
     requestAnimationFrame(loop);
   }
-  return { fx:fx, watchSky:watchSky, init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ pats={}; layer0=null; } };
+  return { restore:restore, fx:fx, watchSky:watchSky, init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ pats={}; layer0=null; } };
 })();
