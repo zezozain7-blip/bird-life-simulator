@@ -9,11 +9,11 @@ BLS.CFG = {
   EAT_SPEED: 30,               // hunger units removed per real second while eating
   DRINK_SPEED: 40,
   GRAIN_PER_UNIT: 0.001,       // kg per hunger unit (about 38 g per bird per game day, like a real pigeon)
-  WATER_PER_UNIT: 0.06,
-  FEEDER_CAP: 0.6, FEED_BAG: 1, WATER_CAP: 100,
+  WATER_PER_UNIT: 1.0,         // ml per thirst unit: 2.4 units/h x 24 h x ~0.8 = 45 ml per bird per day (real 30-60 ml)
+  FEEDER_CAP: 1.2, FEED_BAG: 1, WATER_CAP: 1500,   // kg and ml: hopper feeds ~30 bird-days (38 g each), drinker ~33 bird-days (45 ml each)
   EGG_INCUBATION_H: 96, EGG_CANDLE_H: 22, SQUAB_H: 96, JUVENILE_H: 480,   // egg 4 d, nest 4 d, adult at 20 d
   EGG_COLD_LIMIT_H: 18,
-  NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.9, OLD_START_D: 150, LIFE_D: 260,
+  NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.9, STARVE_H: 0.7, DEHYD_H: 3, SQUAB_HZ: 0.0015, JUV_HZ: 0.00017, OLD_START_D: 150, LIFE_D: 260,
   START_COINS: 700, START_FEED: 1.6, UPKEEP_PER_BIRD: 0.4, GUARD_COST: 300, ISO_COST: 200, UP_COST:{heat:250,vent:200,nursery:350,vet:400,flight:300,cam:250}, PRED_P: 0.10, DISEASE_P: 0.05,
   OFFLINE_MAX_H: 48,
   EXTRA_FEEDER_COST:[80,120,180], EXTRA_WATER_COST:[50,80,120], EXTRA_UNIT_LV:[2,4,6],
