@@ -11,7 +11,7 @@ function notify(m){try{if(document.hidden&&window.Notification&&Notification.per
 function tick(){
   var Sim=BLS.Sim,G=Sim.G,el=$('sev'),ar=isAr();
   if(!G||!G.stats||!G.ftue||!el)return;
-  if(G.coins<30&&G.feed<1&&G.bail!==Sim.dayNum()){G.bail=Sim.dayNum();G.coins+=80;Sim.emit('toast',(ar?'🆘 مساعدة الجيران: ':'🆘 Neighbours help: ')+'+80');}
+  if(G.coins<30&&G.feed<0.2&&G.bail!==Sim.dayNum()){G.bail=Sim.dayNum();G.coins+=80;Sim.emit('toast',(ar?'🆘 مساعدة الجيران: ':'🆘 Neighbours help: ')+'+80');}
   if(G.ftue.i<7){el.style.display='none';return;}
   var c=Math.floor((Sim.dayNum()-1)/15);
   if(!G.sev||G.sev.c!==c)G.sev={c:c,b:{h:G.stats.hatched,s:G.ftue.seeds,d:G.stats.sold||0},p:[0,0,0],done:0};
