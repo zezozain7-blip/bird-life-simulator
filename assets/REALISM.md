@@ -108,3 +108,6 @@ Drawn procedurally (own code, no third-party art) for baladi, homer, roller, kin
 - Floor decals (feathers, droppings, cap 45) scale with the dirt level; seasonal colour wash and sun-following shadows are visual only.
 - Sources drawer in the hub lists sourced vs ESTIMATE numbers (kept in step with this file by hand).
 - NOT done: hop/head-bob/wing-flap micro animations beyond the existing walk bob and flight flap; feather particle pool (only the 26 fixed dust motes exist).
+
+## v0.51 (move items)
+- Feeders, drinkers and perches can be dragged in edit mode (menu, or key E). Positions are saved in G.pos (extra units keep x,y on the unit). Only layout, no real-world numbers. Minimum spacing 1.5 grid units and floor-only bounds are game design choices.
