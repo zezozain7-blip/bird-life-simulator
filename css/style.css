@@ -134,3 +134,4 @@ input.name{background:#0006;border:1px solid #6d5a34;color:#fff;border-radius:8p
 #sheet-body .row{gap:8px;align-items:stretch}
 .card .nm{overflow-wrap:anywhere}
 @media (max-width:380px),(max-height:640px){#sheet{max-height:70%}.btn2{font-size:13px;padding:8px 8px;min-width:70px}#sheet-bar{font-size:17px}}
+.item .sm b,.kv b{direction:ltr;unicode-bidi:isolate;display:inline-block}
