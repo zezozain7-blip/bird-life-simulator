@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bundle the project into one self-contained HTML file (dist/bird-life-simulator.html)."""
 import re, os
-VER='25'  # build version: bump ONLY this each build; build.py rewrites every ?v= in index.html (js and css)
+VER='26'  # build version: bump ONLY this each build; build.py rewrites every ?v= in index.html (js and css)
 root=os.path.dirname(os.path.abspath(__file__))
 h=open(os.path.join(root,'index.html'),encoding='utf8').read()
 h=re.sub(r'(src="js/[a-z0-9]+\.js)(\?v=[\w.]+)?(")', lambda m: m.group(1)+'?v='+VER+m.group(3), h)
