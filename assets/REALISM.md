@@ -89,3 +89,6 @@ ESTIMATE (no real source found; do not read as real)
 
 ## STILL not audited / not done
 Per-breed sprite redo, dedicated brooding sprite, competition behaviour states, genes, achievements, roof expansion.
+
+## v0.48 vector pigeons (js/vsprite.js)
+Drawn procedurally (own code, no third-party art) for baladi, homer, roller, king, roman, fantail, in grey/red/white, bar and chequer, plus a dedicated brooding pose. Shape references (text standards, not copied art): NPA Giant Runt standard (pigeoncote.com/standards/runt), American King Club standard (americankingclub.org), Indian Fantail Club standard (indianfantailclub.org/standards: tail upright, 3/4 to 7/8 of a circle), Birmingham roller descriptions (nbrc.us: small, apple-bodied), creatures.com/species/pigeon/racing-homer. Body proportions are ESTIMATES eyeballed from those descriptions. Other 8 breeds still use the old images; squabs keep the old drawing.
