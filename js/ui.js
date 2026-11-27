@@ -18,9 +18,9 @@ BLS.UI = (function(){
     var n=Sim.claimable(); var bd=$('h-badge'); bd.style.display=n?'flex':'none'; bd.textContent=n;
     $('b-speed').textContent='x'+G.speed;
   }
-  function open(kind,title,html,opts){ if(!cur.kind){ try{ history.pushState({bls:1},''); }catch(e){} } cur={kind:kind,args:opts||{}}; $('sheet-title').innerHTML=BLS.Icons.emo(esc(title)); body.innerHTML=BLS.Icons.emo(html); sheet.classList.remove('hidden'); body.scrollTop=0; setNav(kind); }
+  function open(kind,title,html,opts){ var hh0=document.getElementById('hint'); if(hh0){ hh0.remove(); if(Sim.G) Sim.G.seenHint=1; } if(!cur.kind){ try{ history.pushState({bls:1},''); }catch(e){} } cur={kind:kind,args:opts||{}}; $('sheet-title').innerHTML=BLS.Icons.emo(esc(title)); body.innerHTML=BLS.Icons.emo(html); sheet.classList.toggle('shop',kind==='shop'); sheet.classList.remove('hidden'); body.scrollTop=0; setNav(kind); }
   function close(fromPop){ var was=cur.kind; sheet.classList.add('hidden'); cur={kind:null}; if(was&&fromPop!==true){ try{ if(history.state&&history.state.bls) history.back(); }catch(e){} } BLS.Scene.select(-1); setNav('farm'); }
-  function setNav(k){ var m={build:'farm',tree:'birds',bird:'birds',birds:'birds',breeding:'breeding',nest:'breeding',egg:'breeding',market:'market',manage:'manage',comp:'manage',tasks:'manage',pick:'birds'}[k]||'farm'; document.querySelectorAll('#nav button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-nav')===m); }); }
+  function setNav(k){ var m={build:'farm',tree:'birds',bird:'birds',birds:'birds',breeding:'breeding',nest:'breeding',egg:'breeding',shop:'market',manage:'manage',comp:'manage',tasks:'manage',pick:'birds'}[k]||'farm'; document.querySelectorAll('#nav button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-nav')===m); }); }
   function bar(v,good){ v=Math.max(0,Math.min(100,v)); var col=good?(v>60?'#6fcf4a':v>30?'#e6c03a':'#e0553a'):(v<40?'#6fcf4a':v<70?'#e6c03a':'#e0553a'); return '<div class="bar"><i style="width:'+v+'%;background:'+col+'"></i></div>'; }
   function portrait(b,size){ var cn=document.createElement('canvas'); cn.width=size*2; cn.height=size*1.7; cn.style.width=size+'px'; cn.style.height=(size*0.85)+'px'; var c=cn.getContext('2d'); c.scale(2,2); c.fillStyle='#00000030'; c.beginPath(); c.ellipse(size*0.5,size*0.78,size*0.28,size*0.06,0,0,6.3); c.fill();
     Spr.draw(c,size*0.5,size*0.8,size/68,1,{br:Gen.breedOf(b.g),col:Gen.phenoColor(b.g),pat:Gen.phenoPattern(b.g),pose:'stand',ph:0,stage:Sim.stageOf(b)==='squab'?'squab':Sim.stageOf(b)}); return cn; }
@@ -101,37 +101,92 @@ BLS.UI = (function(){
     open('nest',T('nest')+' '+(n+1),h); body.querySelectorAll('[data-b]').forEach(function(e){ e.onclick=function(){ showBird(+e.getAttribute('data-b')); }; }); body.querySelectorAll('[data-se]').forEach(function(e){ e.onclick=function(){ Sim.sellEgg(+e.getAttribute('data-se')); showNest(n); }; });
     BLS.Scene.focus(2.4,BLS.LAYOUT.nestPos(n).y,BLS.LAYOUT.nestPos(n).z);
   }
-  function showMarket(){
-    var G=Sim.G, P=C.PRICE;
-    var h='<div class="kv"><span>🪙 '+T('coins')+'</span><span>'+G.coins+'</span></div><div class="kv"><span>🌾 '+T('feedstock')+'</span><span>'+G.feed.toFixed(1)+' kg</span></div>'
-     +'<div class="row"><button class="btn2" id="m-f">🌾 '+T('buy_feed')+' · '+Sim.feedPrice()+'</button></div><div class="row"><button class="btn2 alt" id="m-mix">🌾 '+T('buy_mix')+' · '+Sim.mixPrice()+'</button></div><div class="row"><button class="btn2" id="m-b">🕊️ '+T('buy_bird')+' · '+P.bird+'</button></div><div class="row"><button class="btn2" id="m-p">🕊️🕊️ '+T('buy_pair')+' · '+P.pair+'</button></div>'
-     +'<div class="row"><button class="btn2 alt" id="m-br">🕊️ '+T('breeds_shop')+'</button><button class="btn2 alt" id="m-av">🐣 '+T('aviary')+'</button></div>'
-     +'<p style="color:#c9b78d;font-size:12px">'+T('sell')+': '+T('my_birds')+' › '+T('sell')+'</p>';
-    h+='<h4>'+T('mk_title')+'</h4>'; [['feed','mk_feed'],['G','mk_G'],['R','mk_R'],['W','mk_W']].forEach(function(p){ var t=Sim.trend(p[0]); h+='<div class="kv"><span>'+T(p[1])+'</span><span>'+(t==='up'?'▲ ':t==='down'?'▼ ':'● ')+T('mk_'+t)+' (x'+G.mkt[p[0]].toFixed(2)+')</span></div>'; });
-    Sim.ensureOrders(); h+='<h4>'+T('orders')+'</h4>';
-    G.orders.forEach(function(o){ var cn=T({G:'grey',R:'red',W:'white'}[o.col]), pn=o.pat?' '+T(o.pat==='B'?'bar':'check'):'';
-      var ms=G.birds.filter(function(b){return Sim.orderMatch(b,o);});
-      h+='<div class="row" style="flex-wrap:wrap"><div style="flex:1 1 100%">'+esc(o.who)+': '+T('o_want',cn+pn)+' · '+T('o_pay')+' 🪙 '+o.pay+(o.minQ?' (★'+o.minQ+'+)':'')+'</div>'
-        +(ms.length?ms.slice(0,3).map(function(b){return '<button class="btn2 alt" data-o="'+o.id+'" data-ob="'+b.id+'">'+T('o_fill')+' '+esc(b.name)+'</button>';}).join(''):'<span style="color:#c9b78d;font-size:12px">'+T('o_none')+'</span>')+'</div>'; });
-    open('market',T('market'),h);
-    body.querySelectorAll('[data-o]').forEach(function(e){ e.onclick=function(){ Sim.fillOrder(+e.getAttribute('data-o'),+e.getAttribute('data-ob')); showMarket(); }; });
-    $('m-br').onclick=showBreeds; $('m-av').onclick=showAviary; $('m-mix').onclick=function(){ Sim.buyMix(); showMarket(); }; $('m-f').onclick=function(){ Sim.buyFeed(); showMarket(); }; $('m-b').onclick=function(){ Sim.buyBird(); showMarket(); }; $('m-p').onclick=function(){ Sim.buyPair(); showMarket(); };
+  // ----- shop
+  var shopTab='feed', sellArm=null;
+  var TABS=[['feed','grain'],['pigeons','birds'],['aviary','egg'],['gear','build'],['sell','coin'],['orders','tasks']];
+  function art(inner,bg){ return '<svg viewBox="0 0 80 64" class="art">'+inner+'</svg>'; }
+  function sackArt(col,mark,star){ return art('<ellipse cx="40" cy="58" rx="26" ry="4" fill="#0005"/><path d="M22 57Q14 34 27 19H53Q66 34 58 57Z" fill="'+col+'" stroke="#6b4a1e" stroke-width="2"/><path d="M27 19L24 9Q40 15 56 9L53 19Z" fill="'+col+'" stroke="#6b4a1e" stroke-width="2"/><path d="M27 20H53" stroke="#6b4a1e" stroke-width="4"/><circle cx="40" cy="39" r="11" fill="#fff4cf"/><path d="M40 48V31M40 36l-6-5M40 36l6-5M40 42l-6-5M40 42l6-5" stroke="'+mark+'" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+(star?'<path d="M62 8l3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z" fill="#ffd23f" stroke="#8a5a00"/>':'')); }
+  var GEAR_ART={
+    nest:'<ellipse cx="40" cy="46" rx="28" ry="13" fill="#b98b3e"/><ellipse cx="40" cy="43" rx="20" ry="8" fill="#6e4c1c"/><ellipse cx="34" cy="37" rx="7" ry="10" fill="#fdf8ea"/><ellipse cx="48" cy="38" rx="7" ry="10" fill="#eee5cd"/><path d="M14 46q26 16 52 0M18 52q22 10 44 0" stroke="#e8c26a" stroke-width="2" fill="none"/>',
+    perch:'<rect x="36" y="22" width="8" height="36" fill="#7a5028"/><rect x="14" y="16" width="52" height="9" rx="4" fill="#a8743f"/><rect x="24" y="56" width="32" height="5" rx="2" fill="#5b3a1c"/>',
+    heat:'<rect x="18" y="16" width="44" height="42" rx="6" fill="#8a2c20"/><path d="M26 24v26M34 24v26M42 24v26M50 24v26" stroke="#ffb03a" stroke-width="4"/><path d="M30 12q-5-5 0-9M44 12q-5-5 0-9" stroke="#ff8a3a" stroke-width="2.5" fill="none"/>',
+    vent:'<rect x="14" y="8" width="52" height="50" rx="8" fill="#cfd8de"/><circle cx="40" cy="33" r="19" fill="#43525c"/><g fill="#9fd4f2"><ellipse cx="40" cy="23" rx="6" ry="10"/><ellipse cx="49" cy="39" rx="6" ry="10" transform="rotate(120 49 39)"/><ellipse cx="31" cy="39" rx="6" ry="10" transform="rotate(240 31 39)"/></g><circle cx="40" cy="33" r="4" fill="#fff"/>',
+    nursery:'<rect x="12" y="30" width="56" height="28" rx="6" fill="#a8743f"/><path d="M10 32L40 8l30 24z" fill="#c0503a"/><ellipse cx="40" cy="45" rx="9" ry="11" fill="#fdf8ea"/><circle cx="40" cy="25" r="5" fill="#ffd77a"/>',
+    vet:'<rect x="14" y="18" width="52" height="40" rx="7" fill="#f2f5f4"/><path d="M30 18v-7h20v7" stroke="#8a9aa0" stroke-width="4" fill="none"/><path d="M35 26h10v9h9v10h-9v9H35v-9h-9V35h9z" fill="#d6332a"/>',
+    flight:'<rect x="10" y="10" width="60" height="48" rx="6" fill="#7fb9e6"/><path d="M22 10v48M34 10v48M46 10v48M58 10v48M10 26h60M10 42h60" stroke="#e8f4ff" stroke-width="1.2"/><path d="M22 38q12-16 20-2 8-14 20-6-14 2-20 16-8-10-20-8z" fill="#fff"/>',
+    cam:'<rect x="14" y="18" width="42" height="26" rx="6" fill="#d8dde2"/><circle cx="52" cy="31" r="12" fill="#22303a"/><circle cx="52" cy="31" r="6" fill="#4aa8e0"/><path d="M28 44l-6 14h18" stroke="#8a949c" stroke-width="5" fill="none"/><circle cx="22" cy="25" r="3" fill="#e33"/>',
+    iso:'<rect x="14" y="14" width="52" height="44" rx="5" fill="#35505c"/><path d="M24 14v44M34 14v44M44 14v44M54 14v44" stroke="#bcd0d8" stroke-width="2.5"/><rect x="10" y="8" width="60" height="8" rx="3" fill="#e8b84a"/>',
+    guard:'<path d="M40 6l26 9v18q-3 18-26 26Q17 51 14 33V15z" fill="#2f5d9a" stroke="#ffd36a" stroke-width="3"/><path d="M28 32l9 9 17-18" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/>'
+  };
+  function priceBtn(act,price,label){ var poor=Sim.G.coins<price; return '<button class="buy'+(poor?' poor':'')+'" data-act="'+act+'">'+(label?'<span>'+label+'</span>':'')+'<b>'+price.toLocaleString('en')+'</b><i></i></button>'; }
+  function lockBtn(lv){ return '<button class="buy lock" disabled>🔒 '+T('lv_need',lv)+'</button>'; }
+  function sellBtn(act,price){ var armed=sellArm===act; return '<button class="buy sell'+(armed?' armed':'')+'" data-act="'+act+'"><span>'+(armed?T('sure'):T('sell'))+'</span><b>'+price.toLocaleString('en')+'</b><i></i></button>'; }
+  function item(pic,name,desc,btns,ribbon,cls){ return '<div class="item '+(cls||'')+'">'+(ribbon?'<em class="rib">'+ribbon+'</em>':'')+'<div class="pic">'+pic+'</div><div class="nm">'+name+'</div>'+(desc?'<div class="sm">'+desc+'</div>':'')+'<div class="btns">'+btns+'</div></div>'; }
+  function sec(t,html){ return '<h4 class="shop-h">'+t+'</h4><div class="shelf">'+html+'</div>'; }
+  function slot(k){ return '<span class="slot" data-pic="'+k+'"></span>'; }
+  function trendTag(k){ var t=Sim.trend(k); return '<span class="trend '+t+'">'+(t==='up'?'▲':t==='down'?'▼':'●')+' '+T('mk_'+t)+'</span>'; }
+  function canvasFor(key){
+    var p=key.split(':'), G=Sim.G;
+    if(p[0]==='br'){ var B=BLS.BREEDS[p[1]]; return portrait({g:{br:p[1],c:[B.base||'G',B.base||'G'],p:['B','B']},age:999},104); }
+    if(p[0]==='bird'){ var b=Sim.bird(+p[1]); return b?portrait(b,104):null; }
+    if(p[0]==='sp'){ var s=BLS.SPECIES[p[1]], cn=document.createElement('canvas'); cn.width=180; cn.height=130; cn.style.width='90px'; cn.style.height='65px'; var c=cn.getContext('2d'); c.scale(2,2); c.fillStyle='#00000030'; c.beginPath(); c.ellipse(46,56,22,4,0,0,6.3); c.fill(); Spr.small(c,48,54,s,1.8,1); return cn; }
+    return null;
   }
-  function showBreeds(){
-    var G=Sim.G; open('market',T('breeds_shop'),'<div class="kv"><span>🪙 '+T('coins')+'</span><span>'+G.coins+'</span></div><div class="grid two" id="brg"></div>'); var g=$('brg');
-    Object.keys(BLS.BREEDS).forEach(function(k){ var B=BLS.BREEDS[k], lock=G.level<B.lv, d=document.createElement('div'); d.className='card';
-      d.appendChild(portrait({g:{br:k,c:[B.base||'G',B.base||'G'],p:['B','B']},age:999},110));
-      d.insertAdjacentHTML('beforeend','<div class="nm">'+T('br_'+k)+'</div><div class="sm">'+(lock?T('lv_need',B.lv):BLS.Icons.emo('🪙 '+Sim.breedPrice(k)))+'</div>'+(lock?'':'<div class="row"><button class="btn2 mini" data-s="M">♂ '+T('buy_m')+'</button><button class="btn2 mini" data-s="F">♀ '+T('buy_f')+'</button></div>'));
-      if(lock) d.style.opacity=0.55;
-      d.querySelectorAll('[data-s]').forEach(function(e){ e.onclick=function(){ Sim.buyBreed(k,e.getAttribute('data-s')); var y=body.scrollTop; showBreeds(); body.scrollTop=y; }; }); g.appendChild(d); });
+  function shopHtml(tab){
+    var G=Sim.G, P=C.PRICE, h='', a=Sim.aviary(), room=Math.min(C.MAX_BIRDS,Sim.popCap());
+    if(tab==='feed'){
+      h+=sec(T('tab_feed'), item(sackArt('#d9b46e','#8a5a14'),T('feed_sack'),T('feed_sack_d')+' '+trendTag('feed'),priceBtn('feed',Sim.feedPrice()),'5 kg')
+        +item(sackArt('#8fbf5a','#2f6a1c',1),T('mix_sack'),T('mix_sack_d'),priceBtn('mix',Sim.mixPrice()),'5 kg','gold'));
+      h+='<div class="note">'+T('feedstock')+': <b dir="ltr">'+G.feed.toFixed(1)+' kg</b></div>';
+    } else if(tab==='pigeons'){
+      h+='<div class="note">'+T('loft_room')+': <b dir="ltr">'+G.birds.length+' / '+room+'</b></div>';
+      h+=sec(T('quick_buy'), item(slot('br:baladi'),T('buy_bird'),T('rand_d'),priceBtn('rbird',P.bird))+item(slot('br:homer'),T('buy_pair'),T('pair_d'),priceBtn('rpair',P.pair),'×2','gold'));
+      h+=sec(T('breeds_shop'), Object.keys(BLS.BREEDS).map(function(k){ var B=BLS.BREEDS[k], lock=G.level<B.lv, p=Sim.breedPrice(k);
+        return item(slot('br:'+k),T('br_'+k),T('value_x')+' <b dir="ltr">×'+B.mul.toFixed(2)+'</b>',lock?lockBtn(B.lv):priceBtn('br:'+k+':M',p,'♂')+priceBtn('br:'+k+':F',p,'♀'),B.mul>=2?T('rare'):'',(lock?'locked ':'')+(B.mul>=2?'gold':'')); }).join(''));
+    } else if(tab==='aviary'){
+      h+='<div class="note">'+T('aviary')+': <b dir="ltr">'+Sim.avCount()+' / '+BLS.AVIARY_CAP+'</b><br>'+T('aviary_info')+'</div>';
+      h+=sec(T('tab_aviary'), Object.keys(BLS.SPECIES).map(function(k){ var s=BLS.SPECIES[k], lock=G.level<s.lv, n=a[k]||0;
+        return item(slot('sp:'+k),T('sp_'+k),T('av_own')+': '+n,lock?lockBtn(s.lv):priceBtn('av:'+k,s.price,T('pair_w')),s.price>=600?T('rare'):'',(lock?'locked ':'')+(s.price>=600?'gold':'')); }).join(''));
+    } else if(tab==='gear'){
+      function gear(id,name,desc,cost,owned){ return item(art(GEAR_ART[id]),name,desc,owned?'<button class="buy owned" disabled>✔ '+T('up_owned')+'</button>':priceBtn('gear:'+id,cost),'',owned?'done':''); }
+      var nf=G.nestsOpen>=C.NEST_COUNT, pf=G.perches.length>=BLS.LAYOUT.perchSpots.length;
+      h+=sec(T('build'), gear('nest',T('buy_nest'),'<b dir="ltr">'+G.nestsOpen+' / '+C.NEST_COUNT+'</b>',Sim.nestCost(),nf)+gear('perch',T('buy_perch'),'<b dir="ltr">'+G.perches.length+' / '+BLS.LAYOUT.perchSpots.length+'</b>',150,pf));
+      h+=sec(T('farm_up'), ['heat','vent','nursery','vet','flight','cam'].map(function(k){ var d=T('up_'+k+'_d'); if(d==='up_'+k+'_d') d=T('gd_'+k); return gear(k,T('up_'+k),d,C.UP_COST[k],G.up&&G.up[k]); }).join('')
+        +gear('iso',T('iso_name'),T('gd_iso'),C.ISO_COST,G.isoUnit)+gear('guard',T('guard_name'),T('gd_guard'),C.GUARD_COST,G.guard));
+    } else if(tab==='sell'){
+      h+='<div class="note">'+T('mk_title')+': '+T('mk_G')+' '+trendTag('G')+' '+T('mk_R')+' '+trendTag('R')+' '+T('mk_W')+' '+trendTag('W')+'</div>';
+      var bs=G.birds.slice().sort(function(x,y){return Sim.sellPrice(y)-Sim.sellPrice(x);});
+      h+=sec(T('sell_pigeons'), bs.map(function(b){ return item(slot('bird:'+b.id),(b.sex==='M'?'♂ ':'♀ ')+esc(b.name),T('br_'+Gen.breedOf(b.g))+' · '+stageTxt(b)+(b.mate>=0?' · ❤ '+T('paired_w'):''),sellBtn('sb:'+b.id,Sim.sellPrice(b)),G.comp&&G.comp.entry===b.id?T('comp'):''); }).join('')||'<p>'+T('nothing_sell')+'</p>');
+      if(G.eggs.length) h+=sec(T('sell_eggs'), G.eggs.map(function(e){ return item(art('<ellipse cx="40" cy="56" rx="18" ry="4" fill="#0005"/><ellipse cx="40" cy="33" rx="17" ry="23" fill="'+(e.dead?'#9a958a':'#fbf4e0')+'"/><ellipse cx="34" cy="24" rx="5" ry="8" fill="#fff8"/>'),T('egg')+' · '+T('nest')+' '+(e.nest+1),T('br_'+Gen.breedOf(e.g)),sellBtn('se:'+e.id,Sim.eggPrice(e))); }).join(''));
+      var own=Object.keys(a).filter(function(k){return a[k]>0;});
+      if(own.length) h+=sec(T('sell_birds'), own.map(function(k){ return item(slot('sp:'+k),T('sp_'+k),T('av_own')+': '+a[k],sellBtn('sa:'+k,Sim.avSellPrice(k)),'×'+a[k]); }).join(''));
+    } else {
+      Sim.ensureOrders(); h+='<div class="note">'+T('orders_note')+'</div>';
+      h+=G.orders.map(function(o){ var cn=T({G:'grey',R:'red',W:'white'}[o.col]), pn=o.pat?' '+T(o.pat==='B'?'bar':'check'):''; var ms=G.birds.filter(function(b){return Sim.orderMatch(b,o);});
+        return '<div class="order"><div class="o-top"><i class="dot '+o.col+'"></i><div><b>'+esc(o.who)+'</b><div class="sm">'+T('o_want',cn+pn)+(o.minQ?' (★'+o.minQ+'+)':'')+'</div></div><div class="o-pay"><b>'+o.pay+'</b><i></i></div></div>'
+          +(ms.length?'<div class="btns">'+ms.slice(0,4).map(function(b){ var act='or:'+o.id+':'+b.id, armed=sellArm===act; return '<button class="buy sell'+(armed?' armed':'')+'" data-act="'+act+'">'+(armed?T('sure')+' ':T('o_fill')+' ')+esc(b.name)+' · '+T('br_'+Gen.breedOf(b.g))+'</button>'; }).join('')+'</div>':'<div class="sm">'+T('o_none')+'</div>')+'</div>'; }).join('')||'<p>'+T('orders_empty')+'</p>';
+    }
+    return h;
   }
-  function showAviary(){
-    var G=Sim.G, a=Sim.aviary(); open('market',T('aviary')+' ('+Sim.avCount()+'/'+BLS.AVIARY_CAP+')','<p style="color:#c9b78d;font-size:12px">'+T('aviary_info')+'</p><div class="kv"><span>🪙 '+T('coins')+'</span><span>'+G.coins+'</span></div><div class="grid two" id="avg"></div>'); var g=$('avg');
-    Object.keys(BLS.SPECIES).forEach(function(k){ var s=BLS.SPECIES[k], lock=G.level<s.lv, n=a[k]||0, d=document.createElement('div'); d.className='card';
-      var cn=document.createElement('canvas'); cn.width=160; cn.height=120; cn.style.width='80px'; cn.style.height='60px'; var c=cn.getContext('2d'); c.scale(2,2); Spr.small(c,40,46,s,1.6,1); d.appendChild(cn);
-      d.insertAdjacentHTML('beforeend','<div class="nm">'+T('sp_'+k)+'</div><div class="sm">'+T('av_own')+': '+n+(lock?' · '+T('lv_need',s.lv):'')+'</div>'+(lock?'':'<div class="row"><button class="btn2 mini" data-a="b">'+T('buy_apair')+' '+s.price+'</button></div>')+(n?'<div class="row"><button class="btn2 mini alt" data-a="s">'+T('av_sell')+' +'+Sim.avSellPrice(k)+'</button></div>':''));
-      if(lock&&!n) d.style.opacity=0.55;
-      d.querySelectorAll('[data-a]').forEach(function(e){ e.onclick=function(){ if(e.getAttribute('data-a')==='b') Sim.avBuy(k); else Sim.avSell(k); var y=body.scrollTop; showAviary(); body.scrollTop=y; }; }); g.appendChild(d); });
+  function shopAct(act){
+    var p=act.split(':'), G=Sim.G;
+    // selling needs a second tap
+    if(/^(sb|se|sa|or)$/.test(p[0])&&sellArm!==act){ sellArm=act; return showShop(shopTab); }
+    sellArm=null;
+    if(p[0]==='feed') Sim.buyFeed(); else if(p[0]==='mix') Sim.buyMix(); else if(p[0]==='rbird') Sim.buyBird(); else if(p[0]==='rpair') Sim.buyPair();
+    else if(p[0]==='br') Sim.buyBreed(p[1],p[2]); else if(p[0]==='av') Sim.avBuy(p[1]);
+    else if(p[0]==='gear'){ var g=p[1]; if(g==='nest') Sim.buyNest(); else if(g==='perch') Sim.buyPerch(); else if(g==='iso') Sim.buyIso(); else if(g==='guard') Sim.buyGuard(); else Sim.buyUp(g); }
+    else if(p[0]==='sb'){ var b=Sim.bird(+p[1]); if(b) Sim.sell(b); } else if(p[0]==='se') Sim.sellEgg(+p[1]); else if(p[0]==='sa') Sim.avSell(p[1]); else if(p[0]==='or') Sim.fillOrder(+p[1],+p[2]);
+    hud(); showShop(shopTab);
+  }
+  function showShop(tab){
+    tab=tab||shopTab; var same=cur.kind==='shop'&&shopTab===tab, y=same?body.scrollTop:0; if(!same) sellArm=null; shopTab=tab;
+    var tabs=TABS.map(function(t){ return '<button class="tab'+(t[0]===tab?' on':'')+'" data-tab="'+t[0]+'"><span data-ic="'+t[1]+'" data-sz="22"></span><small>'+T('tab_'+t[0])+'</small></button>'; }).join('');
+    open('shop',T('market'),'<div class="shop-top"><div class="wallet"><i></i><b dir="ltr">'+Sim.G.coins.toLocaleString('en')+'</b></div><div class="tabs">'+tabs+'</div></div>'+shopHtml(tab));
+    BLS.Icons.fill(body); body.scrollTop=y;
+    body.querySelectorAll('[data-pic]').forEach(function(e){ var cn=canvasFor(e.getAttribute('data-pic')); if(cn) e.appendChild(cn); });
+    body.querySelectorAll('[data-tab]').forEach(function(e){ e.onclick=function(){ showShop(e.getAttribute('data-tab')); }; });
+    body.querySelectorAll('[data-act]').forEach(function(e){ e.onclick=function(){ shopAct(e.getAttribute('data-act')); }; });
   }
   function showComp(){
     var G=Sim.G; Sim.ensureComp(); var K=G.comp, left=Math.max(0,Math.ceil(K.nextShow-G.t)), me=Sim.bird(K.entry);
@@ -214,8 +269,8 @@ BLS.UI = (function(){
     else if(hit.type==='nest') { if(hit.n>=Sim.G.nestsOpen) showBuild(); else showNest(hit.n); }
     else if(hit.type==='feeder') Sim.refillFeeder();
     else if(hit.type==='water') Sim.refillWater();
-    else if(hit.type==='sacks') showMarket();
-    else if(hit.type==='aviary') showAviary();
+    else if(hit.type==='sacks') showShop('feed');
+    else if(hit.type==='aviary') showShop('aviary');
   }
   function welcomeBack(){ var w=Sim.G.welcome; if(!w) return; delete Sim.G.welcome; if(w.h<4&&!w.eggs&&!w.hatched&&!w.died) return; var hh=document.getElementById('hint'); if(hh){ hh.remove(); Sim.G.seenHint=1; } showWelcome(w); }
   function init(){
@@ -223,8 +278,8 @@ BLS.UI = (function(){
     var G0=Sim.G; if(!G0.seenHint){ var hn=document.createElement('div'); hn.id='hint'; hn.innerHTML='<b>🕊️</b> '+T('tap_hint')+'<br><small>'+T('hatch_tip')+'</small>'; hn.onclick=function(){ hn.remove(); G0.seenHint=1; }; document.body.appendChild(hn); }
     Sim.on('toast',toast);
     Sim.on('event',function(m,go,id){ lastEvent={go:go,id:id}; var t=$('ticker'); $('tick-txt').innerHTML=BLS.Icons.emo(esc(m)); t.style.display='flex'; clearTimeout(t._h); t._h=setTimeout(function(){t.style.display='none';},9000); toast(m); });
-    $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='comp') showComp(); else if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); else if(lastEvent&&lastEvent.go==='market') showMarket(); else if(lastEvent&&lastEvent.go==='manage') showManage(); else if(lastEvent&&lastEvent.go==='aviary') showAviary(); else if(lastEvent&&lastEvent.go==='farm') close(); };
-    document.querySelectorAll('#nav button').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-nav'); if(k==='farm') close(); else if(k==='birds') showBirds(); else if(k==='breeding') showBreeding(); else if(k==='market') showMarket(); else showManage(); }; });
+    $('ticker').onclick=function(){ $('ticker').style.display='none'; if(lastEvent&&lastEvent.go==='comp') showComp(); else if(lastEvent&&lastEvent.go==='breeding') showBreeding(); else if(lastEvent&&lastEvent.id) showBird(lastEvent.id); else if(lastEvent&&lastEvent.go==='birds') showBirds(); else if(lastEvent&&lastEvent.go==='market') showShop('feed'); else if(lastEvent&&lastEvent.go==='manage') showManage(); else if(lastEvent&&lastEvent.go==='aviary') showShop('aviary'); else if(lastEvent&&lastEvent.go==='farm') close(); };
+    document.querySelectorAll('#nav button').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-nav'); if(k==='farm') close(); else if(k==='birds') showBirds(); else if(k==='breeding') showBreeding(); else if(k==='market') showShop(); else showManage(); }; });
     $('b-zin').onclick=function(){ BLS.Scene.cam.z*=1.25; }; $('b-zout').onclick=function(){ BLS.Scene.cam.z/=1.25; };
     $('b-center').onclick=function(){ BLS.Scene.center(); };
     $('b-tasks').onclick=showTasks;
@@ -236,5 +291,5 @@ BLS.UI = (function(){
     $('b-lang').onclick=function(){ var G=Sim.G; G.lang=G.lang==='ar'?'en':'ar'; applyLang(); if(cur.kind) close(); hud(); };
     BLS.Icons.fill(document); applyLang(); hud(); welcomeBack(); setInterval(hud,250);
   }
-  return {welcomeBack:welcomeBack,showAviary:showAviary,init:init,applyLang:applyLang,onPick:onPick,toast:toast,hud:hud,showBird:showBird,showBreeding:showBreeding,close:close,showNest:showNest,showTree:showTree,showBuild:showBuild};
+  return {welcomeBack:welcomeBack,showShop:showShop,init:init,applyLang:applyLang,onPick:onPick,toast:toast,hud:hud,showBird:showBird,showBreeding:showBreeding,close:close,showNest:showNest,showTree:showTree,showBuild:showBuild};
 })();
