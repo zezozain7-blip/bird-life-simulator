@@ -152,7 +152,7 @@ BLS.UI = (function(){
       h+='<div class="note">'+T('loft_room')+': <b dir="ltr">'+G.birds.length+' / '+room+'</b></div>';
       h+=sec(T('quick_buy'), item(slot('br:baladi'),T('buy_bird'),T('rand_d'),priceBtn('rbird',P.bird))+item(slot('br:homer'),T('buy_pair'),T('pair_d'),priceBtn('rpair',P.pair),'×2','gold'));
       h+=sec(T('breeds_shop'), Object.keys(BLS.BREEDS).map(function(k){ var B=BLS.BREEDS[k], lock=G.level<B.lv, p=Sim.breedPrice(k);
-        return item(slot('br:'+k),T('br_'+k),T('value_x')+' <b dir="ltr">×'+B.mul.toFixed(2)+'</b>',lock?lockBtn(B.lv):priceBtn('br:'+k+':M',p,'♂')+priceBtn('br:'+k+':F',p,'♀'),B.mul>=2?T('rare'):'',(lock?'locked ':'')+(B.mul>=2?'gold':'')); }).join(''));
+        return item(slot('br:'+k),T('br_'+k),T('rar'+BLS.rarityOf(k))+' · '+T('pair_mkt')+' <b dir="ltr">'+B.pp+' EGP</b>',lock?lockBtn(B.lv):priceBtn('br:'+k+':M',p,'♂')+priceBtn('br:'+k+':F',p,'♀'),BLS.rarityOf(k)>=2?T('rare'):'',(lock?'locked ':'')+(BLS.rarityOf(k)>=2?'gold':'')); }).join(''));
     } else if(tab==='aviary'){
       h+='<div class="note">'+T('aviary')+': <b dir="ltr">'+Sim.avCount()+' / '+BLS.AVIARY_CAP+'</b><br>'+T('aviary_info')+'</div>';
       h+=sec(T('tab_aviary'), Object.keys(BLS.SPECIES).map(function(k){ var s=BLS.SPECIES[k], lock=G.level<s.lv, n=a[k]||0;
