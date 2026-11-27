@@ -6,7 +6,7 @@ BLS.Art = (function(){
     spr:['grey_stand','grey_peck','grey_fly','red_stand','red_peck','red_fly','white_stand','white_peck','white_fly'],
     tex:['floor','wood','roof','brick'], shp:[]
   };
-  var img={}, tex={}, pending=0, onReady=null, cfg=BLS.ASSET_CFG||{};
+  var img={}, tex={}, gem={}, pending=0, onReady=null, cfg=BLS.ASSET_CFG||{};
   function load(key,src,store){
     pending++; var im=new Image(); im.onload=function(){ store[key]=im; done(); }; im.onerror=function(){ done(); }; im.src=src;
   }
@@ -17,8 +17,9 @@ BLS.Art = (function(){
     (BLS.SHAPE_NAMES||[]).forEach(function(sn){ ['grey','red','white'].forEach(function(c){ ['stand','peck','fly'].forEach(function(p){ var n=sn+'_'+c+'_'+p; load(n,D['sprites/'+n]||('assets/sprites/'+n+'.png'),img); }); }); });
     ['town','town0','town1','town2','town3'].forEach(function(n){ load(n,D['bg/'+n]||('assets/bg/'+n+'.jpg'),tex); });
     NAMES.tex.forEach(function(n){ load(n,D['textures/'+n]||('assets/textures/'+n+'.jpg'),tex); });
+    (BLS.GEM_NAMES||[]).forEach(function(n){ load(n,D['gem/'+n]||('assets/gem/'+n+'.webp'),gem); });
     if(pending===0&&cb) cb();
   }
   function sprite(col,pose,shape){ if(shape){ var sk=shape+'_'+(col==='G'?'grey':col==='R'?'red':'white')+'_'+pose; if(img[sk]) return img[sk]; } var k=(col==='G'?'grey':col==='R'?'red':'white')+'_'+pose; return img[k]||null; }
-  return {init:init,sprite:sprite,tex:function(n){return tex[n]||null;},count:function(){return Object.keys(img).length+Object.keys(tex).length;},cfg:cfg};
+  return {init:init,sprite:sprite,tex:function(n){return tex[n]||null;},gem:function(n){return gem[n]||null;},count:function(){return Object.keys(img).length+Object.keys(tex).length;},cfg:cfg};
 })();
