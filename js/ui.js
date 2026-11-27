@@ -279,7 +279,7 @@ BLS.UI = (function(){
   function welcomeBack(){ var w=Sim.G.welcome; if(!w) return; delete Sim.G.welcome; if(w.h<4&&!w.eggs&&!w.hatched&&!w.died) return; var hh=document.getElementById('hint'); if(hh){ hh.remove(); Sim.G.seenHint=1; } showWelcome(w); }
   function init(){
     sheet=$('sheet'); body=$('sheet-body'); $('sheet-x').onclick=function(){ close(); }; window.addEventListener('popstate',function(){ if(cur.kind) close(true); });
-    var G0=Sim.G; if(!G0.seenHint){ var hn=document.createElement('div'); hn.id='hint'; hn.innerHTML='<b>🕊️</b> '+T('tap_hint')+'<br><small>'+T('hatch_tip')+'</small>'; hn.onclick=function(){ hn.remove(); G0.seenHint=1; }; document.body.appendChild(hn); }
+    var G0=Sim.G; if(!G0.seenHint){ var hn=document.createElement('div'); hn.id='hint'; hn.innerHTML='<b>🕊️</b> '+T('tap_hint')+'<br><small>'+T('hatch_tip')+'</small>'; hn.onclick=function(){ hn.remove(); G0.seenHint=1; }; document.body.appendChild(hn); setTimeout(function(){ if(hn.parentNode){ hn.remove(); G0.seenHint=1; } },14000); }
     Sim.on('toast',toast);
     Sim.on('fx',BLS.Scene.fx);
     Sim.on('levelup',function(lv,gift){ var lines=['+'+gift+' '+T('coins')];
