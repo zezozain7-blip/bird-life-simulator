@@ -30,6 +30,7 @@ BLS.Sprites = (function(){
     var squab = stage==='squab';
     var B=(BLS.BREEDS&&BLS.BREEDS[o.br])||null;
     if(B) c.scale(B.sc,B.sc);
+    if(!squab&&BLS.Gem&&BLS.Gem.has(o.br,o.col,o.pat,stage)&&BLS.Gem.draw(c,o,{pose:o.pose,ph:ph})){ c.restore(); return; }
     if(!squab&&BLS.VS&&BLS.VS.has(o.br)){ BLS.VS.draw(c,o,{pose:o.pose||'stand',ph:ph}); c.restore(); return; }
     var SHP=(o.br&&BLS.BREED_SHAPE&&BLS.BREED_SHAPE[o.br])||null;
     var im=(stage!=='squab')&&BLS.Art&&BLS.Art.sprite((B&&B.base)||o.col,fly?'fly':(peck?'peck':'stand'),SHP);
