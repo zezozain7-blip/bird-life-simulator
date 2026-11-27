@@ -16,7 +16,11 @@ BLS.BREEDS = {
   jacobin: {ar:'يعقوبي',  en:'Jacobin',         sc:1.00, mul:2.20, lv:5, f:['ruff']},
   roman:   {ar:'روماني',  en:'Roman runt',      sc:1.08, mul:2.40, lv:6, f:['wattle']}
 };
-BLS.BREED_PRICE = 300;   // x mul
+BLS.BREED_PRICE = 300;   // unused since v0.37 (each breed has pp)
+// real Egyptian market price of a PAIR in EGP (June-Nov 2026): baladi, king, roman, fantail, homer squabs come from published lists; the others are estimates
+(function(){ var PP={baladi:190,homer:630,roller:300,swallow:320,nun:350,helmet:350,king:520,fantail:260,magpie:320,maltese:400,pouter:450,trumpet:900,jacobin:1000,roman:525};
+  Object.keys(PP).forEach(function(k){ if(BLS.BREEDS[k]) BLS.BREEDS[k].pp=PP[k]; });
+  BLS.rarityOf=function(k){ var p=(BLS.BREEDS[k]||{}).pp||0; return p<=200?0:p<=350?1:p<=650?2:3; }; })();
 // Aviary birds. body / head / wing colours, len = tail length, crest flag. price = one pair.
 BLS.SPECIES = {
   zebra:    {ar:'فنش زيبرا',   en:'Zebra finch',    price:120, lv:1, body:'#d8d5cf', head:'#8d9097', wing:'#8a7a6a', beak:'#f0602a', len:7},
@@ -47,3 +51,5 @@ BLS.AVIARY_CAP = 24; BLS.AVIARY_UPKEEP = 1; BLS.AVIARY_BREED_P = 0.25; BLS.AVIAR
   for(var b in BLS.BREEDS){ BLS.TXT.en['br_'+b]=BLS.BREEDS[b].en; BLS.TXT.ar['br_'+b]=BLS.BREEDS[b].ar; }
   for(var s in BLS.SPECIES){ BLS.TXT.en['sp_'+s]=BLS.SPECIES[s].en; BLS.TXT.ar['sp_'+s]=BLS.SPECIES[s].ar; }
 })();
+
+BLS.TXT=BLS.TXT||{en:{},ar:{}}; (function(){ var e=BLS.TXT.en, a=BLS.TXT.ar; e.rar0='Common';e.rar1='Uncommon';e.rar2='Rare';e.rar3='Very rare';e.pair_mkt='Market price of a pair'; a.rar0='شائع';a.rar1='غير شائع';a.rar2='نادر';a.rar3='نادر جداً';a.pair_mkt='سعر الزوج في السوق'; })();
