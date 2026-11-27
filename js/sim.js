@@ -358,7 +358,14 @@ BLS.Sim = (function(){
     else if(e.k==='injured'&&opt===1){ if(G.coins<e.cost) return emit('toast',T('need_coins')); G.coins-=e.cost; if(b){ b.health=Math.min(100,b.health+40); } emit('toast',T('healed',e.name)); }
     G.pend.splice(G.pend.indexOf(e),1); return true;
   }
+  var CKEYS=['G-B','G-C','R-B','R-C','W-B','W-C'], CREW={'G-B':80,'G-C':80,'R-B':150,'R-C':150,'W-B':300,'W-C':300};
+  var CTRAIT=[{k:'t_size',f:function(g){return g.size>=90;},r:200},{k:'t_vit',f:function(g){return g.vit>=90;},r:200},{k:'t_fert',f:function(g){return g.fert>=90;},r:200},{k:'t_champ',f:function(g){return (g.size+g.vit+g.fert)/3>=85;},r:500}];
+  function scanColl(){ var C0=G.coll=G.coll||{}; G.birds.forEach(function(b){ var k=Gen.phenoColor(b.g)+'-'+Gen.phenoPattern(b.g); if(!C0[k]) C0[k]={got:0}; CTRAIT.forEach(function(t){ if(t.f(b.g)&&!C0[t.k]) C0[t.k]={got:0}; }); }); }
+  function claimColl(k){ scanColl(); var e=G.coll[k]; if(!e||e.got) return false; var r=CREW[k]||(CTRAIT.filter(function(t){return t.k===k;})[0]||{}).r; if(!r) return false; e.got=1; G.coins+=r; addXp(60); emit('toast','🪙 +'+r); emit('sfx','coin'); return true; }
+  function collList(){ scanColl(); var o=[]; CKEYS.forEach(function(k){ o.push({k:k,type:'breed',have:!!G.coll[k],got:G.coll[k]&&G.coll[k].got,r:CREW[k]}); }); CTRAIT.forEach(function(t){ o.push({k:t.k,type:'trait',have:!!G.coll[t.k],got:G.coll[t.k]&&G.coll[t.k].got,r:t.r}); }); return o; }
+  function collBadge(){ return collList().filter(function(x){return x.have&&!x.got;}).length; }
   function dailyEvents(protect){
+    scanColl();
     dailyMarket(); if(!protect) rollEvent();
     rollWeather(); if(G.weather==='rain') G.dirt=Math.min(100,(G.dirt||0)+4);
     var n=G.birds.length; G.dirt=Math.min(100,(G.dirt||0)+3+n*1.4);
@@ -442,7 +449,7 @@ BLS.Sim = (function(){
     {id:'nests6',k:'t_nests',r:700,ok:function(){return G.nestsOpen>=6;}},
     {id:'win',k:'t_win',r:1000,ok:function(){return G.comp&&G.comp.wins>=1;}},
     {id:'rich',k:'t_rich',r:800,ok:function(){return G.coins>=3000;}}];
-  function claimable(){ return TASKS.filter(function(t){return !G.tasks[t.id]&&t.ok();}).length+questBadge()+((G.pend||[]).length); }
+  function claimable(){ return TASKS.filter(function(t){return !G.tasks[t.id]&&t.ok();}).length+questBadge()+((G.pend||[]).length)+collBadge(); }
   function claim(id){ TASKS.forEach(function(t){ if(t.id===id&&!G.tasks[id]&&t.ok()){ G.tasks[id]=1; G.coins+=t.r; addXp(20); emit('toast','🪙 +'+t.r); } }); }
   // ---------- save / load
   function save(){
@@ -463,7 +470,7 @@ BLS.Sim = (function(){
     if(away>=1){ var s0={eggs:G.stats.eggs||0,hat:G.stats.hatched,died:G.stats.died,grain:G.feeder.grain,water:G.water.amt,birds:G.birds.length}; skip(Math.floor(away)); G.savedAt=Date.now(); G.welcome={h:Math.floor(away),eggs:(G.stats.eggs||0)-s0.eggs,hatched:G.stats.hatched-s0.hat,died:G.stats.died-s0.died,grain:Math.max(0,s0.grain-G.feeder.grain),water:Math.max(0,s0.water-G.water.amt),birds:G.birds.length-s0.birds}; }
     return true;
   }
-  return { rollEvent:rollEvent, feedPrice:feedPrice, trend:trend, resolveEvent:resolveEvent, season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
+  return { collList:collList, claimColl:claimColl, rollEvent:rollEvent, feedPrice:feedPrice, trend:trend, resolveEvent:resolveEvent, season:season, buyUp:buyUp, buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
     bird:bird, related:related, canPair:canPair, pairUp:pairUp, unpair:unpair, nestContents:nestContents, popCap:popCap, ensureQuests:ensureQuests, qProg:qProg, claimQuest:claimQuest, claimLogin:claimLogin, loginReady:loginReady, LOGIN:LOGIN, sell:sell, ensureComp:ensureComp, birdScore:birdScore, enterShow:enterShow, withdrawShow:withdrawShow, ensureOrders:ensureOrders, orderMatch:orderMatch, fillOrder:fillOrder, sellPrice:sellPrice,
     cleanLoft:cleanLoft, buyGuard:buyGuard, buyFeed:buyFeed, buyBird:buyBird, buyPair:buyPair, refillFeeder:refillFeeder, refillWater:refillWater, feedBird:feedBird, waterBird:waterBird, healBird:healBird,
     weightOf:weightOf, TASKS:TASKS, buyNest:buyNest, nestCost:nestCost, buyPerch:buyPerch, childrenOf:childrenOf, claimable:claimable, claim:claim, skip:skip, freeNest:freeNest, covered:covered, isNight:isNight, addXp:addXp };
