@@ -3,7 +3,7 @@
 BLS.Scene = (function(){
   var C=BLS.CFG, L=BLS.LAYOUT, Sim=BLS.Sim, Spr=BLS.Sprites;
   var U=64, ZU=64, D=22, WW=1030;
-  var cv, ctx, W=800, H=600, dpr=1, cam={x:400,y:30,z:0.7,tx:null,ty:null,tz:null}, sel=-1, follow=false, pats={}, bgFall=null;
+  var vigC=null, cv, ctx, W=800, H=600, dpr=1, cam={x:400,y:30,z:0.7,tx:null,ty:null,tz:null}, sel=-1, follow=false, pats={}, bgFall=null;
   var ambient=[]; for(var i=0;i<7;i++) ambient.push({x:-200+Math.random()*1400,y:-290-Math.random()*110,sp:30+Math.random()*30,ph:Math.random()*9,col:['W','G','G','R','G','W','G'][i]});
   var aviary=[]; for(var k=0;k<12;k++) aviary.push({u:Math.random(),v:Math.random(),c:['#f2d21e','#6cc04a','#e8892b','#4aa8e0','#f2d21e'][k%5],ph:Math.random()*9});
   // depth on screen: things behind the yard (loft roof area) are flattened onto the loft line
@@ -57,9 +57,11 @@ BLS.Scene = (function(){
     c.strokeStyle='rgba(120,135,145,0.55)'; c.lineWidth=1; for(var gx=x0;gx<=x1;gx+=14){ c.beginPath(); c.moveTo(gx,yt); c.lineTo(gx,yb); c.stroke(); } for(var gy=yt;gy<=yb;gy+=14){ c.beginPath(); c.moveTo(x0,gy); c.lineTo(x1,gy); c.stroke(); }
     // perches + budgies inside
     c.strokeStyle='#7a5530'; c.lineWidth=4; [[0.7],[0.4]].forEach(function(p){ c.beginPath(); c.moveTo(x0+8,yt+(yb-yt)*p[0]); c.lineTo(x1-8,yt+(yb-yt)*p[0]); c.stroke(); });
-    aviary.forEach(function(a){ var px=x0+14+a.u*(w-28), py=yt+30+Math.floor(a.v*3)*38+Math.sin(t*2+a.ph)*2; c.fillStyle=a.c; c.beginPath(); c.ellipse(px,py,5,7,0.2,0,6.3); c.fill(); c.beginPath(); c.arc(px+3,py-8,3.4,0,6.3); c.fill(); c.fillStyle='#222'; c.fillRect(px+4,py-9,1.5,1.5); });
     c.strokeStyle='#4d5560'; c.lineWidth=5; c.strokeRect(x0,yt,w,yb-yt); c.fillStyle='#4d5560'; c.fillRect(x0-4,yt-8,w+8,8);
     c.fillStyle='rgba(255,255,255,0.08)'; c.fillRect(x0,yt,w,yb-yt);
+  }
+  function drawBudgies(c,t){ var x0=12.3*U, x1=15.7*U, yb=3.9*D+10, yt=yb-150, w=x1-x0;
+    aviary.forEach(function(a){ var px=x0+14+a.u*(w-28), py=yt+30+Math.floor(a.v*3)*38+Math.sin(t*2+a.ph)*2; c.fillStyle=a.c; c.beginPath(); c.ellipse(px,py,5,7,0.2,0,6.3); c.fill(); c.beginPath(); c.arc(px+3,py-8,3.4,0,6.3); c.fill(); c.fillStyle='#222'; c.fillRect(px+4,py-9,1.5,1.5); });
   }
   function drawSacks(c){ var b=3.25*D+6, base=0.55*U; [[base,0,1],[base+52,2,0.9],[base+24,-30,0.85]].forEach(function(s){ var x=s[0], y=b+s[1], k=s[2]; shadow(c,x,y+2,34*k,8*k,0.25);
       var g=c.createLinearGradient(x-30*k,0,x+30*k,0); g.addColorStop(0,'#c9a56a'); g.addColorStop(0.5,'#ead3a0'); g.addColorStop(1,'#b08a50'); c.fillStyle=g; c.beginPath(); c.moveTo(x-28*k,y); c.quadraticCurveTo(x-36*k,y-40*k,x-18*k,y-64*k); c.lineTo(x+18*k,y-64*k); c.quadraticCurveTo(x+36*k,y-40*k,x+28*k,y); c.closePath(); c.fill();
@@ -112,6 +114,13 @@ BLS.Scene = (function(){
     var fy=12.4*D; var gg=c.createLinearGradient(0,fy,0,fy+300); gg.addColorStop(0,'#78c04a'); gg.addColorStop(1,'#4f9a3a'); c.fillStyle=gg; c.beginPath(); c.moveTo(-700,fy+8); for(var x=-700;x<=1800;x+=40) c.lineTo(x,fy+Math.sin(x*0.05)*6); c.lineTo(1800,fy+700); c.lineTo(-700,fy+700); c.closePath(); c.fill();
     for(var i=0;i<46;i++){ var px=-100+R()*1250, py=fy+14+R()*70; c.fillStyle=['#ff6f91','#ffd23f','#ffffff','#8fd4ff'][i%4]; c.beginPath(); c.arc(px,py,3.5,0,6.3); c.fill(); }
   }
+  // --- cached static layers (the expensive scenery is painted once, not every frame)
+  var BK={x:-300,y:-340,w:1630,h:1240}, S=1.25, layer0=null, layerBed=null, bakedNests=-1;
+  function bake(w,h,ox,oy,fn){ var cn=document.createElement('canvas'); cn.width=Math.ceil(w*S); cn.height=Math.ceil(h*S); var c=cn.getContext('2d'); c.setTransform(S,0,0,S,-ox*S,-oy*S); fn(c); return cn; }
+  function buildLayers(G){
+    layer0=bake(BK.w,BK.h,BK.x,BK.y,function(c){ drawGround(c); drawPot(c,0.3*U,3.0*D+10,22,3); drawPot(c,7.2*U,3.1*D+10,20,4); drawLoft(c,G); drawTank(c); drawAviary(c,0); drawSacks(c); });
+    layerBed=bake(520,200,7.9*U,9.6*D-120,function(c){ drawBed(c); });
+    bakedNests=G.nestsOpen; }
   // --- camera
   function resize(){ dpr=Math.min(2,window.devicePixelRatio||1); W=window.innerWidth; H=window.innerHeight; cv.width=W*dpr; cv.height=H*dpr; }
   function fitZoom(){ return Math.max(0.6,Math.min(1.6,W/410)); }
@@ -136,18 +145,19 @@ BLS.Scene = (function(){
     drawBackdrop(c);
     c.setTransform(cam.z*dpr,0,0,cam.z*dpr,(W/2-cam.x*cam.z)*dpr,(H/2-cam.y*cam.z)*dpr);
     var t=now/1000;
-    drawGround(c); drawPot(c,0.3*U,3.0*D+10,22,3); drawPot(c,7.2*U,3.1*D+10,20,4);
-    drawLoft(c,G); drawTank(c); drawAviary(c,t); drawSacks(c);
+    if(!layer0||bakedNests!==G.nestsOpen) buildLayers(G);
+    c.drawImage(layer0,BK.x,BK.y,BK.w,BK.h); drawBudgies(c,t);
     var cnt={}; G.eggs.forEach(function(e){ cnt[e.nest]=(cnt[e.nest]||0)+1; drawEgg(c,e,cnt[e.nest]-1); });
     var items=[];
-    items.push({k:L.feeder.x,f:function(){ drawFeeder(c,G); }}); items.push({k:L.water.x,f:function(){ drawWater(c,G); }}); items.push({k:9.4,f:function(){ drawBed(c); }});
+    items.push({k:L.feeder.x,f:function(){ drawFeeder(c,G); }}); items.push({k:L.water.x,f:function(){ drawWater(c,G); }}); items.push({k:9.4,f:function(){ c.drawImage(layerBed,7.9*U,9.6*D-120,520,200); }});
     G.perches.forEach(function(pi){ var sp=L.perchSpots[pi]; items.push({k:sp[0]-0.1,f:function(){ drawPerch(c,sp); }}); });
     G.birds.forEach(function(b){ if(b.st!=='fly') items.push({k:(b.st==='sit'||b.st==='squabnest')?2.3:(b.x<3.2&&b.z>0.3?2.4:b.x),f:function(){ drawBirdW(c,b); }}); });
     items.sort(function(a,b){return a.k-b.k;}); items.forEach(function(i){ i.f(); });
     G.birds.forEach(function(b){ if(b.st==='fly') drawBirdW(c,b); });
     ambient.forEach(function(a){ a.x+=a.sp*0.016; if(a.x>1300){ a.x=-250; a.y=-290-Math.random()*110; } Spr.draw(c,a.x,a.y+Math.sin(t+a.ph)*14,0.9,1,{col:a.col,pat:'B',pose:'fly',ph:t+a.ph}); });
     c.setTransform(dpr,0,0,dpr,0,0);
-    var vg=c.createRadialGradient(W/2,H*0.5,Math.min(W,H)*0.5,W/2,H*0.5,Math.max(W,H)*0.8); vg.addColorStop(0,'rgba(20,12,0,0)'); vg.addColorStop(1,'rgba(20,12,0,0.3)'); c.fillStyle=vg; c.fillRect(0,0,W,H);
+    if(!vigC||vigC.width!==cv.width||vigC.height!==cv.height){ vigC=document.createElement('canvas'); vigC.width=cv.width; vigC.height=cv.height; var vc=vigC.getContext('2d'); vc.scale(dpr,dpr); var vg=vc.createRadialGradient(W/2,H*0.5,Math.min(W,H)*0.5,W/2,H*0.5,Math.max(W,H)*0.8); vg.addColorStop(0,'rgba(20,12,0,0)'); vg.addColorStop(1,'rgba(20,12,0,0.3)'); vc.fillStyle=vg; vc.fillRect(0,0,W,H); }
+    c.drawImage(vigC,0,0,W,H);
     var h=Sim.hourOfDay(), tc=tint(h); if(tc!=='rgb(255,255,255)'){ c.globalCompositeOperation='multiply'; c.fillStyle=tc; c.fillRect(0,0,W,H); c.globalCompositeOperation='source-over'; }
   }
   // --- picking
@@ -162,7 +172,7 @@ BLS.Scene = (function(){
     return null;
   }
   function init(canvas){
-    cv=canvas; ctx=cv.getContext('2d'); resize(); window.addEventListener('resize',function(){ resize(); });
+    cv=canvas; ctx=cv.getContext('2d',{alpha:false}); resize(); window.addEventListener('resize',function(){ resize(); });
     cam.z=fitZoom(); cam.x=4.2*U; cam.y=20;
     var ptrs={}, moved=false, startPos=null, lastPinch=0;
     function pts(){ return Object.keys(ptrs).map(function(k){return ptrs[k];}); }
@@ -177,5 +187,5 @@ BLS.Scene = (function(){
     document.addEventListener('visibilitychange',function(){ if(!document.hidden&&!running){ running=true; requestAnimationFrame(loop); } });
     requestAnimationFrame(loop);
   }
-  return { init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ pats={}; } };
+  return { init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ pats={}; layer0=null; } };
 })();
