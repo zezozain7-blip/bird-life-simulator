@@ -14,6 +14,7 @@ BLS.Art = (function(){
   function init(cb){
     onReady=cb; var D=BLS.ASSET_DATA||{};
     NAMES.spr.forEach(function(n){ load(n,D['sprites/'+n]||('assets/sprites/'+n+'.png'),img); });
+    load('town',D['bg/town']||'assets/bg/town.jpg',tex);
     NAMES.tex.forEach(function(n){ load(n,D['textures/'+n]||('assets/textures/'+n+'.jpg'),tex); });
     if(pending===0&&cb) cb();
   }
