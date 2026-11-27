@@ -3,7 +3,7 @@
   var Sim=BLS.Sim;
   function ar(){ var G=Sim.G; return !G||(G.lang||'ar')==='ar'; }
   // --- PWA (only over http/https; the single-file copy opened from disk skips it)
-  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !/[?&]test=1\b/.test(location.search)){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
   // --- XP log for a days-to-next-level estimate
   function totalXp(G){ var t=G.xp||0; for(var l=1;l<(G.level||1);l++) t+=100*l; return t; }
   function logXp(){ var G=Sim.G; if(!G||!G.birds) return; var L=G.xpLog=G.xpLog||[]; var last=L[L.length-1]; if(!last||G.t-last[0]>=12){ L.push([Math.round(G.t),totalXp(G)]); if(L.length>40) L.shift(); } }
@@ -43,7 +43,7 @@
   // --- inject into sheets/hub as they appear
   new MutationObserver(function(){
     var tl=document.getElementById('tl'); if(tl&&!document.getElementById('sgn')&&tl.closest('#sheet')&&!tl.closest('#sheet').classList.contains('hidden')){ var h=tl.parentNode.querySelector('h4'); tl.parentNode.insertAdjacentHTML('afterbegin',signpost()); }
-    var hub=document.getElementById('hub'); if(hub&&hub.style.display==='flex'&&!document.getElementById('hl')){ var he=document.getElementById('he'); if(he){ var b=document.createElement('button'); b.id='hl'; b.textContent=ar()?'🏠 كارت العشة (صورة)':'🏠 Loft card (image)'; b.onclick=loftCard; he.parentNode.insertBefore(b,he); } }
+    var hub=document.getElementById('hub'); if(hub&&hub.style.display==='flex'&&!document.getElementById('hl')){ var he=document.getElementById('he'); if(he){ var b=document.createElement('button'); b.id='hl'; b.textContent=ar()?'🏠 كارت العشة (صورة)':'🏠 Loft card (image)'; b.onclick=function(){ BLS_LOFT.card(); }; he.parentNode.insertBefore(b,he); } }
   }).observe(document.body,{childList:true,subtree:true});
   // --- crisp Arabic overlays
   var st=document.createElement('style');
