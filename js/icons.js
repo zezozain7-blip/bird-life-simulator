@@ -32,7 +32,7 @@ BLS.Icons = (function(){
   };
   function svg(n,sz){ sz=sz||22; return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(P[n]||'')+'</svg>'; }
   function fill(root){ (root||document).querySelectorAll('[data-ic]').forEach(function(e){ e.innerHTML=svg(e.getAttribute('data-ic'),+e.getAttribute('data-sz')||22); }); }
-  var MAP={'🌾':'grain','💧':'drop','🪙':'coin','🥚':'egg','🪺':'egg','🐣':'egg','🕊':'birds','🌳':'tree','🎥':'center','💊':'plus','💔':'heart','❤':'heart','🔥':'sun','🪨':'minus','❄':'snow','⭐':'star','🔒':'lock','⚠':'warn','🔨':'build','🪵':'build','✅':'check','🟡':'dot','⬜':'box','♂':null,'♀':null};
+  var MAP={'🌾':'grain','💧':'drop','🪙':'coin','🥚':'egg','🪺':'egg','🐣':'egg','🕊':'birds','🌳':'tree','🎥':'center','💊':'plus','💔':'heart','❤':'heart','🔥':'sun','🪨':'minus','❄':'snow','⭐':'star','🔒':'lock','⚠':'warn','🔨':'build','🪵':'build','✅':'check','🟡':'dot','⬜':'box','🎯':'check','🏅':'star','🎉':'star','🆘':'warn','✨':'star','💾':'box','📂':'box','📤':'chev','♂':null,'♀':null};
   var RX=new RegExp('('+Object.keys(MAP).filter(function(k){return MAP[k];}).join('|')+')\\uFE0F?','g');
   function emo(str){ return String(str).replace(RX,function(m,k){ return '<span class="ei">'+svg(MAP[k],15)+'</span>'; }); }
   return {svg:svg,fill:fill,emo:emo};
