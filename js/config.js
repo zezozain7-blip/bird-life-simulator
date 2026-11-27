@@ -14,9 +14,9 @@ BLS.CFG = {
   EGG_INCUBATION_H: 96, SQUAB_H: 96, JUVENILE_H: 240,   // hatch at 3 d, leave nest 3 d later, adult at 7 d
   EGG_COLD_LIMIT_H: 18,
   NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.5,
-  START_COINS: 1200, START_FEED: 8, UPKEEP_PER_BIRD: 5, GUARD_COST: 400, ISO_COST: 250, UP_COST:{heat:350,vent:300,nursery:450,vet:500,flight:400,cam:300}, PRED_P: 0.10, DISEASE_P: 0.05,
+  START_COINS: 1200, START_FEED: 8, UPKEEP_PER_BIRD: 3, GUARD_COST: 400, ISO_COST: 250, UP_COST:{heat:350,vent:300,nursery:450,vet:500,flight:400,cam:300}, PRED_P: 0.10, DISEASE_P: 0.05,
   OFFLINE_MAX_H: 48,
-  PRICE: { feed5: 90, bird: 220, pair: 420, heal: 60 }
+  PRICE: { feed5: 90, bird: 260, pair: 480, egg: 25, eggBad: 5, sellK: 1.15, heal: 60 }
 };
 BLS.NAMES = {
   en: ['Zaki','Hamama','Nour','Mazen','Salma','Yara','Omar','Laila','Karim','Dina','Adel','Rania','Tarek','Hana','Sami','Mona','Fouad','Nada','Ramy','Aya'],
