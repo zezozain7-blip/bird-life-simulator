@@ -5,9 +5,11 @@
   function $(i){ return document.getElementById(i); }
   function ar(){ return !(Sim.G&&Sim.G.lang==='en'); }
   function tx(a,e){ return ar()?a:e; }
-  function isNew(){ try{ return localStorage.getItem('bls_ui')!=='old'; }catch(e){ return true; } }
-  function apply(){ document.body.classList.toggle('ui2',isNew()); var m=document.querySelector('meta[name=theme-color]'); if(m) m.content=isNew()?'#7EC4CF':'#1b1710'; if(!isNew()) hideChip(); }
-  function setTheme(n){ try{ localStorage.setItem('bls_ui',n?'new':'old'); }catch(e){} apply(); sync(); }
+  // v0.56: the old look is gone. A saved old-look flag from v0.54/0.55 is deleted so nobody stays stuck on it.
+  try{ localStorage.removeItem('bls_ui'); }catch(e){}
+  function isNew(){ return true; }
+  function apply(){ document.body.classList.add('ui2'); var m=document.querySelector('meta[name=theme-color]'); if(m) m.content='#7EC4CF'; var o=document.getElementById('nav'); if(o) o.remove(); }
+  function setTheme(){ apply(); }
   // ---- bottom tab bar
   var ICON={
     farm:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
@@ -23,7 +25,7 @@
     if(t==='farm') UI.close(); else if(t==='birds') UI.showBirds(); else if(t==='shop') UI.showShop(); else if(t==='tasks') UI.showTasks(); else more(); sel(t); }
   function sel(t){ nav.querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-selected',b.getAttribute('data-t')===t?'true':'false'); }); }
   var KIND={build:'farm',tree:'birds',bird:'birds',birds:'birds',pick:'birds',shop:'shop',tasks:'tasks',breeding:'more',nest:'more',egg:'more',manage:'more',comp:'more',coll:'more'};
-  function sync(){ var sh=$('sheet'); var open=sh&&!sh.classList.contains('hidden'); var k='farm'; if(open){ var t=($('sheet-title')||{}).textContent||''; k=curKind()||'farm'; k=KIND[k]||'more'; } if(document.querySelector('.ov28')) k='more'; sel(k);
+  function sync(){ var ht=$('hud-top'); if(ht) ht.dir=ar()?'rtl':'ltr'; if(nav.dir!==(ar()?'rtl':'ltr')) nav.dir=ar()?'rtl':'ltr'; var sh=$('sheet'); var open=sh&&!sh.classList.contains('hidden'); var k='farm'; if(open){ var t=($('sheet-title')||{}).textContent||''; k=curKind()||'farm'; k=KIND[k]||'more'; } if(document.querySelector('.ov28')) k='more'; sel(k);
     var n=Sim.G?Sim.claimable():0, nb=$('nb-tasks'); if(nb){ nb.style.display=n?'flex':'none'; nb.textContent=n>9?'9+':n; } }
   function curKind(){ var c=$('sheet'); if(!c) return null; return c.getAttribute('data-kind'); }
   // record the open sheet kind so the tab bar can follow it
@@ -33,7 +35,7 @@
   // ---- "More" grid
   function more(){
     var V=window.BLS_V29||{};
-    var items=[['🧬',tx('التزاوج','Breeding'),function(){ UI.showBreeding(); }],['📋',tx('الإدارة','Manage'),function(){ UI.showManage(); }],['📖',tx('الموسوعة','Collection'),function(){ UI.showColl(); }],['🏅',tx('المسابقات','Competitions'),function(){ UI.showComp(); }],['🏆',tx('الإنجازات','Achievements'),function(){ V.ach&&V.ach(); }],['📈',tx('السوق (أسعار)','Market prices'),function(){ V.market&&V.market(); }],['🕊️',tx('كشف القطيع','Roster'),function(){ V.roster&&V.roster(); }],['✋',tx('تحريك الأدوات','Move items'),function(){ BLS_EDIT.toggle(true); }],['📚',tx('المصادر','Sources'),function(){ BLS_SRC.open(); }],['🖼️',tx('كارت العشة','Share card'),function(){ V.card&&V.card(); }],['🧰',tx('أدوات المزرعة','Farm tools'),function(){ V.menu&&V.menu(); }],['🎨',tx('الشكل القديم','Old look'),function(){ setTheme(false); }]];
+    var items=[['🧬',tx('التزاوج','Breeding'),function(){ UI.showBreeding(); }],['📋',tx('الإدارة','Manage'),function(){ UI.showManage(); }],['📖',tx('الموسوعة','Collection'),function(){ UI.showColl(); }],['🏅',tx('المسابقات','Competitions'),function(){ UI.showComp(); }],['🏆',tx('الإنجازات','Achievements'),function(){ V.ach&&V.ach(); }],['📈',tx('السوق (أسعار)','Market prices'),function(){ V.market&&V.market(); }],['🕊️',tx('كشف القطيع','Roster'),function(){ V.roster&&V.roster(); }],['✋',tx('تحريك الأدوات','Move items'),function(){ BLS_EDIT.toggle(true); }],['📚',tx('المصادر','Sources'),function(){ BLS_SRC.open(); }],['🖼️',tx('كارت العشة','Share card'),function(){ V.card&&V.card(); }],['🧰',tx('أدوات المزرعة','Farm tools'),function(){ V.menu&&V.menu(); }]];
     UI.close();
     var o=BLS_OV('<h3>'+tx('المزيد','More')+'</h3><div class="moregrid">'+items.map(function(a,i){ return '<button data-i="'+i+'"><span aria-hidden="true">'+a[0]+'</span>'+a[1]+'</button>'; }).join('')+'</div><button id="mg-x" style="margin-top:10px;width:100%">'+tx('إغلاق','Close')+'</button>');
     o.querySelector('#mg-x').onclick=function(){ o.remove(); sync(); };
@@ -41,9 +43,6 @@
     new MutationObserver(function(){ if(!document.body.contains(o)){ sync(); this.disconnect(); } }).observe(document.body,{childList:true});
     sel('more');
   }
-  // ---- Farm tools menu gets the look toggle (new look <-> old look)
-  new MutationObserver(function(){ var b=document.querySelector('.ov28 [data-m=ed]'); if(b&&!document.getElementById('th31')){ var t=document.createElement('button'); t.id='th31'; t.textContent='🎨 '+tx('الشكل: ','Look: ')+(isNew()?tx('جديد (اضغط للقديم)','new (tap for old)'):tx('قديم (اضغط للجديد)','old (tap for new)')); t.onclick=function(){ var o=t.closest('.ov28'); if(o) o.remove(); setTheme(!isNew()); }; b.parentNode.appendChild(t); } var h=$('he'); var hub=$('hub'); if(hub&&hub.style.display==='flex'&&!$('h31')&&h){ var q=document.createElement('button'); q.id='h31'; q.textContent='🎨 '+tx('الشكل: ','Look: ')+(isNew()?tx('جديد (اضغط للقديم)','new (tap for old)'):tx('قديم (اضغط للجديد)','old (tap for new)')); q.onclick=function(){ hub.style.display='none'; setTheme(!isNew()); }; h.parentNode.insertBefore(q,h); } }).observe(document.body,{childList:true,subtree:true});
-  // in the old look a small button brings the new one back (the old hub also has it)
   // ---- drag handle on the sheet (swipe down closes)
   var sheet=$('sheet');
   if(sheet&&!sheet.querySelector('.sheet-drag-zone')){ var z=document.createElement('div'); z.className='sheet-drag-zone'; z.innerHTML='<i></i>'; sheet.insertBefore(z,sheet.firstChild);
