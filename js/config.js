@@ -11,7 +11,7 @@ BLS.CFG = {
   GRAIN_PER_UNIT: 0.001,       // kg per hunger unit (about 38 g per bird per game day, like a real pigeon)
   WATER_PER_UNIT: 0.06,
   FEEDER_CAP: 0.6, FEED_BAG: 1, WATER_CAP: 100,
-  EGG_INCUBATION_H: 96, SQUAB_H: 96, JUVENILE_H: 480,   // egg 4 d, nest 4 d, adult at 20 d
+  EGG_INCUBATION_H: 96, EGG_CANDLE_H: 22, SQUAB_H: 96, JUVENILE_H: 480,   // egg 4 d, nest 4 d, adult at 20 d
   EGG_COLD_LIMIT_H: 18,
   NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.9, OLD_START_D: 150, LIFE_D: 260,
   START_COINS: 1200, START_FEED: 1.6, UPKEEP_PER_BIRD: 3, GUARD_COST: 400, ISO_COST: 250, UP_COST:{heat:350,vent:300,nursery:450,vet:500,flight:400,cam:300}, PRED_P: 0.10, DISEASE_P: 0.05,
@@ -32,7 +32,7 @@ BLS.TXT = {
   feed:'Feed',water:'Water',heal:'Heal',rename:'Rename',sell:'Sell',pair:'Pair',unpair:'Unpair',close:'Close',follow:'Follow',
   my_birds:'My birds',nests:'Nests',nest:'Nest',empty:'Empty',free:'Free',new_pair:'New pair',pick_partner:'Choose a partner',
   no_partner:'No eligible partner (needs an adult of the other sex, not related, not paired).',related:'Related',
-  incubating:'Incubating',cold:'Cooling',infertile:'Infertile',fertile:'Fertile',hatch_in:'Hatches in {0}h',
+  incubating:'Incubating',cold:'Cooling',infertile:'Infertile',fertile:'Fertile',hatch_in:'Hatches in {0}h',n_sit:'Sitting now',n_none:'Nobody on the nest',n_unk:'Too early to tell (candling in {0}h)',n_fert:'Fertile: embryo veins visible',n_inf:'Infertile: clear egg',n_dead:'Dead egg',n_par:'Parents',n_sq:'Squabs',n_ready:'Next clutch after the squabs leave',n_age:'Age',n_left:'Leaves nest in {0}h',
   market:'Market',buy_feed:'Buy 1 kg feed',buy_bird:'Buy a pigeon',buy_pair:'Buy a young pair',buy_heal:'Medicine',
   manage:'Management',stats:'Statistics',speed:'Game speed',skip:'Skip time',skip6:'+6 hours',skip24:'+1 day',
   reset:'Start a new farm',reset_q:'Delete all progress and start over?',language:'Language',
@@ -56,7 +56,7 @@ BLS.TXT = {
   feed:'أطعم',water:'اسقي',heal:'علاج',rename:'تغيير الاسم',sell:'بيع',pair:'تزويج',unpair:'فك الزواج',close:'إغلاق',follow:'تتبع',
   my_birds:'طيوري',nests:'الأعشاش',nest:'عش',empty:'فاضي',free:'متاح',new_pair:'زوج جديد',pick_partner:'اختار الشريك',
   no_partner:'مفيش شريك مناسب (لازم بالغ من الجنس التاني، مش قريب، وغير متزوج).',related:'قرابة',
-  incubating:'بتفقس',cold:'بتبرد',infertile:'غير مخصبة',fertile:'مخصبة',hatch_in:'تفقس بعد {0} ساعة',
+  incubating:'بتفقس',cold:'بتبرد',infertile:'غير مخصبة',fertile:'مخصبة',hatch_in:'تفقس بعد {0} ساعة',n_sit:'قاعد على العش دلوقتي',n_none:'مفيش حد على العش',n_unk:'بدري نعرف (الكشف بالنور بعد {0} ساعة)',n_fert:'مخصبة: العروق ظاهرة',n_inf:'غير مخصبة: البيضة صافية',n_dead:'بيضة ميتة',n_par:'الأبوين',n_sq:'الزغاليل',n_ready:'البيض الجاي بعد ما الزغاليل تخرج',n_age:'العمر',n_left:'يخرج من العش بعد {0} ساعة',
   market:'السوق',buy_feed:'اشتري 1 كجم علف',buy_bird:'اشتري حمامة',buy_pair:'اشتري زوج صغير',buy_heal:'دواء',
   manage:'الإدارة',stats:'الإحصائيات',speed:'سرعة اللعبة',skip:'تخطي الوقت',skip6:'+6 ساعات',skip24:'+يوم',
   reset:'ابدأ مزرعة جديدة',reset_q:'تمسح كل التقدم وتبدأ من الأول؟',language:'اللغة',
