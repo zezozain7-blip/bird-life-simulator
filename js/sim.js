@@ -28,7 +28,7 @@ BLS.Sim = (function(){
   }
   var PERS=[{k:'p_calm',st:0.7},{k:'p_bold',st:1.0},{k:'p_shy',st:1.4},{k:'p_greedy',st:1.1},{k:'p_social',st:0.9}];
   function ensureBird(b){ if(b.pers===undefined) b.pers=b.id%5; if(b.clean===undefined) b.clean=85; if(b.stress===undefined) b.stress=10; if(b.mood===undefined) b.mood=70; }
-  function symptoms(b){ var a=[]; if(b.health<70) a.push('s_weak'); if(b.health<50) a.push('s_ruffled'); if(b.hunger>70) a.push('s_hungry'); if(b.thirst>70) a.push('s_thirsty'); if(b.clean<35) a.push('s_dirty'); if(b.stress>65) a.push('s_stressed'); return a; }
+  function symptoms(b){ var a=[]; if(b.dis){ a.push(b.dis.k==='d_cold'?'s_sneeze':b.dis.k==='d_gut'?'s_loose':'s_lumps'); if(b.dis.t>24) a.push('s_lethargic'); } if(b.health<70) a.push('s_weak'); if(b.health<50) a.push('s_ruffled'); if(b.iso) a.push('s_iso'); if(b.hunger>70) a.push('s_hungry'); if(b.thirst>70) a.push('s_thirsty'); if(b.clean<35) a.push('s_dirty'); if(b.stress>65) a.push('s_stressed'); return a; }
   function newBird(o){
     var b={ id:G.nextId++, name:o.name||pickName(), sex:o.sex, g:o.g, age:o.age||0, hunger:o.hunger||10, thirst:o.thirst||10,
       health:100, pers:o.pers!==undefined?o.pers:Math.floor(Math.random()*5), clean:90, stress:10, mood:70, mate:-1, nest:-1, parents:o.parents||[-1,-1], cool:6, clutch:0, layT:0, sickFlag:false,
@@ -57,7 +57,7 @@ BLS.Sim = (function(){
     for(var k in A) if(B[k]) return true;
     return false;
   }
-  function canPair(a,b){ return a&&b&&a.sex!==b.sex&&stageOf(a)==='adult'&&stageOf(b)==='adult'&&a.mate<0&&b.mate<0&&!related(a,b); }
+  function canPair(a,b){ return a&&b&&a.sex!==b.sex&&stageOf(a)==='adult'&&stageOf(b)==='adult'&&a.mate<0&&b.mate<0&&!a.iso&&!b.iso&&!related(a,b); }
   function freeNest(){ for(var i=0;i<Math.min(G.nests.length,G.nestsOpen);i++) if(!G.nests[i]) return i; return -1; }
   function pairUp(a,b,silent){
     var n=freeNest(); if(n<0) return false;
@@ -124,9 +124,10 @@ BLS.Sim = (function(){
       b.stress=Math.max(0,Math.min(100,b.stress+((b.hunger>70||b.thirst>70?2.5:0)+(crowd?1.2:0)+(G.dirt>60?1:0)+(b.health<50?1.5:0)-1.4)*dt*pm.st));
       b.mood=Math.max(0,Math.min(100,100-b.stress*0.6-Math.max(0,b.hunger-50)*0.4-Math.max(0,b.thirst-50)*0.3-(100-b.clean)*0.2));
       if(b.stress>80) b.health-=0.5*dt;
+      if(b.dis){ b.dis.t+=dt; var sg=Math.min(2,Math.floor(b.dis.t/24)); b.health-=(0.2+0.15*sg)*dt*(b.iso?0.8:1); b.stress=Math.min(100,b.stress+0.5*dt); if(b.dis.t>120&&b.health>45&&Math.random()<0.02*dt){ b.dis=null; b.iso=false; emit('event',T('ev_recover',b.name),'birds',b.id); } }
       if(protect){ b.hunger=Math.min(b.hunger,80); b.thirst=Math.min(b.thirst,80); }
       b.hunger=Math.min(100,b.hunger); b.thirst=Math.min(100,b.thirst);
-      if(b.hunger>90||b.thirst>90) b.health-=3*dt; else if(b.hunger<60&&b.thirst<60) b.health=Math.min(100,b.health+0.6*dt);
+      if(b.hunger>90||b.thirst>90) b.health-=3*dt; else if(b.hunger<60&&b.thirst<60&&!b.dis) b.health=Math.min(100,b.health+0.6*dt);
       if(protect&&b.health<30) b.health=30;
       if(b.health<45&&!b.sickFlag){ b.sickFlag=true; emit('event',T('ev_sick',b.name),'birds',b.id); }
       if(b.health>=60) b.sickFlag=false;
@@ -160,7 +161,7 @@ BLS.Sim = (function(){
       f.cool-=dt;
       var cont=nestContents(n);
       if(f.clutch>0&&cont===0&&(f.clutch===2||G.t>f.layT)){ f.clutch=0; f.cool=Math.max(f.cool,C.CLUTCH_COOL_H); }
-      if(f.clutch===0&&f.cool<=0&&cont===0&&popRoom()&&f.hunger<65&&f.thirst<65&&f.health>60){ layEgg(f,m,n); f.clutch=1; f.layT=G.t+24; }
+      if(f.clutch===0&&f.cool<=0&&cont===0&&popRoom()&&f.hunger<65&&f.thirst<65&&f.health>60&&!f.dis&&!f.iso){ layEgg(f,m,n); f.clutch=1; f.layT=G.t+24; }
       else if(f.clutch===1&&G.t>=f.layT&&cont<2&&f.hunger<80){ if(Math.random()<C.SECOND_EGG_P&&popRoom()) layEgg(f,m,n); f.clutch=2; }
     });
     releaseNests();
@@ -297,7 +298,7 @@ BLS.Sim = (function(){
   function refillWater(){ G.water.amt=C.WATER_CAP; emit('toast','💧 '+T('water_filled')); }
   function feedBird(b){ if(G.feed<0.05) return emit('toast',T('need_feed')); G.feed-=0.05; b.hunger=Math.max(0,b.hunger-45); G.stats.hand++; emit('toast',T('fed',b.name)); }
   function waterBird(b){ b.thirst=0; emit('toast',T('watered',b.name)); }
-  function healBird(b){ if(G.coins<C.PRICE.heal) return emit('toast',T('need_coins')); G.coins-=C.PRICE.heal; b.health=Math.min(100,b.health+50); emit('toast',T('healed',b.name)); }
+  function healBird(b){ if(G.coins<C.PRICE.heal) return emit('toast',T('need_coins')); G.coins-=C.PRICE.heal; b.health=Math.min(100,b.health+50); b.dis=null; b.iso=false; emit('toast',T('healed',b.name)); }
   function weightOf(b){ var s=stageOf(b); var base=300+b.g.size*2.6; var f=s==='squab'?Math.min(1,0.08+b.age/C.SQUAB_H*0.5):(s==='juvenile'?0.6+0.4*(b.age-C.SQUAB_H)/(C.JUVENILE_H-C.SQUAB_H):1); return Math.round(base*f); }
   function buyNest(){ if(G.nestsOpen>=C.NEST_COUNT) return; var cost=250+(G.nestsOpen-4)*100; if(G.coins<cost) return emit('toast',T('need_coins')); G.coins-=cost; G.nestsOpen++; emit('sfx','build'); emit('toast','🪺 '+T('built')); }
   function nestCost(){ return 250+(G.nestsOpen-4)*100; }
@@ -334,15 +335,31 @@ BLS.Sim = (function(){
     if(n&&!protect){ var up=Math.min(G.coins,Math.round(n*C.UPKEEP_PER_BIRD)); G.coins-=up; emit('event',T('ev_upkeep',up),'farm'); }
     if(protect||!n) return;
     if(G.dirt>=70) emit('event',T('ev_dirty'),'manage');
-    if(Math.random()<C.DISEASE_P+G.dirt/100*0.22){
-      var cand=G.birds.filter(function(b){return b.health>30;}); if(cand.length){ var v=cand[(Math.random()*cand.length)|0]; v.health=Math.max(8,v.health-45); v.sickFlag=true; emit('event',T('ev_disease',v.name),'birds',v.id); emit('sfx','sad');
-        if(G.dirt>=55) G.birds.forEach(function(o){ if(o!==v&&Math.random()<0.18) o.health=Math.max(8,o.health-30); }); }
-    }
-    if(n>2&&G.t>=72&&Math.random()<(G.guard?C.PRED_P*0.15:C.PRED_P)){
+    updateSkill();
+    var crowd=n>popCap()*0.85?1:0, sickN=G.birds.filter(function(x){return x.dis&&!x.iso;}).length, relief=G.skill<0.3?0.7:1;
+    G.birds.forEach(function(x){
+      if(x.dis||x.iso) return; ensureBird(x);
+      var p=(0.01+G.dirt/100*0.05+x.stress/100*0.04+crowd*0.03+(x.hunger>70?0.02:0)+(G.weatherBad?0.02:0))*relief+(sickN?0.12:0);
+      if(Math.random()<p){ x.dis={k:DIS[(Math.random()*DIS.length)|0],t:0}; emit('event',T('ev_ill',x.name,T(whyIll(x,crowd,sickN))),'birds',x.id); }
+    });
+    if(n>2&&G.t>=72&&Math.random()<(G.guard?C.PRED_P*0.15:C.PRED_P)*pressure()){
       if(G.guard){ emit('event',T('ev_pred_ok'),'farm'); }
       else { var tg=G.birds.filter(function(b){return stageOf(b)!=='squab'&&b.nest<0;}); if(!tg.length) tg=G.birds.filter(function(b){return stageOf(b)!=='squab';}); if(tg.length){ var t0=tg[(Math.random()*tg.length)|0], nm=t0.name; die(t0); emit('event',T('ev_pred',nm),'farm'); } }
     }
   }
+  var DIS=['d_cold','d_gut','d_pox'];
+  function whyIll(x,crowd,sickN){ if(sickN) return 'why_contact'; if(G.dirt>55) return 'why_dirty'; if(x.stress>55) return 'why_stress'; if(crowd) return 'why_crowd'; if(x.hunger>70) return 'why_hunger'; return 'why_chance'; }
+  function updateSkill(){
+    var n=G.birds.length||1, fed=G.birds.filter(function(x){return x.hunger<70&&x.thirst<70;}).length/n, clean=G.dirt<50?1:G.dirt<75?0.5:0, money=G.coins>150?1:G.coins>50?0.5:0;
+    var died=G.stats.died||0, dd=died-(G.lastDied||0); G.lastDied=died; var surv=dd>1?0:dd>0?0.5:1;
+    var cur=(fed+clean+money+surv)/4; G.skill=(G.skill===undefined?0.5:G.skill)*0.8+cur*0.2;
+  }
+  function pressure(){ var k=G.skill===undefined?0.5:G.skill; return k<0.3?0.4:k<0.6?1:1.25; }
+  function skillLabel(){ var k=G.skill===undefined?0.5:G.skill; return k<0.3?'lv_relaxed':k<0.6?'lv_normal':'lv_demanding'; }
+  function isoCount(){ return G.birds.filter(function(x){return x.iso;}).length; }
+  function isoCap(){ return G.isoUnit?2:0; }
+  function buyIso(){ if(G.isoUnit) return; if(G.coins<C.ISO_COST) return emit('toast',T('need_coins')); G.coins-=C.ISO_COST; G.isoUnit=1; emit('sfx','build'); emit('toast',T('iso_done')); }
+  function isolate(b,on){ if(on){ if(isoCount()>=isoCap()) return emit('toast',T(G.isoUnit?'iso_full':'iso_need')); unpair(b); b.iso=true; emit('toast',T('iso_on',b.name)); } else { b.iso=false; } }
   function cleanLoft(){ G.stats.cleaned=(G.stats.cleaned||0)+1; G.dirt=0; emit('toast',T('clean_done')); emit('sfx','build'); G.birds.forEach(function(b){ b.health=Math.min(100,b.health+3); }); }
   function buyGuard(){ if(G.guard) return; if(G.coins<C.GUARD_COST) return emit('toast',T('need_coins')); G.coins-=C.GUARD_COST; G.guard=1; emit('sfx','build'); emit('toast',T('guard_done')); }
   // ---------- neighbour orders
@@ -414,7 +431,7 @@ BLS.Sim = (function(){
     if(away>=1){ var s0={eggs:G.stats.eggs||0,hat:G.stats.hatched,died:G.stats.died,grain:G.feeder.grain,water:G.water.amt,birds:G.birds.length}; skip(Math.floor(away)); G.savedAt=Date.now(); G.welcome={h:Math.floor(away),eggs:(G.stats.eggs||0)-s0.eggs,hatched:G.stats.hatched-s0.hat,died:G.stats.died-s0.died,grain:Math.max(0,s0.grain-G.feeder.grain),water:Math.max(0,s0.water-G.water.amt),birds:G.birds.length-s0.birds}; }
     return true;
   }
-  return { PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
+  return { buyIso:buyIso, isolate:isolate, isoCap:isoCap, isoCount:isoCount, skillLabel:skillLabel, PERS:PERS, symptoms:symptoms, get G(){return G;}, newGame:newGame, load:load, save:save, update:update, on:on, emit:emit, stageOf:stageOf, hourOfDay:hourOfDay, dayNum:dayNum,
     bird:bird, related:related, canPair:canPair, pairUp:pairUp, unpair:unpair, nestContents:nestContents, popCap:popCap, ensureQuests:ensureQuests, qProg:qProg, claimQuest:claimQuest, claimLogin:claimLogin, loginReady:loginReady, LOGIN:LOGIN, sell:sell, ensureComp:ensureComp, birdScore:birdScore, enterShow:enterShow, withdrawShow:withdrawShow, ensureOrders:ensureOrders, orderMatch:orderMatch, fillOrder:fillOrder, sellPrice:sellPrice,
     cleanLoft:cleanLoft, buyGuard:buyGuard, buyFeed:buyFeed, buyBird:buyBird, buyPair:buyPair, refillFeeder:refillFeeder, refillWater:refillWater, feedBird:feedBird, waterBird:waterBird, healBird:healBird,
     weightOf:weightOf, TASKS:TASKS, buyNest:buyNest, nestCost:nestCost, buyPerch:buyPerch, childrenOf:childrenOf, claimable:claimable, claim:claim, skip:skip, freeNest:freeNest, covered:covered, isNight:isNight, addXp:addXp };
