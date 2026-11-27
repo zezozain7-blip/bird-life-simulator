@@ -39,7 +39,7 @@ function tick(){
   if(!g){el.style.display='none';return;}
   var ar=BLS.T('tasks')==='المهام';
   el.dir=ar?'rtl':'ltr';
-  el.innerHTML='🎯 <b>'+(G.ftue.i+1)+'/'+GL.length+'</b> '+(ar?g.ar:g.en)+' (+'+g.r+')';
+  el.innerHTML=BLS.Icons.emo('🎯 <b>'+(G.ftue.i+1)+'/'+GL.length+'</b> '+(ar?g.ar:g.en)+' (+'+g.r+')');
   el.style.display='block';
 }
 function init(){
