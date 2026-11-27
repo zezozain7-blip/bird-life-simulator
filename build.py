@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Bundle the project into one self-contained HTML file (dist/bird-life-simulator.html)."""
 import re, os
-VER='23'  # build version: bump this AND the ?v= in index.html so phones fetch fresh js
+VER='24'  # build version: bump ONLY this each build; build.py rewrites every ?v= in index.html (js and css)
 root=os.path.dirname(os.path.abspath(__file__))
 h=open(os.path.join(root,'index.html'),encoding='utf8').read()
-h=re.sub(r'(src="js/[a-z]+\.js)(\?v=[\d.]+)?(")', lambda m: m.group(1)+'?v='+VER+m.group(3), h)
+h=re.sub(r'(src="js/[a-z0-9]+\.js)(\?v=[\w.]+)?(")', lambda m: m.group(1)+'?v='+VER+m.group(3), h)
+h=re.sub(r'(<link rel="stylesheet" href="css/style\.css)(\?v=[\w.]+)?(">)', lambda m: m.group(1)+'?v='+VER+m.group(3), h)
+open(os.path.join(root,'index.html'),'w',encoding='utf8').write(h)  # keep the repo index in sync (cache-busting for hosted copies)
 css=open(os.path.join(root,'css/style.css'),encoding='utf8').read()
-h=re.sub(r'<link rel="stylesheet" href="css/style.css">','<style>\n'+css.replace('\\','\\\\')+'\n</style>',h)
+h=re.sub(r'<link rel="stylesheet" href="css/style\.css(?:\?v=[\w.]+)?">','<style>\n'+css.replace('\\','\\\\')+'\n</style>',h)
 import base64,glob,json
 data={}
 for f in sorted(glob.glob(os.path.join(root,'assets/sprites/*.png'))): data['sprites/'+os.path.basename(f)[:-4]]='data:image/png;base64,'+base64.b64encode(open(f,'rb').read()).decode()
