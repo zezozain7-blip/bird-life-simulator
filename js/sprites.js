@@ -11,6 +11,13 @@ BLS.Sprites = (function(){
     var P=PAL[o.col]||PAL.G, pose=o.pose||'stand', ph=o.ph||0, stage=o.stage||'adult';
     var scale=s*(stage==='squab'?0.5:stage==='juvenile'?0.78:1);
     c.save(); c.translate(x,y); c.scale(scale*face,scale);
+    var fly0=pose==='fly';
+    if(!BLS.REDUCED){ var mt=performance.now()/1000+ph*3.7;
+      if(fly0) c.scale(1,1+Math.sin(ph*16)*0.045);                                   // wing-flap squash
+      else if(pose!=='sit'&&pose!=='perch'&&pose!=='squab'&&pose!=='brood'){
+        c.translate(0,-Math.abs(Math.sin(mt*1.7))*0.5);                              // breathing
+        c.rotate(Math.sin(mt*2.3)*0.012);                                             // head-bob sway
+        var hh=(mt*0.15)%1; if(pose==='stand'&&hh<0.04) c.translate(0,-Math.sin(hh/0.04*Math.PI)*3); } }  // small hop every ~6.7 s
     var fly=pose==='fly', walk=pose==='walk', peck=pose==='peck'||pose==='eat'||pose==='drink', sit=pose==='sit'||pose==='perch'||pose==='squab';
     var bob = walk?-Math.abs(Math.sin(ph*9))*1.8:0;
     var headX=14, headY=-27+bob, tilt=0;
