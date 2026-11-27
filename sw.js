@@ -1,13 +1,28 @@
-// Bird Life Simulator service worker: cache the app shell on first load, then work offline.
-var CACHE='bls-shell-v55';
-var SHELL=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
-self.addEventListener('install',function(e){ e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(SHELL); })); });
+// Bird Life Simulator service worker: precache the complete app shell and media for reliable first-visit offline use.
+var CACHE='bls-shell-v57';
+var SHELL=['./', './index.html', './manifest.webmanifest', './css/style.css', './js/assets.js', './js/audio.js', './js/breeds.js', './js/config.js', './js/fx.js', './js/gem.js', './js/genetics.js', './js/icons.js', './js/main.js', './js/scene.js', './js/shapes.js', './js/sim.js', './js/sprites.js', './js/ui.js', './js/v20.js', './js/v21.js', './js/v22.js', './js/v25.js', './js/v26.js', './js/v27.js', './js/v28.js', './js/v29.js', './js/v30.js', './js/v31.js', './js/vsprite.js', './icons/icon-192.png', './icons/icon-512.png', './assets/audio/amb_coo1.ogg', './assets/audio/amb_coo2.ogg', './assets/audio/amb_rain.ogg', './assets/audio/amb_thunder.ogg', './assets/bg/town.jpg', './assets/bg/town0.jpg', './assets/bg/town1.jpg', './assets/bg/town2.jpg', './assets/bg/town3.jpg', './assets/textures/brick.jpg', './assets/textures/floor.jpg', './assets/textures/roof.jpg', './assets/textures/wood.jpg', './assets/sprites/fantail_grey_fly.png', './assets/sprites/fantail_grey_peck.png', './assets/sprites/fantail_grey_stand.png', './assets/sprites/fantail_red_fly.png', './assets/sprites/fantail_red_peck.png', './assets/sprites/fantail_red_stand.png', './assets/sprites/fantail_white_fly.png', './assets/sprites/fantail_white_peck.png', './assets/sprites/fantail_white_stand.png', './assets/sprites/grey_fly.png', './assets/sprites/grey_peck.png', './assets/sprites/grey_stand.png', './assets/sprites/heavy_grey_fly.png', './assets/sprites/heavy_grey_peck.png', './assets/sprites/heavy_grey_stand.png', './assets/sprites/heavy_red_fly.png', './assets/sprites/heavy_red_peck.png', './assets/sprites/heavy_red_stand.png', './assets/sprites/heavy_white_fly.png', './assets/sprites/heavy_white_peck.png', './assets/sprites/heavy_white_stand.png', './assets/sprites/pouter_grey_fly.png', './assets/sprites/pouter_grey_peck.png', './assets/sprites/pouter_grey_stand.png', './assets/sprites/pouter_red_fly.png', './assets/sprites/pouter_red_peck.png', './assets/sprites/pouter_red_stand.png', './assets/sprites/pouter_white_fly.png', './assets/sprites/pouter_white_peck.png', './assets/sprites/pouter_white_stand.png', './assets/sprites/racer_grey_fly.png', './assets/sprites/racer_grey_peck.png', './assets/sprites/racer_grey_stand.png', './assets/sprites/racer_red_fly.png', './assets/sprites/racer_red_peck.png', './assets/sprites/racer_red_stand.png', './assets/sprites/racer_white_fly.png', './assets/sprites/racer_white_peck.png', './assets/sprites/racer_white_stand.png', './assets/sprites/red_fly.png', './assets/sprites/red_peck.png', './assets/sprites/red_stand.png', './assets/sprites/round_grey_fly.png', './assets/sprites/round_grey_peck.png', './assets/sprites/round_grey_stand.png', './assets/sprites/round_red_fly.png', './assets/sprites/round_red_peck.png', './assets/sprites/round_red_stand.png', './assets/sprites/round_white_fly.png', './assets/sprites/round_white_peck.png', './assets/sprites/round_white_stand.png', './assets/sprites/white_fly.png', './assets/sprites/white_peck.png', './assets/sprites/white_stand.png', './assets/gem/fantail_brood.webp', './assets/gem/fantail_fly.webp', './assets/gem/fantail_peck.webp', './assets/gem/fantail_stand.webp', './assets/gem/helmet_brood.webp', './assets/gem/helmet_fly.webp', './assets/gem/helmet_peck.webp', './assets/gem/helmet_stand.webp', './assets/gem/homer_brood.webp', './assets/gem/homer_fly.webp', './assets/gem/homer_peck.webp', './assets/gem/homer_stand.webp', './assets/gem/king_brood.webp', './assets/gem/king_fly.webp', './assets/gem/king_peck.webp', './assets/gem/king_stand.webp', './assets/gem/magpie_brood.webp', './assets/gem/magpie_fly.webp', './assets/gem/magpie_peck.webp', './assets/gem/magpie_stand.webp', './assets/gem/maltese_brood.webp', './assets/gem/maltese_fly.webp', './assets/gem/maltese_peck.webp', './assets/gem/maltese_stand.webp', './assets/gem/nun_brood.webp', './assets/gem/nun_fly.webp', './assets/gem/nun_peck.webp', './assets/gem/nun_stand.webp', './assets/gem/roller_brood.webp', './assets/gem/roller_fly.webp', './assets/gem/roller_peck.webp', './assets/gem/roller_stand.webp', './assets/gem/roman_brood.webp', './assets/gem/roman_fly.webp', './assets/gem/roman_peck.webp', './assets/gem/roman_stand.webp', './assets/gem/swallow_brood.webp', './assets/gem/swallow_fly.webp', './assets/gem/swallow_peck.webp', './assets/gem/swallow_stand.webp', './assets/gem/trumpet_brood.webp', './assets/gem/trumpet_fly.webp', './assets/gem/trumpet_peck.webp', './assets/gem/trumpet_stand.webp', './assets/reference-image.jpg'];
+self.addEventListener('install',function(e){
+  e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(SHELL); }).then(function(){ return self.skipWaiting(); }));
+});
 self.addEventListener('message',function(e){ if(e.data==='skip') self.skipWaiting(); });
-self.addEventListener('activate',function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k!==CACHE; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
+self.addEventListener('activate',function(e){
+  e.waitUntil(caches.keys().then(function(ks){
+    return Promise.all(ks.filter(function(k){ return k.indexOf('bls-shell-')===0 && k!==CACHE; }).map(function(k){ return caches.delete(k); }));
+  }).then(function(){ return self.clients.claim(); }));
+});
 self.addEventListener('fetch',function(e){
-  var r=e.request; if(r.method!=='GET'||new URL(r.url).origin!==location.origin) return;
-  e.respondWith(caches.match(r).then(function(hit){
-    var net=fetch(r).then(function(res){ if(res&&res.ok){ var cp=res.clone(); caches.open(CACHE).then(function(c){ c.put(r,cp); }); } return res; }).catch(function(){ return hit||caches.match('./index.html'); });
-    return hit||net;
+  var r=e.request;
+  if(r.method!=='GET'||new URL(r.url).origin!==location.origin) return;
+  e.respondWith(caches.match(r,{ignoreSearch:true}).then(function(hit){
+    if(hit) return hit;
+    return fetch(r).then(function(res){
+      if(res&&res.ok && res.type!=='opaque'){ var cp=res.clone(); caches.open(CACHE).then(function(c){ c.put(r,cp); }); }
+      return res;
+    }).catch(function(){
+      // Only navigations may fall back to the app shell. Returning HTML for a
+      // missing JS/CSS/image request masks the real error and breaks offline boot.
+      if(r.mode==='navigate') return caches.match('./index.html');
+      return new Response('',{status:504,statusText:'Offline resource unavailable'});
+    });
   }));
 });
