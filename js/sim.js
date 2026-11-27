@@ -85,7 +85,7 @@ BLS.Sim = (function(){
   // ---------- life cycle
   function addXp(v){ G.xp+=v; while(G.xp>=100*G.level){ G.xp-=100*G.level; G.level++; emit('toast','⭐ '+T('level')+' '+G.level); emit('sfx','level'); } }
   function layEgg(f,m,n){
-    var fert=Math.random() < 0.35+((m.g.fert+f.g.fert)/2)/100*0.62;
+    var fert=Math.random() < 0.78+((m.g.fert+f.g.fert)/2)/100*0.2;
     G.eggs.push({id:G.nextId++, nest:n, m:m.id, f:f.id, g:Gen.cross(m.g,f.g), prog:0, cold:0, fertile:fert, dead:false, deadT:0});
     emit('event',T('ev_egg',n+1),'breeding'); emit('sfx','egg'); G.stats.eggs=(G.stats.eggs||0)+1;
     [f,m].forEach(function(x){ if(x.st!=='fly'&&x.st!=='sit'){ x.timer=0; if(x.st==='walk'||x.st==='eat'||x.st==='drink'){} } });
@@ -137,6 +137,9 @@ BLS.Sim = (function(){
         if(e.fertile){ hatch(e); G.eggs.splice(i,1); } else { e.dead=true; e.deadT=G.t; }
       }
     }
+    // auto-pairing: unpaired adults of opposite sex pair up on their own when a nest is free
+    if(freeNest()>=0){ var ms=G.birds.filter(function(x){return x.sex==='M'&&stageOf(x)==='adult'&&x.mate<0;}), fs_=G.birds.filter(function(x){return x.sex==='F'&&stageOf(x)==='adult'&&x.mate<0;}), done=false;
+      for(var a=0;a<ms.length&&!done;a++) for(var b2=0;b2<fs_.length&&!done;b2++) if(canPair(ms[a],fs_[b2])&&pairUp(ms[a],fs_[b2],false)){ fs_[b2].cool=Math.min(fs_[b2].cool||0,12); done=true; } }
     // laying
     G.birds.forEach(function(f){
       if(f.sex!=='F'||f.mate<0||f.nest<0) return;
@@ -166,7 +169,7 @@ BLS.Sim = (function(){
     b.fl={x0:b.x,y0:b.y,z0:b.z,x1:x,y1:y,z1:z,t:0,dur:dur||Math.max(0.9,d/2.4),arc:Math.min(1.2,0.35+d*0.08)};
     b.st='fly'; b.after=then||'idle'; setFace(b,x-b.x,y-b.y); emit('sfx','flap');
   }
-  function setFace(b,dx,dy){ var sx=dx-dy; if(Math.abs(sx)>0.01) b.face=sx>=0?1:-1; }
+  function setFace(b,dx,dy){ var sx=dy; if(Math.abs(sx)>0.01) b.face=sx>=0?1:-1; }
   function aroundFeeder(){ var a=Math.random()*6.28; return {x:L.feeder.x+Math.cos(a)*0.55,y:L.feeder.y+Math.sin(a)*0.55}; }
   function aroundWater(){ var a=Math.random()*6.28; return {x:L.water.x+Math.cos(a)*0.45,y:L.water.y+Math.sin(a)*0.45}; }
   function think(b){
