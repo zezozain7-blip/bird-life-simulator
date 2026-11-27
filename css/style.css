@@ -110,3 +110,17 @@ input.name{background:#0006;border:1px solid #6d5a34;color:#fff;border-radius:8p
 .o-pay{margin-inline-start:auto;display:flex;align-items:center;gap:4px;direction:ltr;font-size:17px}
 .order .btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.order .buy{flex:1 1 45%;direction:rtl}.order>.sm{margin-top:6px;font-size:12px;color:#7a5426}
 .item .ei{color:#c0392b}body:has(#sheet.shop:not(.hidden)) #toast{top:auto;bottom:24px}
+/* ---- game feel ---- */
+.sq.fly.ready{border-color:#ffd35a;background:linear-gradient(#c98a14,#7a4c06);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px #ffd35a33,0 2px 6px #0008}}
+.fcoin{position:fixed;z-index:40;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff0a8,#f2b81e 55%,#9a6a00);box-shadow:0 1px 4px #0008;pointer-events:none;transition:left .6s cubic-bezier(.5,-.3,.7,1),top .6s cubic-bezier(.5,0,.4,1),transform .6s}
+.fgain{position:fixed;z-index:40;font-weight:900;font-size:18px;color:#ffe566;text-shadow:0 2px 3px #000;pointer-events:none;direction:ltr;animation:gain 1.3s forwards}
+@keyframes gain{to{transform:translateY(26px);opacity:0}}
+.pill{transition:transform .12s}.pill.bump{transform:scale(1.14)}
+#lvlup{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:#0009;overflow:hidden}
+#lvlup .card2{position:relative;width:min(300px,84%);padding:18px;border-radius:22px;text-align:center;background:linear-gradient(#6e4520,#2a1708);border:3px solid #ffd36a;animation:pop .45s cubic-bezier(.2,1.6,.5,1);direction:rtl}
+#lvlup .big{font-size:76px;line-height:1;color:#ffd23f;text-shadow:0 0 24px #ffb000}
+#lvlup h3{margin:4px 0;font-size:24px;color:#fff}#lvlup p{margin:4px 0;color:#ffe9b8;font-weight:700}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+#lvlup>i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall 2.6s linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
