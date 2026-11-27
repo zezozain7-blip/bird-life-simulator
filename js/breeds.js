@@ -68,3 +68,6 @@ BLS.TXT=BLS.TXT||{en:{},ar:{}}; (function(){ var e=BLS.TXT.en, a=BLS.TXT.ar; e.r
 (function(){ var e=BLS.TXT.en, a=BLS.TXT.ar;
  e.al_sick='Sick: tap to treat'; e.al_hurt='Weak: tap'; e.al_hun='Hungry: fill feeder'; e.al_thi='Thirsty: fill water'; e.al_dirt='Dirty: clean'; e.al_crowd='Crowded'; e.al_str='Stressed: tap';
  a.al_sick='مريض: اضغط للعلاج'; a.al_hurt='ضعيف: اضغط'; a.al_hun='جعان: املا المعلف'; a.al_thi='عطشان: املا المية'; a.al_dirt='وسخ: نضّف'; a.al_crowd='زحمة'; a.al_str='متوتر: اضغط'; })();
+(function(){ var e=BLS.TXT.en, a=BLS.TXT.ar;
+ e.bird_days='bird-days of feed'; e.days_left='days for your flock'; e.c_young='weak young bird'; e.h_c_young='Young birds are fragile (about 13% die in the first days in real lofts). Keep the loft clean, food and water full, and parents well fed.';
+ a.bird_days='يوم-طائر علف'; a.days_left='يوم لطيورك'; a.c_young='طائر صغير ضعيف'; a.h_c_young='الصغار هشّة (حوالي 13% بيموتوا في الأيام الأولى في الأبراج الحقيقية). خلّي البرج نضيف والأكل والمية مليانين والأهل مشبعين.'; })();
