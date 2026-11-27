@@ -180,8 +180,9 @@ BLS.Scene = (function(){
   // --- cached static layers (the expensive scenery is painted once, not every frame)
   var BK={x:-300,y:-340,w:1630,h:1240}, S=1.25, layer0=null, layerBed=null, bakedNests=-1;
   function bake(w,h,ox,oy,fn){ var cn=document.createElement('canvas'); cn.width=Math.ceil(w*S); cn.height=Math.ceil(h*S); var c=cn.getContext('2d'); c.setTransform(S,0,0,S,-ox*S,-oy*S); fn(c); return cn; }
+  var SKINS={none:{},sand:{col:'#e3c27d',a:0.38},white:{col:'#ffffff',a:0.5},blue:{col:'#3f78c4',a:0.42},green:{col:'#4f9a5a',a:0.42},terra:{col:'#c4623a',a:0.4}};
   function buildLayers(G){
-    layer0=bake(BK.w,BK.h,BK.x,BK.y,function(c){ drawGround(c); drawPot(c,0.3*U,3.0*D+10,22,3); drawPot(c,7.2*U,3.1*D+10,20,4); drawYardProps(c); drawLoft(c,G); drawLoftDetails(c,G); drawTank(c); drawAviary(c,0); drawSacks(c); });
+    layer0=bake(BK.w,BK.h,BK.x,BK.y,function(c){ drawGround(c); drawPot(c,0.3*U,3.0*D+10,22,3); drawPot(c,7.2*U,3.1*D+10,20,4); drawYardProps(c); (function(){ var sk=SKINS[G.skin||'none'], t=bake(BK.w,BK.h,BK.x,BK.y,function(t){ drawLoft(t,G); drawLoftDetails(t,G); if(sk&&sk.col){ t.globalCompositeOperation='source-atop'; t.fillStyle=sk.col; t.globalAlpha=sk.a; t.fillRect(BK.x,BK.y,BK.w,BK.h); t.globalAlpha=1; t.globalCompositeOperation='source-over'; } }); c.drawImage(t,BK.x,BK.y,BK.w,BK.h); })(); drawTank(c); drawAviary(c,0); drawSacks(c); });
     layerBed=bake(520,200,7.9*U,9.6*D-120,function(c){ drawBed(c); });
     bakedNests=G.nestsOpen; }
   // --- camera
@@ -261,5 +262,5 @@ BLS.Scene = (function(){
     document.addEventListener('visibilitychange',function(){ if(!document.hidden&&!running){ running=true; requestAnimationFrame(loop); } });
     requestAnimationFrame(loop);
   }
-  return { restore:restore, fx:fx, watchSky:watchSky, init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ pats={}; layer0=null; } };
+  return { rebuild:function(){ layer0=null; }, restore:restore, fx:fx, watchSky:watchSky, init:init, focus:focus, center:center, cam:cam, fitZoom:fitZoom, select:function(id){ sel=id; if(id<0) follow=false; }, setFollow:function(v){ follow=v; }, isFollow:function(){return follow;}, get sel(){return sel;}, toScreen:toScreen, pick:pick, rebuild:function(){ pats={}; layer0=null; } };
 })();
