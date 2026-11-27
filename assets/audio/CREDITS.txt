@@ -1,0 +1,6 @@
+Real recordings (Wikimedia Commons), all public domain or CC0, free for commercial use:
+- amb_coo1.ogg  : "Dove cooing.ogg" (public domain)
+- amb_coo2.ogg  : "Pigeon in Antefasy.wav" (CC0)
+- amb_rain.ogg  : "Rain (1).ogg" (public domain), looped with a cross-fade
+- amb_thunder.ogg: "Rain and thunder.ogg" (public domain)
+Wind, town hum, crickets, wing flaps and chimes are synthesized in code.
