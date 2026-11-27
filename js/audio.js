@@ -1,8 +1,8 @@
 // Ambient sound, no music. Real recordings (public domain / CC0, see assets/audio/CREDITS.txt): pigeon coos, rain, thunder.
 // Synthesized with WebAudio: wind, town hum, night crickets, wing flaps and the small UI chimes.
 BLS.Audio = (function(){
-  var flapBuf=null, paused=false, ac=null, master=null, muted=false, lastFlap=0, bufs={}, beds=null, mixT=null, nextThunder=0;
-  try{ muted=localStorage.getItem('bls_mute')==='1'; }catch(e){}
+  var vol=0.9, flapBuf=null, paused=false, ac=null, master=null, muted=false, lastFlap=0, bufs={}, beds=null, mixT=null, nextThunder=0;
+  try{ muted=localStorage.getItem('bls_mute')==='1'; var vv=parseFloat(localStorage.getItem('bls_vol')); if(isFinite(vv)) vol=Math.max(0,Math.min(1,vv)); }catch(e){}
   function pause(on){ paused=on; if(ac){ if(on) ac.suspend(); else ac.resume(); } }
   function loadBuf(name){
     var D=BLS.ASSET_DATA||{}, url=D['audio/'+name]||('assets/audio/'+name+'.ogg');
@@ -11,7 +11,7 @@ BLS.Audio = (function(){
   function start(){
     if(ac){ if(ac.state==='suspended'&&!paused) ac.resume(); return; }
     var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
-    ac=new AC(); master=ac.createGain(); master.gain.value=muted?0:0.9; master.connect(ac.destination);
+    ac=new AC(); master=ac.createGain(); master.gain.value=muted?0:vol; master.connect(ac.destination);
     ['amb_coo1','amb_coo2','amb_rain','amb_thunder'].forEach(loadBuf); buildBeds(); mix(); mixT=setInterval(mix,1500);
   }
   function noiseBuf(sec){ var b=ac.createBuffer(1,ac.sampleRate*sec,ac.sampleRate), d=b.getChannelData(0); for(var i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
@@ -57,10 +57,12 @@ BLS.Audio = (function(){
     if(name==='sad') return chime([392,330,262],0.12);
     if(name==='click') return tone('sine',700,500,ac.currentTime,0.05,0.07);
   }
-  function setMuted(m){ muted=m; try{ localStorage.setItem('bls_mute',m?'1':'0'); }catch(e){} if(master) master.gain.value=m?0:0.9; }
+  function setMuted(m){ muted=m; try{ localStorage.setItem('bls_mute',m?'1':'0'); }catch(e){} if(master) master.gain.value=m?0:vol; }
+  function setVol(v){ vol=Math.max(0,Math.min(1,v)); try{ localStorage.setItem('bls_vol',String(vol)); }catch(e){} if(master&&!muted) master.gain.value=vol; }
+  function getVol(){ return vol; }
   // every 4.5 s: coos by day (more at dawn and when the flock is big), crickets at night, thunder in rain
   function tick(){ if(!ac||muted||document.hidden||paused) return; var G=BLS.Sim.G; if(!G) return; var night=BLS.Sim.isNight(), h=BLS.Sim.hourOfDay();
     if(night){ crickets(); } else { var n=G.birds.filter(function(b){return BLS.Sim.stageOf(b)!=='squab';}).length; var dawn=(h>=5.5&&h<9)?1.6:1; if(n&&Math.random()<Math.min(0.65,(0.12+n*0.05)*dawn)) coo(0.9+Math.random()*0.2); }
     if(G.weather==='rain'&&ac.currentTime>nextThunder){ if(Math.random()<0.25){ thunder(); nextThunder=ac.currentTime+25+Math.random()*40; } } }
-  return {debug:function(){ return {ac:ac&&ac.state,bufs:Object.keys(bufs),rain:!!(beds&&beds.rain),g:beds?[beds.wind.g.gain.value,beds.hum.g.gain.value]:null}; },pause:pause,start:start,play:play,tick:tick,toggle:function(){ setMuted(!muted); return !muted; },isOn:function(){return !muted;}};
+  return {setVol:setVol,getVol:getVol,debug:function(){ return {ac:ac&&ac.state,bufs:Object.keys(bufs),rain:!!(beds&&beds.rain),g:beds?[beds.wind.g.gain.value,beds.hum.g.gain.value]:null}; },pause:pause,start:start,play:play,tick:tick,toggle:function(){ setMuted(!muted); return !muted; },isOn:function(){return !muted;}};
 })();
