@@ -23,17 +23,20 @@ BLS.Sprites = (function(){
     var squab = stage==='squab';
     var B=(BLS.BREEDS&&BLS.BREEDS[o.br])||null;
     if(B) c.scale(B.sc,B.sc);
-    var im=(stage!=='squab')&&BLS.Art&&BLS.Art.sprite((B&&B.base)||o.col,fly?'fly':(peck?'peck':'stand'));
+    var SHP=(o.br&&BLS.BREED_SHAPE&&BLS.BREED_SHAPE[o.br])||null;
+    var im=(stage!=='squab')&&BLS.Art&&BLS.Art.sprite((B&&B.base)||o.col,fly?'fly':(peck?'peck':'stand'),SHP);
+    if(im&&SHP&&im===BLS.Art.sprite((B&&B.base)||o.col,fly?'fly':(peck?'peck':'stand'))) SHP=null;
     if(im){
-      var key=fly?'fly':(peck?'peck':'stand'), cf=(BLS.ASSET_CFG&&BLS.ASSET_CFG[key])||{h:key==='fly'?54:46,ax:0.5,ay:1.0};
+      var key=fly?'fly':(peck?'peck':'stand'), cf=(BLS.ASSET_CFG&&BLS.ASSET_CFG[key])||{h:key==='fly'?54:46,ax:0.5,ay:1.0}; if(SHP&&BLS.SHAPE_H&&BLS.SHAPE_H[SHP+'_'+key]) cf={h:BLS.SHAPE_H[SHP+'_'+key],ax:0.5,ay:cf.ay};
       var hp=cf.h*(sit?0.93:1), wp=hp*im.width/im.height;
       c.translate(0,walk?bob:(sit?3:0)); if(walk) c.rotate(Math.sin(ph*9)*0.035); if(fly) c.translate(0,Math.sin(ph*16)*2-16);
       if(pose==='coo') c.translate(0,-Math.abs(Math.sin(ph*8))*1.5);
       var feats=(B&&B.f)||[], X=-wp*cf.ax, Y=-hp*cf.ay;
       var col=(B&&B.base)||o.col;
+      AN_SHP=SHP&&BLS.SHAPE_AN?BLS.SHAPE_AN[SHP+'_'+key]:null;
       features(c,feats,key,X,Y,wp,hp,col,false);
       var art=marked(im,feats,key,o.col); c.drawImage(art,X,Y,wp*art.width/im.width,hp);
-      features(c,feats,key,X,Y,wp,hp,col,true); c.restore(); return;
+      features(c,feats,key,X,Y,wp,hp,col,true); AN_SHP=null; c.restore(); return;
     }
     // legs
     if(!fly&&!sit){
@@ -86,7 +89,7 @@ BLS.Sprites = (function(){
   var AN={stand:{h:[0.86,0.10],n:[0.80,0.24],c:[0.80,0.42],t:[0.24,0.72],f:[0.66,0.95],tail:[0.08,0.84]},
           peck:{h:[0.89,0.73],n:[0.80,0.60],c:[0.74,0.60],t:[0.22,0.32],f:[0.55,0.93],tail:[0.08,0.18]},
           fly:{h:[0.86,0.54],n:[0.76,0.60],c:[0.70,0.66],t:[0.28,0.74],f:[0.40,0.80],tail:[0.10,0.82]}};
-  var cache={};
+  var cache={}, AN_SHP=null;
   function swell(im,key,col,k){
     var id='sw'+k+key+col; if(cache[id]) return cache[id];
     var w=im.width,h=im.height,A=AN[key],cn=document.createElement('canvas'); cn.width=Math.ceil(w*1.3); cn.height=h; var c=cn.getContext('2d'); c.drawImage(im,0,0); // extra room in front for the chest
@@ -100,17 +103,17 @@ BLS.Sprites = (function(){
     var mk=null; for(var i=0;i<feats.length;i++) if(feats[i].indexOf('mk_')===0||feats[i]==='band') mk=feats[i];
     var big=feats.indexOf('crop')>=0?1.75:feats.indexOf('puff')>=0?1.22:0;
     if(big) return swell(im,key,col,big);
-    if(!mk) return im; var id=mk+key+col; if(cache[id]) return cache[id];
+    if(!mk) return im; var id=mk+key+col+(AN_SHP?'s'+(AN_SHP.h[0]*1000|0):''); if(cache[id]) return cache[id];
     var w=im.width,h=im.height,cn=document.createElement('canvas'); cn.width=w; cn.height=h; var c=cn.getContext('2d'); c.drawImage(im,0,0);
     c.globalCompositeOperation='source-atop';
-    var A=AN[key], ink=col==='R'?'rgba(120,45,20,0.95)':'rgba(24,27,38,0.95)';
+    var A=AN_SHP||AN[key], ink=col==='R'?'rgba(120,45,20,0.95)':'rgba(24,27,38,0.95)';
     function blot(p,rx,ry,rot){ c.save(); c.translate(p[0]*w,p[1]*h); c.rotate(rot||0); c.scale(rx*w,ry*h); var g=c.createRadialGradient(0,0,0.55,0,0,1); g.addColorStop(0,ink); g.addColorStop(0.72,ink); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.beginPath(); c.arc(0,0,1,0,6.3); c.fill(); c.restore(); }
     // keep the markings translucent so the painted feathers show through
     c.globalCompositeOperation='source-atop';
     if(mk==='mk_nun'){ blot([A.h[0]-0.03,A.h[1]-0.01],0.2,0.15); blot([A.n[0]-0.02,A.n[1]+0.05],0.2,0.18); blot(A.tail,0.26,0.16); blot([0.2,A.t[1]-0.02],0.14,0.1); }
     else if(mk==='mk_helmet'){ blot([A.h[0]-0.03,A.h[1]-0.02],0.2,0.13); blot([A.h[0]-0.08,A.h[1]+0.03],0.14,0.09); blot(A.tail,0.26,0.15); }
     else if(mk==='mk_magpie'){ blot([A.h[0]-0.03,A.h[1]],0.18,0.15); blot(A.c,0.2,0.18); blot([0.45,A.t[1]-0.14],0.22,0.15); blot(A.tail,0.28,0.16); }
-    else if(mk==='mk_swallow'){ blot([0.4,key==='fly'?0.36:key==='peck'?0.34:0.6],0.3,0.19,-0.5); blot(A.tail,0.2,0.12); blot([A.h[0],A.h[1]-0.05],0.1,0.06); }
+    else if(mk==='mk_swallow'){ blot([0.4,key==='fly'?0.36:key==='peck'?0.34:0.6],0.24,0.14,-0.5); blot(A.tail,0.16,0.1); blot([A.h[0],A.h[1]-0.05],0.1,0.06); }
     else if(mk==='band'){ c.fillStyle='rgba(235,190,40,0.95)'; c.fillRect((A.f[0]-0.09)*w,(A.f[1]-0.06)*h,0.2*w,0.025*h); }
     cache[id]=cn; return cn;
   }
@@ -120,7 +123,7 @@ BLS.Sprites = (function(){
     c.beginPath(); c.moveTo(0,0); c.bezierCurveTo(len*0.35,-wid*0.7,len*1.02,-wid,len,0); c.bezierCurveTo(len*1.02,wid,len*0.35,wid*0.7,0,0); c.fillStyle=g; c.fill();
     c.globalAlpha=0.35; c.strokeStyle=edge; c.lineWidth=0.35; c.stroke(); c.beginPath(); c.moveTo(len*0.1,0); c.lineTo(len*0.9,0); c.stroke(); c.globalAlpha=1; c.restore(); }
   function features(c,feats,key,X,Y,W,H,col,front){
-    var A=AN[key], F=FC[col]||FC.G; function at(p){ return [X+p[0]*W,Y+p[1]*H]; }
+    var A=AN_SHP||AN[key], F=FC[col]||FC.G; function at(p){ return [X+p[0]*W,Y+p[1]*H]; }
     feats.forEach(function(f){ var p,i;
       if(f==='fan'&&!front){ p=at(A.t); for(i=0;i<15;i++){ feather(c,p[0],p[1],-3.45+i*0.155,H*(key==='peck'?0.8:0.62),H*0.075,i%2?F[1]:F[0],F[2]); } }
       if(f==='uptail'&&!front){ p=at(A.t); for(i=0;i<6;i++) feather(c,p[0],p[1],-2.35+i*0.11,H*0.52,H*0.05,i%2?F[1]:F[0],F[2]); }
