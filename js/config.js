@@ -3,22 +3,39 @@ var BLS = window.BLS = {};
 BLS.CFG = {
   SAVE_KEY: 'bls_save_v1',
   GRID: 12,
-  REAL_SEC_PER_HOUR: 6,        // at x1: 1 game hour = 6 real seconds (1 day = 2.4 min)
+  REAL_SEC_PER_HOUR: 240,      // at x1: 1 game hour = 4 real min, 1 game day = 96 real min = clock runs 15x faster than real time
   HUNGER_RATE: 1.6, REAR_EXTRA: 0.6,            // per game hour (0 fed .. 100 starving)
   THIRST_RATE: 2.4,
   EAT_SPEED: 30,               // hunger units removed per real second while eating
   DRINK_SPEED: 40,
   GRAIN_PER_UNIT: 0.001,       // kg per hunger unit (about 38 g per bird per game day, like a real pigeon)
   WATER_PER_UNIT: 1.0,         // ml per thirst unit: 2.4 units/h x 24 h x ~0.8 = 45 ml per bird per day (real 30-60 ml)
-  FEEDER_CAP: 1.2, FEED_BAG: 1, WATER_CAP: 1500,   // kg and ml: hopper feeds ~30 bird-days (38 g each), drinker ~33 bird-days (45 ml each)
-  EGG_INCUBATION_H: 96, EGG_CANDLE_H: 22, SQUAB_H: 96, JUVENILE_H: 480,   // egg 4 d, nest 4 d, adult at 20 d
+  FEEDER_CAP: 0.5, FEED_BAG: 1, WATER_CAP: 1500,   // kg and ml: user spec, one dish holds 0.5 kg = ~13 bird-days at 38 g; drinker ~33 bird-days (45 ml each)
+  EGG_INCUBATION_H: 432, EGG_CANDLE_H: 99, SQUAB_H: 672, JUVENILE_H: 4320,   // natural: egg 18 d (17-19), nest ~28 d, breeding from ~6 months (CCAC: 6-7 months)
   EGG_COLD_LIMIT_H: 18,
-  NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 72, SECOND_EGG_P: 0.9, STARVE_H: 0.7, DEHYD_H: 3, SQUAB_HZ: 0.0015, JUV_HZ: 0.00017, OLD_START_D: 150, LIFE_D: 260,
-  START_COINS: 700, START_FEED: 1.6, UPKEEP_PER_BIRD: 0.4, GUARD_COST: 300, ISO_COST: 200, UP_COST:{heat:250,vent:200,nursery:350,vet:400,flight:300,cam:250}, PRED_P: 0.10, DISEASE_P: 0.05,
-  OFFLINE_MAX_H: 48,
+  NEST_COUNT: 8, MAX_BIRDS: 40, CAP_BASE: 6, CAP_PER_NEST: 3, CLUTCH_COOL_H: 504, SECOND_EGG_P: 0.9,
+  START_COINS: 700, START_FEED: 1.6, UPKEEP_PER_BIRD: 0, GUARD_COST: 300, ISO_COST: 200, UP_COST:{heat:250,vent:200,nursery:350,vet:400,flight:300,cam:250}, PRED_P: 0.004, DISEASE_P: 0.05,
+  OFFLINE_MAX_H: 2520,   // 7 real days away = 105 game days; birds are protected while away (no deaths)
+  FEEDER_TIERS:[{kg:0.5,lv:1,p:0},{kg:1,lv:3,p:80},{kg:2.5,lv:5,p:180},{kg:5,lv:8,p:380},{kg:10,lv:11,p:750}],   // dish > small hopper > hopper > automatic > barrel; EGP estimates
+  WATER_TIERS:[{ml:1500,lv:1,p:0},{ml:3000,lv:3,p:70},{ml:5000,lv:6,p:150},{ml:10000,lv:9,p:300}],
+  REF_WEIGHT_G: 450,            // reference adult body weight for 38 g feed + 45 ml water per day
   EXTRA_FEEDER_COST:[80,120,180], EXTRA_WATER_COST:[50,80,120], EXTRA_UNIT_LV:[2,4,6],
   PRICE: { feed5: 20, bird: 105, pair: 200, egg: 10, eggBad: 2, sellK: 1.15, heal: 40 }   // EGP, Nov 2026: feed per kg (see assets/PRICES.md)
 };
+
+// ===== Time scaling (v0.42): every rate below is a REAL-WORLD figure converted to game time with two explicit factors.
+// One rule: every rate is the NATURAL (real-world) value per natural day/hour, applied per GAME day/hour. METAB = SLOW = 1 (no extra compression).
+// The only thing sped up is the game clock: 1 game day = 96 real min at x1 (15 game days per real day). A pigeon lives ~3650 game days = ~243 real days of play.
+(function(){ var C=BLS.CFG; C.SCALE={METAB:1,SLOW:1}; C.CLOCK={RATIO:15,REAL_MIN_PER_GAME_DAY:96}; var S=C.SCALE.SLOW, d=function(annual){ return annual*S/365; };   // annual rate per bird -> chance per game day
+  C.LIFE_D=Math.round(3650/S); C.OLD_START_D=Math.round(2100/S);                      // real: ~10 y typical loft life, old from ~5.75 y
+  C.STARVE_H=100/143; C.DEHYD_H=100/33;                                               // health per hour once >90 hungry/thirsty: lethal in 143 h / 33 h
+  C.SQUAB_HZ=-Math.log(1-0.13)/C.SQUAB_H; C.JUV_HZ=-Math.log(1-0.08)/(C.JUVENILE_H-C.SQUAB_H);   // 13% nest-stage, 8% juvenile mortality at average care
+  C.DIS={base:d(0.12),dirt:d(0.8),stress:d(0.5),crowd:d(0.4),hunger:d(0.25),weather:d(0.25),contact:0.04,   // real cases per bird per year (estimates)
+         stage_h:48,drain:0.12,drain_step:0.1,min_h:168,recover:0.012};              // real course: stage every 2 days, untreated recovery from day 7
+  C.MED={days:5,cost_bird:25,start_h:24,recover:0.03,drain_cut:0.6,contact_cut:0.6};   // medicated water: 5-day course, cures from day 1, ~12 EGP per bird (estimate)
+  var gl={guard:[2800,4,0.3],iso:[1820,0,0.3],heat:[210,3,0.4],vent:[1092,2,0.35],nursery:[1820,0.5,0.3],vet:[364,1,0.4],flight:[1820,0,0.3],cam:[1400,0.2,0.35]}; C.GEAR={};
+  for(var k in gl) C.GEAR[k]={life:Math.round(gl[k][0]/S),run:gl[k][1],rep:gl[k][2]};    // life = real days / SLOW; run = EGP per game day
+})();
 BLS.NAMES = {
   en: {M:['Zaki','Mazen','Omar','Karim','Adel','Tarek','Sami','Fouad','Ramy','Hassan','Youssef','Khaled','Ahmed','Mostafa'], F:['Hamama','Salma','Yara','Laila','Dina','Rania','Hana','Mona','Nada','Aya','Mariam','Hala','Sara','Farah']},
   ar: {M:['زكي','مازن','عمر','كريم','عادل','طارق','سامي','فؤاد','رامي','حسن','يوسف','خالد','أحمد','مصطفى'], F:['حمامة','سلمى','يارا','ليلى','دينا','رانيا','هنا','منى','ندى','آية','مريم','هالة','سارة','فرح']}
