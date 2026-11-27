@@ -100,11 +100,11 @@
   // ---- menu
   function menu(){
     var vol=BLS.Audio&&BLS.Audio.getVol?BLS.Audio.getVol():0.9;
-    var h='<h3>🧰 '+tx('أدوات المزرعة','Farm tools')+'</h3><div class="grid2"><button data-m="fa">🌾 '+tx('أطعم الكل','Feed all')+' (F)</button><button data-m="ro">🕊️ '+tx('كشف القطيع','Roster')+' (R)</button><button data-m="cl">🧹 '+tx('نضّف العشة','Clean loft')+' (C)</button><button data-m="mk">📈 '+tx('السوق','Market')+' (K)</button><button data-m="ac">🏆 '+tx('الإنجازات','Achievements')+' (A)</button><button data-m="lg">🏅 '+tx('سجل المسابقات','Comp log')+'</button><button data-m="cd">🖼️ '+tx('كارت العشة','Share card')+'</button><button data-m="sr">📚 '+tx('المصادر','Sources')+' (?)</button></div>'
+    var h='<h3>🧰 '+tx('أدوات المزرعة','Farm tools')+'</h3><div class="grid2"><button data-m="fa">🌾 '+tx('أطعم الكل','Feed all')+' (F)</button><button data-m="ro">🕊️ '+tx('كشف القطيع','Roster')+' (R)</button><button data-m="cl">🧹 '+tx('نضّف العشة','Clean loft')+' (C)</button><button data-m="mk">📈 '+tx('السوق','Market')+' (K)</button><button data-m="ac">🏆 '+tx('الإنجازات','Achievements')+' (A)</button><button data-m="lg">🏅 '+tx('سجل المسابقات','Comp log')+'</button><button data-m="cd">🖼️ '+tx('كارت العشة','Share card')+'</button><button data-m="sr">📚 '+tx('المصادر','Sources')+' (?)</button><button data-m="ed">✋ '+tx('تحريك الأكل والمية والأعواد','Move feeders, drinkers, perches')+' (E)</button></div>'
      +'<div class="it">🔊 '+tx('الصوت','Volume')+' <input type="range" id="vol29" min="0" max="100" value="'+Math.round(vol*100)+'" aria-label="volume"> (M = '+tx('كتم','mute')+')</div><div class="it"><small>'+tx('اختصارات: 1-5 للتنقل، Esc للإغلاق','Shortcuts: 1-5 tabs, Esc closes')+'</small></div><button id="mn-x">'+tx('إغلاق','Close')+'</button>';
     var o=OV(h); o.querySelector('#mn-x').onclick=function(){ o.remove(); };
     o.querySelector('#vol29').oninput=function(){ if(BLS.Audio&&BLS.Audio.setVol) BLS.Audio.setVol(this.value/100); };
-    var A={fa:feedAll,ro:roster,cl:function(){ Sim.cleanLoft(); },mk:market,ac:achPanel,lg:compLog,cd:card,sr:function(){ BLS_SRC.open(); }};
+    var A={fa:feedAll,ro:roster,cl:function(){ Sim.cleanLoft(); },mk:market,ac:achPanel,lg:compLog,cd:card,sr:function(){ BLS_SRC.open(); },ed:function(){ BLS_EDIT.toggle(true); }};
     o.querySelectorAll('[data-m]').forEach(function(e){ e.onclick=function(){ var k=e.getAttribute('data-m'); if(k!=='fa'&&k!=='cl'&&k!=='cd') o.remove(); A[k](); }; });
   }
   window.BLS_V29={feedAll:feedAll,drill:drill,roster:roster,market:market,ach:achPanel,checkAch:checkAch,card:card,menu:menu,compLog:compLog,pairPreview:pairPreview,ACH:ACH};
@@ -114,9 +114,9 @@
   document.addEventListener('keydown',function(e){
     if(e.ctrlKey||e.metaKey||e.altKey) return; var t=(e.target&&e.target.tagName)||''; if(/INPUT|TEXTAREA|SELECT/.test(t)) return; if(!G()||!G().birds) return;
     var k=e.key, ov=document.querySelector('.ov28');
-    if(k==='Escape'){ if(ov) ov.remove(); else BLS.UI.close(); return; }
+    if(k==='Escape'){ if(window.BLS_EDIT&&BLS_EDIT.on){ BLS_EDIT.cancel(); return; } if(ov) ov.remove(); else BLS.UI.close(); return; }
     if(ov) return;
     if(/^[1-5]$/.test(k)){ var bs=document.querySelectorAll('#nav button'); if(bs[+k-1]) bs[+k-1].click(); }
-    else if(k==='f'||k==='F') feedAll(); else if(k==='c'||k==='C') Sim.cleanLoft(); else if(k==='r'||k==='R') roster(); else if(k==='k'||k==='K') market(); else if(k==='a'||k==='A') achPanel(); else if(k==='m'||k==='M'){ var s=$('b-snd'); if(s) s.click(); } else if(k==='?') BLS_SRC.open(); else if(k==='t'||k==='T') menu();
+    else if(k==='f'||k==='F') feedAll(); else if(k==='c'||k==='C') Sim.cleanLoft(); else if(k==='r'||k==='R') roster(); else if(k==='k'||k==='K') market(); else if(k==='a'||k==='A') achPanel(); else if(k==='m'||k==='M'){ var s=$('b-snd'); if(s) s.click(); } else if(k==='?') BLS_SRC.open(); else if(k==='t'||k==='T') menu(); else if(k==='e'||k==='E') BLS_EDIT.toggle();
   });
 })();
