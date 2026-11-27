@@ -35,9 +35,9 @@ function hub(){
           :['Farm profile','Day','Level','Hatched','Sold','Colour combos found','Sessions','Days since first play','Season badges','None yet','Enable notifications','Close'];
   var M=ar?['💾 نسخة احتياطية','📂 استرجاع نسخة','📤 شارك أحسن طير']:['💾 Export backup','📂 Import backup','📤 Share my best bird'];
   h.dir=ar?'rtl':'ltr';
-  h.innerHTML=BLS.Icons.emo('<div class="c"><h3>🏅 '+L[0]+'</h3>'+L[1]+': '+Sim.dayNum()+'<br>'+L[2]+': '+G.level+'<br>'+L[3]+': '+G.stats.hatched+'<br>'+L[4]+': '+(G.stats.sold||0)+'<br>'+L[5]+': '+seen+'<br>'+L[6]+': '+a.s.length+'<br>'+L[7]+': '+days+'<br>'+L[8]+': '+((G.badges||[]).map(function(n){return '🏅'+n;}).join(' ')||L[9])+'<button id="hn">'+L[10]+'</button><button id="he">'+M[0]+'</button><button id="hi">'+M[1]+'</button><button id="hs">'+M[2]+'</button><button id="hx">'+L[11]+'</button></div>');
+  h.innerHTML=BLS.Icons.emo('<div class="c"><h3>🏅 '+L[0]+'</h3>'+L[1]+': '+Sim.dayNum()+'<br>'+L[2]+': '+G.level+'<br>'+L[3]+': '+G.stats.hatched+'<br>'+L[4]+': '+(G.stats.sold||0)+'<br>'+L[5]+': '+seen+'<br>'+L[6]+': '+a.s.length+'<br>'+L[7]+': '+days+'<br>'+L[8]+': '+((G.badges||[]).map(function(n){return '🏅'+n;}).join(' ')||L[9])+'<button id="hn">'+L[10]+'</button><button id="he">'+M[0]+'</button><button id="hi">'+M[1]+'</button><button id="hs">'+M[2]+'</button><button id="ht">'+(ar?'🎓 إعادة الشرح':'🎓 Replay tutorial')+'</button><button id="hx">'+L[11]+'</button></div>');
   h.style.display='flex';
-  $('hx').onclick=function(){h.style.display='none';};
+  $('hx').onclick=function(){h.style.display='none';}; $('ht').onclick=function(){h.style.display='none';if(window.BLS_TUT)BLS_TUT.start();};
   $('he').onclick=BLS_BK.exp;$('hi').onclick=BLS_BK.imp;$('hs').onclick=BLS_BK.share;
   $('hn').onclick=function(){try{Notification.requestPermission();}catch(e){}};
 }
