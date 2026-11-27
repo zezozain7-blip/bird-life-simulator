@@ -1,4 +1,4 @@
-# REALISM.md  (v0.44)  - every number: SOURCED or ESTIMATE
+# REALISM.md  (v0.47)  - every number: SOURCED or ESTIMATE
 
 ## The clock rule
 Every rate is the natural (real-world) value per natural day/hour, applied per GAME day/hour. Only the clock is sped up:
@@ -60,5 +60,32 @@ Bot visits every 6 game h (24 real min): refills feeder and water, buys feed, cl
 
 - v0.45: egg drawn at real proportion (40 x 30 mm pigeon egg, about 20% of a 20 cm bird's height).
 
-## STILL not audited (v0.45+)
-Shop gear prices, quest/XP/gift amounts, competition prizes, market volatility, aviary prices and times.
+## v0.47 full audit: shop, gear, rewards, events
+SOURCED (Egypt, Nov 2026 unless noted)
+- Feed 20 -> 16 EGP/kg: pigeon mixes 15-18 EGP/kg (elyakza.com, Aug 2025); yellow corn 13.9-14.3 wholesale (dwajn.net/materials); poultry feed 22-26k EGP/tonne = 22-26/kg (tafsela.net/111827).
+- Heater: infrared 250 W lamp 270 EGP (amazon.eg B09Q2FDJ1X; other shops 490-820) -> game 270.
+- Ventilation fan 20 cm: 675-949 EGP (moreelectronicss.com, sakrstore.com, elfares-store.com) -> game 675.
+- Camera: indoor wifi camera from 859 EGP (kobonatak.com/electronics/indoor-wifi-security-camera-egypt) -> game 859.
+- Predator guard: bird spike strip 5 m 750 EGP (alrawdaegypt.com, 1 m 350 at technicaloffice.net) -> game 750.
+- Vet kit: vitamin cream 32-179 EGP (elkadypharmacy.store, drhpharmacy.com) -> game 180.
+- Reference only: plastic nest 18 EGP (naghamaltabiea.com), brass leg band 4 EGP (petshops1.com Egypt Bird).
+- Repair prices follow the gear price (30-40%), so they also rose.
+ESTIMATE (no real source found; do not read as real)
+- Isolation cage 200, nursery 350, flight net 300, nest compartment 120 + 40 each, perch 150, extra feeder/drinker prices, feeder/drinker ladder (see above).
+- Loft paint 250 EGP (one tin of exterior paint; not looked up).
+- Quest rewards (60-200/day, 300-800/week), login 50-500, level gift 50 x level, XP, tasks, season event 100 per step + 300 badge, collection rewards 80-300: game-design values, NOT real. They are per real day, so they are now the main early income.
+- Competition prizes 400/200/100 EGP and XP: ESTIMATE (no real Egyptian show prize data).
+- Market volatility (0.7-1.6 clamp, 15% pull to 1, +/-11% noise per day): ESTIMATE (real feed moves a few % a month).
+- Aviary price, sell 0.35 and breed 0.25: ESTIMATE.
+- Pair prices for roller, swallow, nun, helmet, maltese, pouter, trumpeter, jacobin: ESTIMATES (see PRICES.md).
+- Medicine 25 EGP/bird, vet cost 40: ESTIMATE.
+
+## v0.47 features
+- Loft paint: 5 colours + original (tint over the loft layer only), 250 EGP each, owned colours reusable.
+- Brooding: existing sit sprite sunk into the nest. A dedicated brooding sprite and the breed sprite redo are NOT done: there is no CC0 art for them and I will not fake them.
+
+## Balance sim v0.47 (headless bot, 1 game year, feed 16)
+1 pair: coins +60, net worth +70. 2 pairs: about -2 to +250 depending on predator luck. Farm income is about zero by design with real prices; quests/gifts carry early progress.
+
+## STILL not audited / not done
+Per-breed sprite redo, dedicated brooding sprite, competition behaviour states, genes, achievements, roof expansion.
