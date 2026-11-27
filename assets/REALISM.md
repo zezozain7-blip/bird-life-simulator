@@ -111,3 +111,6 @@ Drawn procedurally (own code, no third-party art) for baladi, homer, roller, kin
 
 ## v0.51 (move items)
 - Feeders, drinkers and perches can be dragged in edit mode (menu, or key E). Positions are saved in G.pos (extra units keep x,y on the unit). Only layout, no real-world numbers. Minimum spacing 1.5 grid units and floor-only bounds are game design choices.
+
+## v0.53 (motion polish, visual only, no gameplay numbers)
+- Idle micro-animations: breathing, head-bob sway, a small hop every ~6.7 s, wing-flap squash in flight. Pooled feather/dust particles, hard cap 60. Reduced motion (OS setting, or the Farm tools toggle) turns these and the dust-mote drift off.
