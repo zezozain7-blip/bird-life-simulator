@@ -72,12 +72,12 @@ BLS.Scene = (function(){
     c.fillStyle='#d9b98c'; c.fillRect(x0-4,yb-h-6,w+8,8); }
   function drawPot(c,x,y,r,seed){ shadow(c,x,y+1,18,5,0.22); c.fillStyle='#b4643b'; c.beginPath(); c.moveTo(x-14,y-26); c.lineTo(x+14,y-26); c.lineTo(x+10,y); c.lineTo(x-10,y); c.fill(); bush(c,x,y-34,r,'#4f9a3a',seed); }
   // --- pieces that are drawn per frame (depth sorted)
-  function drawFeeder(c,G){ var p=P(L.feeder.x,L.feeder.y,0), rx=26; shadow(c,p[0],p[1]+3,rx+6,12,0.22);
+  function drawFeeder(c,G,u,pos){ u=u||G.feeder; pos=pos||L.feeder; var p=P(pos.x,pos.y,0), rx=26; shadow(c,p[0],p[1]+3,rx+6,12,0.22);
     c.fillStyle='#8a6a3f'; c.beginPath(); c.ellipse(p[0],p[1],rx,12,0,0,6.3); c.fill(); c.fillStyle='#5e4528'; c.beginPath(); c.ellipse(p[0],p[1]-3,rx-6,9,0,0,6.3); c.fill();
-    var f=Math.min(1,G.feeder.grain/C.FEEDER_CAP); if(f>0.02){ c.fillStyle='#e0b53a'; c.beginPath(); c.ellipse(p[0],p[1]-3-f*6,(rx-8)*Math.max(0.4,f),8*Math.max(0.5,f),0,0,6.3); c.fill(); c.fillStyle='rgba(255,230,140,0.6)'; for(var i=0;i<8;i++) c.fillRect(p[0]-14+((i*13)%28),p[1]-8-f*5+((i*7)%6),2,1.5); } }
-  function drawWater(c,G){ var p=P(L.water.x,L.water.y,0); shadow(c,p[0],p[1]+3,26,8,0.22);
+    var f=Math.min(1,u.grain/C.FEEDER_CAP); if(f>0.02){ c.fillStyle='#e0b53a'; c.beginPath(); c.ellipse(p[0],p[1]-3-f*6,(rx-8)*Math.max(0.4,f),8*Math.max(0.5,f),0,0,6.3); c.fill(); c.fillStyle='rgba(255,230,140,0.6)'; for(var i=0;i<8;i++) c.fillRect(p[0]-14+((i*13)%28),p[1]-8-f*5+((i*7)%6),2,1.5); } }
+  function drawWater(c,G,u,pos){ u=u||G.water; pos=pos||L.water; var p=P(pos.x,pos.y,0); shadow(c,p[0],p[1]+3,26,8,0.22);
     c.fillStyle='#b32424'; c.beginPath(); c.ellipse(p[0],p[1],22,8,0,0,6.3); c.fill(); c.fillStyle='#8c1a1a'; c.beginPath(); c.ellipse(p[0],p[1]-3,17,6,0,0,6.3); c.fill();
-    var w=Math.min(1,G.water.amt/C.WATER_CAP); c.fillStyle='rgba(235,245,250,0.88)'; c.beginPath(); c.moveTo(p[0]-11,p[1]-6); c.quadraticCurveTo(p[0]-14,p[1]-44,p[0],p[1]-52); c.quadraticCurveTo(p[0]+14,p[1]-44,p[0]+11,p[1]-6); c.closePath(); c.fill();
+    var w=Math.min(1,u.amt/C.WATER_CAP); c.fillStyle='rgba(235,245,250,0.88)'; c.beginPath(); c.moveTo(p[0]-11,p[1]-6); c.quadraticCurveTo(p[0]-14,p[1]-44,p[0],p[1]-52); c.quadraticCurveTo(p[0]+14,p[1]-44,p[0]+11,p[1]-6); c.closePath(); c.fill();
     c.fillStyle='rgba(90,170,230,0.78)'; var wh=40*w; c.fillRect(p[0]-11.5,p[1]-6-wh,23,wh*0.95); c.strokeStyle='rgba(120,140,150,0.6)'; c.lineWidth=1; c.stroke(); }
   function drawPerch(c,sp){ var a=P(sp[0],sp[1],0), top=P(sp[0],sp[1],0.95); shadow(c,a[0],a[1]+1,24,7,0.22); c.strokeStyle='#6b4526'; c.lineWidth=6; c.lineCap='round'; c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(top[0],top[1]); c.stroke(); c.lineWidth=5; c.beginPath(); c.moveTo(top[0]-24,top[1]); c.lineTo(top[0]+24,top[1]); c.stroke(); }
   function poseOf(b){ var st=b.st; if(st==='eat'||st==='drink'||st==='peck') return 'peck'; if(st==='walk') return 'walk'; if(st==='fly'||st==='flock') return 'fly'; if(st==='sit'||st==='perch') return 'sit'; if(st==='squabnest') return 'squab'; if(st==='preen') return 'preen'; if(st==='coo') return 'coo'; return 'stand'; }
@@ -186,7 +186,7 @@ BLS.Scene = (function(){
     var R=rng(99), nd=Math.min(70,((G.dirt||0)*0.7)|0); for(var q=0;q<nd;q++){ var dx=90+R()*620, dy=76+R()*100; c.fillStyle='rgba(72,66,44,0.7)'; c.beginPath(); c.ellipse(dx,dy,3.5+R()*3,2+R()*1.5,R()*3,0,6.3); c.fill(); c.fillStyle='rgba(238,238,225,0.85)'; c.beginPath(); c.arc(dx+1,dy-0.5,1.6,0,6.3); c.fill(); }
     var cnt={}; G.eggs.forEach(function(e){ cnt[e.nest]=(cnt[e.nest]||0)+1; drawEgg(c,e,cnt[e.nest]-1); });
     var items=[];
-    items.push({k:L.feeder.x,f:function(){ drawFeeder(c,G); }}); items.push({k:L.water.x,f:function(){ drawWater(c,G); }}); items.push({k:9.4,f:function(){ c.drawImage(layerBed,7.9*U,9.6*D-120,520,200); }});
+    items.push({k:L.feeder.x,f:function(){ drawFeeder(c,G); }}); items.push({k:L.water.x,f:function(){ drawWater(c,G); }}); (G.xf||[]).forEach(function(u){ items.push({k:u.x,f:function(){ drawFeeder(c,G,u,u); }}); }); (G.xw||[]).forEach(function(u){ items.push({k:u.x,f:function(){ drawWater(c,G,u,u); }}); }); items.push({k:9.4,f:function(){ c.drawImage(layerBed,7.9*U,9.6*D-120,520,200); }});
     G.perches.forEach(function(pi){ var sp=L.perchSpots[pi]; items.push({k:sp[0]-0.1,f:function(){ drawPerch(c,sp); }}); });
     G.birds.forEach(function(b){ if(b.st!=='fly'&&b.st!=='flock') items.push({k:(b.st==='sit'||b.st==='squabnest')?2.3:(b.x<3.2&&b.z>0.3?2.4:b.x),f:function(){ drawBirdW(c,b); }}); });
     items.sort(function(a,b){return a.k-b.k;}); items.forEach(function(i){ i.f(); });
@@ -207,8 +207,8 @@ BLS.Scene = (function(){
     G.birds.forEach(function(b){ var stg=Sim.stageOf(b), p=toScreen(b.x,b.y,b.z), sc=(stg==='adult'?1:stg==='juvenile'?0.78:0.5), hgt=50*szOf(b)*sc; var r=Math.max(hgt*0.55,16)*cam.z+10, cy=p[1]-hgt*0.5*cam.z; var d=Math.hypot(p[0]-sx,cy-sy); if(d<r&&d<bd){ bd=d; best={type:'bird',id:b.id}; } });
     if(best) return best;
     for(var n=0;n<C.NEST_COUNT;n++){ var r2=nestRect(n); var x0=(r2.x-cam.x)*cam.z+W/2, y0=(r2.y-cam.y)*cam.z+H/2, x1=x0+r2.w*cam.z, y1=y0+r2.h*cam.z; if(sx>=x0-4&&sx<=x1+4&&sy>=y0-4&&sy<=y1+4) return {type:'nest',n:n}; }
-    var f=toScreen(L.feeder.x,L.feeder.y,0); if(Math.abs(sx-f[0])<42*cam.z&&Math.abs(sy-f[1])<22*cam.z) return {type:'feeder'};
-    var w=toScreen(L.water.x,L.water.y,0); if(Math.abs(sx-w[0])<26*cam.z&&sy<w[1]+10*cam.z&&sy>w[1]-56*cam.z) return {type:'water'};
+    var fl=[L.feeder].concat(G.xf||[]); for(var fi=0;fi<fl.length;fi++){ var f=toScreen(fl[fi].x,fl[fi].y,0); if(Math.abs(sx-f[0])<42*cam.z&&Math.abs(sy-f[1])<22*cam.z) return {type:'feeder'}; }
+    var wl=[L.water].concat(G.xw||[]); for(var wi=0;wi<wl.length;wi++){ var w=toScreen(wl[wi].x,wl[wi].y,0); if(Math.abs(sx-w[0])<26*cam.z&&sy<w[1]+10*cam.z&&sy>w[1]-56*cam.z) return {type:'water'}; }
     var sk=[(0.55*U+20-cam.x)*cam.z+W/2,(3.25*D+6-30-cam.y)*cam.z+H/2]; if(Math.hypot(sx-sk[0],sy-sk[1])<62*cam.z) return {type:'sacks'};
     var ax0=(12.3*U-cam.x)*cam.z+W/2, ax1=(15.7*U-cam.x)*cam.z+W/2, ay1=(3.9*D+10-cam.y)*cam.z+H/2, ay0=ay1-185*cam.z; if(sx>=ax0&&sx<=ax1&&sy>=ay0&&sy<=ay1) return {type:'aviary'};
     var gx=((sy-H/2)/cam.z+cam.y)/D, gy=((sx-W/2)/cam.z+cam.x)/U; if(L.walkable(gx,gy)) return {type:'ground',x:gx,y:gy};
