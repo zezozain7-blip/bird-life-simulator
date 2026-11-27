@@ -1,17 +1,19 @@
 // Procedural sound (WebAudio, no files): coos, wing flaps, chimes, ambience. Starts after the first tap.
 BLS.Audio = (function(){
-  var ac=null, master=null, muted=false, amb=null, lastFlap=0, lastCoo=0;
+  var flapBuf=null, music=null, musicSeason=-1, paused=false, ac=null, master=null, muted=false, amb=null, lastFlap=0, lastCoo=0;
   try{ muted=localStorage.getItem('bls_mute')==='1'; }catch(e){}
-  // ---- seasonal music (real audio files, one loop per season, crossfaded)
-  var mus=[], musSeason=-1, musCur=null, MV=0.32;
-  function musicTick(){
-    if(!ac||!BLS.Sim.G||!BLS.Art||!BLS.Art.musicSrc) return;
-    var s=BLS.Sim.season();
-    if(s!==musSeason){ musSeason=s; if(!mus[s]){ var el=new Audio(BLS.Art.musicSrc(s)); el.loop=true; el.volume=0; mus[s]=el; } var p=mus[s].play(); if(p&&p.catch) p.catch(function(){}); }
-    for(var i=0;i<mus.length;i++){ var m=mus[i]; if(!m) continue; var target=(i===s&&!muted&&!document.hidden)?MV:0; m.volume=Math.max(0,Math.min(1,m.volume+(target-m.volume)*0.15)); if(i!==s&&m.volume<0.01&&!m.paused) m.pause(); if(i===s&&m.paused&&!muted&&!document.hidden){ var q=m.play(); if(q&&q.catch) q.catch(function(){}); } }
+  function season(){ var S=BLS.Sim; return S&&S.G?S.season():0; }
+  // seasonal background track (assets/audio/music0..3.ogg)
+  function playMusic(){
+    if(muted||paused){ if(music) music.pause(); return; }
+    var s=season();
+    if(!music){ music=new Audio(); music.loop=true; music.volume=0.28; }
+    if(s!==musicSeason){ musicSeason=s; var D=BLS.ASSET_DATA||{}; music.src=D['audio/music'+s]||('assets/audio/music'+s+'.ogg'); }
+    if(music.paused){ var p=music.play(); if(p&&p.catch) p.catch(function(){}); }
   }
-  setInterval(musicTick,400);
+  function pause(on){ paused=on; if(ac){ if(on) ac.suspend(); else ac.resume(); } if(ac||music) playMusic(); }
   function start(){
+    playMusic();
     if(ac){ if(ac.state==='suspended') ac.resume(); return; }
     var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
     ac=new AC(); master=ac.createGain(); master.gain.value=muted?0:0.9; master.connect(ac.destination); ambience();
@@ -30,7 +32,7 @@ BLS.Audio = (function(){
   }
   function flap(){
     if(!ac||muted) return; var now=ac.currentTime; if(now-lastFlap<0.35) return; lastFlap=now;
-    for(var i=0;i<4;i++){ var s=ac.createBufferSource(); s.buffer=noiseBuf(0.12); var f=ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=900+Math.random()*500; f.Q.value=0.9; var g=ac.createGain(); env(g,now+i*0.09,0.01,0.07,0.07); s.connect(f); f.connect(g); g.connect(master); s.start(now+i*0.09); }
+    for(var i=0;i<4;i++){ var s=ac.createBufferSource(); s.buffer=flapBuf||(flapBuf=noiseBuf(0.12)); var f=ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=900+Math.random()*500; f.Q.value=0.9; var g=ac.createGain(); env(g,now+i*0.09,0.01,0.07,0.07); s.connect(f); f.connect(g); g.connect(master); s.start(now+i*0.09); }
   }
   function chime(notes,vol){ if(!ac||muted) return; var t=ac.currentTime; notes.forEach(function(f,i){ tone('sine',f,null,t+i*0.11,0.35,vol||0.13); tone('triangle',f*2,null,t+i*0.11,0.2,(vol||0.13)*0.3); }); }
   function play(name){
@@ -45,9 +47,9 @@ BLS.Audio = (function(){
     if(name==='sad') return chime([392,330,262],0.12);
     if(name==='click') return tone('sine',700,500,ac.currentTime,0.05,0.07);
   }
-  function setMuted(m){ muted=m; try{ localStorage.setItem('bls_mute',m?'1':'0'); }catch(e){} if(master) master.gain.value=m?0:0.9; }
+  function setMuted(m){ muted=m; try{ localStorage.setItem('bls_mute',m?'1':'0'); }catch(e){} if(master) master.gain.value=m?0:0.9; playMusic(); }
   // random coos while birds are awake
-  function tick(){ if(!ac||muted||document.hidden) return; var G=BLS.Sim.G; if(!G||BLS.Sim.isNight()) return;
+  function tick(){ if(!ac||muted||document.hidden) return; playMusic(); var G=BLS.Sim.G; if(!G||BLS.Sim.isNight()) return;
     var n=G.birds.filter(function(b){return BLS.Sim.stageOf(b)!=='squab';}).length; if(n&&Math.random()<Math.min(0.6,0.15+n*0.06)) coo(0.85+Math.random()*0.35); }
-  return {start:start,play:play,tick:tick,toggle:function(){ setMuted(!muted); return !muted; },isOn:function(){return !muted;}};
+  return {pause:pause,start:start,play:play,tick:tick,toggle:function(){ setMuted(!muted); return !muted; },isOn:function(){return !muted;}};
 })();
