@@ -14,11 +14,10 @@ BLS.Art = (function(){
   function init(cb){
     onReady=cb; var D=BLS.ASSET_DATA||{};
     NAMES.spr.forEach(function(n){ load(n,D['sprites/'+n]||('assets/sprites/'+n+'.png'),img); });
-    load('town',D['bg/town']||'assets/bg/town.jpg',tex);
-    for(var si=0;si<4;si++) load('town'+si,D['bg/town'+si]||('assets/bg/town'+si+'.jpg'),tex);
+    ['town','town0','town1','town2','town3'].forEach(function(n){ load(n,D['bg/'+n]||('assets/bg/'+n+'.jpg'),tex); });
     NAMES.tex.forEach(function(n){ load(n,D['textures/'+n]||('assets/textures/'+n+'.jpg'),tex); });
     if(pending===0&&cb) cb();
   }
   function sprite(col,pose){ var k=(col==='G'?'grey':col==='R'?'red':'white')+'_'+pose; return img[k]||null; }
-  return {musicSrc:function(i){ var D=BLS.ASSET_DATA||{}; return D['audio/music'+i]||('assets/audio/music'+i+'.ogg'); },init:init,sprite:sprite,tex:function(n){return tex[n]||null;},count:function(){return Object.keys(img).length+Object.keys(tex).length;},cfg:cfg};
+  return {init:init,sprite:sprite,tex:function(n){return tex[n]||null;},count:function(){return Object.keys(img).length+Object.keys(tex).length;},cfg:cfg};
 })();
