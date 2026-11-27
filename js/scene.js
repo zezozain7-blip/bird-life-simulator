@@ -224,6 +224,7 @@ BLS.Scene = (function(){
     var items=[];
     items.push({k:L.feeder.x,f:function(){ drawFeeder(c,G); }}); items.push({k:L.water.x,f:function(){ drawWater(c,G); }}); (G.xf||[]).forEach(function(u){ items.push({k:u.x,f:function(){ drawFeeder(c,G,u,u); }}); }); (G.xw||[]).forEach(function(u){ items.push({k:u.x,f:function(){ drawWater(c,G,u,u); }}); }); items.push({k:9.4,f:function(){ c.drawImage(layerBed,7.9*U,9.6*D-120,520,200); }});
     (function(){ var gs=[], X={guard:10.6,iso:10.4,heat:2.2,vent:2.2,cam:2.2,vet:2.2,nursery:3.3,flight:11.2}; for(var gk in X) if(G.gear&&G.gear[gk]) gs.push([gk,X[gk]]); gs.forEach(function(g){ items.push({k:g[1]-0.2,f:function(){ var gg=G.gear&&G.gear[g[0]]; if(gg&&(gg.broken||gg.c<35)){ c.save(); c.globalAlpha=gg.broken?0.4:0.8; drawProp(c,g[0],gg.broken?0:t); c.restore(); } else drawProp(c,g[0],t); }}); }); })();
+    (function(){ var n=Math.min(45,Math.round((G.dirt||0)*0.45)); if(n<1) return; items.push({k:0.05,f:function(){ for(var i=0;i<n;i++){ var u=Math.abs(Math.sin(i*12.9898)*43758.5453)%1, v=Math.abs(Math.sin(i*78.233+1.7)*12345.678)%1, p=P(3+u*8.4,3.6+v*7.8,0); if(i%3===0){ c.fillStyle='rgba(245,240,225,0.5)'; c.beginPath(); c.ellipse(p[0],p[1],4.5,1.4,(u*3)-1.5,0,6.3); c.fill(); } else { c.fillStyle='rgba(235,232,220,0.55)'; c.beginPath(); c.ellipse(p[0],p[1],2.2,1,0,0,6.3); c.fill(); c.fillStyle='rgba(80,70,55,0.4)'; c.beginPath(); c.ellipse(p[0],p[1],0.9,0.45,0,0,6.3); c.fill(); } } }}); })();
     G.perches.forEach(function(pi){ var sp=L.perchSpots[pi]; items.push({k:sp[0]-0.1,f:function(){ drawPerch(c,sp); }}); });
     G.birds.forEach(function(b){ if(b.st!=='fly'&&b.st!=='flock') items.push({k:(b.st==='sit'||b.st==='squabnest')?2.3:(b.x<3.2&&b.z>0.3?2.4:b.x),f:function(){ drawBirdW(c,b); }}); });
     items.sort(function(a,b){return a.k-b.k;}); items.forEach(function(i){ i.f(); });
@@ -236,6 +237,7 @@ BLS.Scene = (function(){
     if(!vigC||vigC.width!==cv.width||vigC.height!==cv.height){ vigC=document.createElement('canvas'); vigC.width=cv.width; vigC.height=cv.height; var vc=vigC.getContext('2d'); vc.scale(dpr,dpr); var vg=vc.createRadialGradient(W/2,H*0.5,Math.min(W,H)*0.5,W/2,H*0.5,Math.max(W,H)*0.8); vg.addColorStop(0,'rgba(20,12,0,0)'); vg.addColorStop(1,'rgba(20,12,0,0.3)'); vc.fillStyle=vg; vc.fillRect(0,0,W,H); }
     c.drawImage(vigC,0,0,W,H);
     var h=Sim.hourOfDay(), tc=tint(h); if(tc!=='rgb(255,255,255)'){ c.globalCompositeOperation='multiply'; c.fillStyle=tc; c.fillRect(0,0,W,H); c.globalCompositeOperation='source-over'; }
+    (function(){ var sn=Sim.season(), P4=['rgb(246,255,240)','rgb(255,248,232)','rgb(255,232,200)','rgb(228,238,255)'][sn]; if(sn!==0||true){ c.globalCompositeOperation='multiply'; c.fillStyle=P4; c.fillRect(0,0,W,H); c.globalCompositeOperation='source-over'; } })();
     drawLight(c,h,t); drawGlow(c,h); drawWeather(c,G,t);
   }
   // --- picking
