@@ -103,14 +103,14 @@ BLS.Sprites = (function(){
     if(!mk) return im; var id=mk+key+col; if(cache[id]) return cache[id];
     var w=im.width,h=im.height,cn=document.createElement('canvas'); cn.width=w; cn.height=h; var c=cn.getContext('2d'); c.drawImage(im,0,0);
     c.globalCompositeOperation='source-atop';
-    var A=AN[key], ink=col==='R'?'rgba(140,55,25,0.8)':'rgba(30,34,48,0.8)';
-    function blot(p,rx,ry,rot){ c.save(); c.translate(p[0]*w,p[1]*h); c.rotate(rot||0); c.scale(rx*w,ry*h); var g=c.createRadialGradient(0,0,0.55,0,0,1); g.addColorStop(0,ink); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.beginPath(); c.arc(0,0,1,0,6.3); c.fill(); c.restore(); }
+    var A=AN[key], ink=col==='R'?'rgba(120,45,20,0.95)':'rgba(24,27,38,0.95)';
+    function blot(p,rx,ry,rot){ c.save(); c.translate(p[0]*w,p[1]*h); c.rotate(rot||0); c.scale(rx*w,ry*h); var g=c.createRadialGradient(0,0,0.55,0,0,1); g.addColorStop(0,ink); g.addColorStop(0.72,ink); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.beginPath(); c.arc(0,0,1,0,6.3); c.fill(); c.restore(); }
     // keep the markings translucent so the painted feathers show through
     c.globalCompositeOperation='source-atop';
-    if(mk==='mk_nun'){ blot([A.h[0]-0.02,A.h[1]-0.02],0.17,0.13); blot([A.n[0],A.n[1]+0.06],0.17,0.16); blot(A.tail,0.24,0.14); }
-    else if(mk==='mk_helmet'){ blot([A.h[0]-0.01,A.h[1]-0.04],0.16,0.09); blot(A.tail,0.22,0.13); }
+    if(mk==='mk_nun'){ blot([A.h[0]-0.03,A.h[1]-0.01],0.2,0.15); blot([A.n[0]-0.02,A.n[1]+0.05],0.2,0.18); blot(A.tail,0.26,0.16); blot([0.2,A.t[1]-0.02],0.14,0.1); }
+    else if(mk==='mk_helmet'){ blot([A.h[0]-0.03,A.h[1]-0.02],0.2,0.13); blot([A.h[0]-0.08,A.h[1]+0.03],0.14,0.09); blot(A.tail,0.26,0.15); }
     else if(mk==='mk_magpie'){ blot([A.h[0]-0.03,A.h[1]],0.18,0.15); blot(A.c,0.2,0.18); blot([0.45,A.t[1]-0.14],0.22,0.15); blot(A.tail,0.28,0.16); }
-    else if(mk==='mk_swallow'){ blot([0.38,key==='fly'?0.36:key==='peck'?0.34:0.62],0.32,0.2,-0.5); blot([A.h[0],A.h[1]-0.05],0.1,0.06); }
+    else if(mk==='mk_swallow'){ blot([0.4,key==='fly'?0.36:key==='peck'?0.34:0.6],0.3,0.19,-0.5); blot(A.tail,0.2,0.12); blot([A.h[0],A.h[1]-0.05],0.1,0.06); }
     else if(mk==='band'){ c.fillStyle='rgba(235,190,40,0.95)'; c.fillRect((A.f[0]-0.09)*w,(A.f[1]-0.06)*h,0.2*w,0.025*h); }
     cache[id]=cn; return cn;
   }
@@ -126,6 +126,7 @@ BLS.Sprites = (function(){
       if(f==='uptail'&&!front){ p=at(A.t); for(i=0;i<6;i++) feather(c,p[0],p[1],-2.35+i*0.11,H*0.52,H*0.05,i%2?F[1]:F[0],F[2]); }
       if(f==='crest'&&!front){ p=at([A.h[0]-0.06,A.h[1]]); for(i=0;i<6;i++) feather(c,p[0],p[1],-2.9+i*0.28,H*0.17,H*0.035,i%2?F[1]:F[0],F[2]); }
       if(f==='ruff'){ p=at([A.n[0]-0.04,A.n[1]-0.03]); if(!front){ for(i=0;i<16;i++) feather(c,p[0],p[1],-4.5+i*0.25,H*0.3,H*0.06,i%2?F[1]:F[0],F[2]); } else { for(i=0;i<7;i++) feather(c,p[0]-W*0.03,p[1]+H*0.04,0.9+i*0.24,H*0.19,H*0.04,i%2?F[1]:F[0],F[2]); } }
+      if(f==='wattle'&&front){ p=at([A.h[0]+0.045,A.h[1]+0.01]); c.fillStyle='#f3ece4'; c.beginPath(); c.ellipse(p[0],p[1],H*0.04,H*0.032,0,0,6.3); c.fill(); c.strokeStyle='#c9bcae'; c.lineWidth=0.5; c.stroke(); }
       if(f==='rose'&&front){ p=at([A.h[0]+0.03,A.h[1]-0.04]); for(i=0;i<9;i++) feather(c,p[0],p[1],i*0.7,H*0.09,H*0.025,i%2?F[1]:F[0],F[2]); }
       if(f==='muff'&&front&&key!=='fly'){ p=at(A.f); for(i=0;i<9;i++) feather(c,p[0]+(i-4)*W*0.028,p[1]-H*0.09,1.2+(i-4)*0.18,H*0.13,H*0.03,i%2?F[1]:F[0],F[2]); }
     });
