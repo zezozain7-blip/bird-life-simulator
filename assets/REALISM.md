@@ -58,5 +58,7 @@ Bot visits every 6 game h (24 real min): refills feeder and water, buys feed, cl
 - Consequence: farm income alone is slow by design. Quests (60-200 EGP per day), level gifts and login rewards are NOT time-scaled and are the main early income. Offline (max 7 real days = 105 game days) gives a pair about 30-60 EGP.
 - Sim limits: simplified bot, headless, bird movement runs at x8 not x1.
 
+- v0.45: egg drawn at real proportion (40 x 30 mm pigeon egg, about 20% of a 20 cm bird's height).
+
 ## STILL not audited (v0.45+)
 Shop gear prices, quest/XP/gift amounts, competition prizes, market volatility, aviary prices and times.
