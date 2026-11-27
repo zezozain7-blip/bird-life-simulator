@@ -1,5 +1,5 @@
 // Bird Life Simulator service worker: cache the app shell on first load, then work offline.
-var CACHE='bls-shell-v53';
+var CACHE='bls-shell-v55';
 var SHELL=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',function(e){ e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(SHELL); })); });
 self.addEventListener('message',function(e){ if(e.data==='skip') self.skipWaiting(); });
